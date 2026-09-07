@@ -4,12 +4,12 @@ import argparse
 import sys
 from pathlib import Path
 
-from pith.check import check_brain
+from personal_memory.check import check_brain
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="pith",
+        prog="personal-memory",
         description="Git-native memory for coding agents. v1 is schema check only.",
     )
     sub = parser.add_subparsers(dest="command", required=True)

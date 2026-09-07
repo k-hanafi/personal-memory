@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from pith.check import check_brain
-from pith.frontmatter import FrontmatterError, parse_frontmatter, split_frontmatter
+from personal_memory.check import check_brain
+from personal_memory.frontmatter import FrontmatterError, parse_frontmatter, split_frontmatter
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
 

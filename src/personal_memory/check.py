@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from pith.frontmatter import FrontmatterError, parse_frontmatter, split_frontmatter
+from personal_memory.frontmatter import FrontmatterError, parse_frontmatter, split_frontmatter
 
 SKIP_NAMES = frozenset({"README.md", "AGENTS.md", "CHANGELOG.md"})
 

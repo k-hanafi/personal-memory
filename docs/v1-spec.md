@@ -1,7 +1,7 @@
-# Pith v1 spec
+# Personal Memory v1 spec
 
-Working name: **pith**. Rename is cheap while this GitHub repo is private.
-Locked: 2026-09-02.
+Name: **Personal Memory**. GitHub: `k-hanafi/personal-memory`.
+Locked: 2026-09-02. Renamed from pith on 2026-09-07.
 
 This file is the product plan. If code and this file disagree, this file wins
 until we change it on purpose.
@@ -40,7 +40,7 @@ stack: git markdown as source of truth, Postgres index, hybrid search
 (keyword + vectors + graph), skills, optional hosted agent. Tens of thousands
 of pages, many ingestion pipes, paid embedding APIs.
 
-Pith takes the same *ownership* idea (you keep the files) and a narrower
+Personal Memory takes the same *ownership* idea (you keep the files) and a narrower
 job: coding-agent memory that stays honest when notes go stale.
 
 Gbrain's own retrieval doc is the reason vectors are optional here. Vector
@@ -60,11 +60,11 @@ Three different things. The Gbrain tutorial says "create two repos" because
 Gbrain *the product* already exists. You install it, then you create a private
 brain and (if you run a hosted agent) a private workspace.
 
-Pith is the product, so the map is:
+Personal Memory is the product, so the map is:
 
 | Repo | Job | Public? | Today |
 |---|---|---|---|
-| **Product** (this repo) | Engine, MCP, schema, docs, demo brain | Private now. Public later. | `k-hanafi/pith` |
+| **Product** (this repo) | Engine, MCP, schema, docs, demo brain | Private now. Public later. | `k-hanafi/personal-memory` |
 | **Brain** | The person's notes | Never (unless they choose) | Khaled: `k-hanafi/vault`. Jan: his own folder. |
 | **Agent workspace** | How a hosted agent behaves (skills copies, crons, Telegram) | Private | Not in v1 |
 
@@ -75,7 +75,7 @@ engine? Then it belongs in the product.
 Khaled's vault today mixes both (`bin/` scripts next to people notes). That
 was right when the "product" was three scripts. The public product cannot
 live in `~/vault`. Features land here. `~/vault` stays the first customer:
-point pith at that folder. Do not freeze the vault while building a
+point Personal Memory at that folder. Do not freeze the vault while building a
 greenfield clone, and do not migrate onto a new note format at the end.
 
 Community install uses `examples/demo-brain/` (fake people, fake courses).
@@ -90,7 +90,7 @@ Think of four lookup keys. They do different jobs.
 | Keyword | Which files contain these words? | Yes. Better than raw grep if we can (title vs body). |
 | Exact / alias | Which page is *this name*? | Yes. `id`, title, optional `aliases`. |
 | Graph | This page links to what? | Yes, walk existing `[[wikilinks]]`. No LLM extraction required. |
-| Vector | Which pages are *about* this even if they used different words? | **Optional, v1.5+.** Fail-open: no API key means pith still works. |
+| Vector | Which pages are *about* this even if they used different words? | **Optional, v1.5+.** Fail-open: no API key means Personal Memory still works. |
 
 Vectors help when the asker does not share vocabulary with the notes
 ("gaming the curve" vs a note that says "strategic sitting of exams"), and
@@ -165,53 +165,53 @@ it (README, agent protocol files) are skipped, not rejected.
 
 This is the onboarding loop. Dumps do not become the schema. Raw material
 lands in `sources/`. Labeled notes are written elsewhere. `sources/` is
-immutable: pith and the agent read it and never edit it.
+immutable: Personal Memory and the agent read it and never edit it.
 
 ### Ordered workflow
 
-1. **Start a brain.** `pith init ~/my-brain` writes a small template
+1. **Start a brain.** `personal-memory init ~/my-brain` writes a small template
    (folders, `AGENTS.md` filing rules, empty `sources/`). Or skip init and
-   point pith at a folder the user already has.
+   point Personal Memory at a folder the user already has.
 2. **Land raw material in `sources/`.** Drag and drop files, or later a
    connector (Notion first). Connectors are copy jobs: token in env, no
    model in the pipe. Same job as Khaled's `notion-sync`.
-3. **Scan.** `pith unfiled` lists `sources/` items that have no filed
+3. **Scan.** `personal-memory unfiled` lists `sources/` items that have no filed
    note yet. No LLM. No file moves.
 4. **Propose.** The user's coding agent (Claude Code, Codex, or Cursor)
    reads each unfiled item plus `recall` against notes already in the
    brain, then submits a proposal: destination path, jar-label
-   frontmatter, short claim, and a confidence. Pith stores proposals in
-   a queue (for example `.pith/queue/`). The agent does not write the
+   frontmatter, short claim, and a confidence. Personal Memory stores proposals in
+   a queue (for example `.personal-memory/queue/`). The agent does not write the
    note yet.
-5. **Validate.** `pith apply` refuses any proposal that fails the jar
+5. **Validate.** `personal-memory apply` refuses any proposal that fails the jar
    rules (missing `id` / `as_of` / `status` / `confidence`, bad
    kebab-case, two `current` notes on the same fact). Model-stated
    "high confidence" is not enough. High also needs a boring signal:
    exact `id` or title match, or a dated source for `as_of`.
 6. **Apply by confidence.**
-   - High, and pith agrees: apply. Write the note, leave `sources/`
+   - High, and the engine agrees: apply. Write the note, leave `sources/`
      untouched, mark the source as filed.
-   - Medium or low, or pith disagrees: stay in the queue. The user sees
+   - Medium or low, or the engine disagrees: stay in the queue. The user sees
      a short list ("this looks like a person named Samir, or a course
      note, I cannot tell") and picks.
-   - Blocked: pith will not guess. Example: two current notes already
+   - Blocked: the engine will not guess. Example: two current notes already
      disagree.
-7. **Check.** `pith check` must pass on the brain after a batch.
+7. **Check.** `personal-memory check` must pass on the brain after a batch.
 
 Jan's session is: drop files in `sources/`, open Cursor in the brain
-folder, say "file the inbox." The agent uses pith tools. The user only
+folder, say "file the inbox." The agent uses Personal Memory tools. The user only
 answers the low-confidence list.
 
 ### Who runs the LLM
 
-**v1: the coding agent already in the editor. Pith does not call an LLM
+**v1: the coding agent already in the editor. Personal Memory does not call an LLM
 API and does not ask for a second key.**
 
 Filing is judgment (`as_of`, type, which person, whether to supersede).
 That is what Claude Code / Codex / Cursor are for. The user is already
 paying for that session. The chat UI *is* the human-in-the-loop.
 
-Pith's job is the clerk work: list unfiled sources, accept or reject
+Personal Memory's job is the clerk work: list unfiled sources, accept or reject
 proposals, enforce jar rules, refuse silent overwrite, leave `sources/`
 alone.
 
@@ -224,17 +224,17 @@ Gbrain does both, on purpose:
   chat session is open, so the binary has to call a model. With no chat
   key, those jobs stay off.
 
-Pith is not a 24/7 daemon in v1, so it should not collect a chat API
-key. A later `pith file --model` overnight path can copy gbrain's
+Personal Memory is not a 24/7 daemon in v1, so it should not collect a chat API
+key. A later `personal-memory file --model` overnight path can copy gbrain's
 daemon. Not now.
 
-If the agent writes markdown with the editor instead of `pith apply`,
+If the agent writes markdown with the editor instead of `personal-memory apply`,
 that is a bypass. `AGENTS.md` in the brain must say: new notes go
-through pith. `pith check` (and later a git hook) catch strays.
+through Personal Memory. `personal-memory check` (and later a git hook) catch strays.
 
 ## MCP surface (v1)
 
-Install is: point pith at a folder, add one MCP server entry in Claude Code /
+Install is: point Personal Memory at a folder, add one MCP server entry in Claude Code /
 Codex / Cursor. No website, no Telegram, no cloud account.
 
 v1 tools (names can shift, jobs cannot):
@@ -244,7 +244,7 @@ v1 tools (names can shift, jobs cannot):
    `current` unless the question is historical.
 2. **get** — fetch one note by `id` or path, with frontmatter intact.
 3. **unfiled** — list `sources/` items with no filed note yet.
-4. **submit_proposal** — agent hands pith a filing draft. Pith validates
+4. **submit_proposal** — agent hands Personal Memory a filing draft. Personal Memory validates
    jar rules and queues it. Does not write the note.
 5. **apply** — write queued proposals that pass validation. High
    auto-applies. Low stays for the user. Never silent-overwrite a
@@ -253,7 +253,7 @@ v1 tools (names can shift, jobs cannot):
    stated in chat rather than a `sources/` dump.
 
 Out of v1 MCP: Slack, Gmail, Calendar, a hosted HTTP MCP with OAuth, a
-reranker, query-expansion LLMs, pith-owned chat API calls.
+reranker, query-expansion LLMs, engine-owned chat API calls.
 
 One ingestion path can follow later: Notion into `sources/`, modeled on
 Khaled's existing `notion-sync`. Not a launch checklist of five
@@ -275,7 +275,7 @@ connectors.
 ## Dogfood
 
 Khaled keeps using `~/vault` every day. New engine features must run against
-that folder the same week they land. If pith cannot serve the vault without
+that folder the same week they land. If Personal Memory cannot serve the vault without
 rewriting the notes, the engine is wrong, not the vault.
 
 Schema changes are versioned. The vault opts in. No surprise rewrites of
@@ -288,29 +288,31 @@ historical notes.
 - Convex or any backend that becomes the source of truth
 - Required vector search
 - Slack / Google Suite ingestion
+- Marketplace plugins (Claude Code / Codex / Cursor). v1 install is the
+  CLI plus one MCP config snippet. A plugin can wrap that later.
 - Multi-user company brain, authz beyond "this folder is yours"
 - Changing Khaled's vault into a public demo
 
 ## Contract
 
-GOAL: After v1, a coding agent connected to pith can answer a question from a
+GOAL: After v1, a coding agent connected to Personal Memory can answer a question from a
 markdown brain using only recall/get, and every stated fact has an evidence
 card. The same install works with embeddings disabled. A new user can run
-`pith check` on `examples/demo-brain` and get a clean pass without API keys.
+`personal-memory check` on `examples/demo-brain` and get a clean pass without API keys.
 
 CONSTRAINTS:
 
 - Git markdown is the system of record
-- No required cloud account, embedding key, or pith-owned LLM API key
+- No required cloud account, embedding key, or engine-owned LLM API key
 - v1 clients are Claude Code, Codex, and Cursor only
-- `sources/` is never rewritten by pith or the agent
+- `sources/` is never rewritten by Personal Memory or the agent
 - Low-confidence proposals never auto-apply
 - Do not put real personal notes in this repo
 - Do not treat two `current` notes on one fact as a tie to pick silently
 
 FORMAT:
 
-- Engine code under `src/pith/`
+- Engine code under `src/personal_memory/`
 - Fake brain under `examples/demo-brain/`
 - This spec under `docs/v1-spec.md`
 - Evidence cards as the recall return shape
@@ -321,15 +323,15 @@ FAILURE (any of these means v1 is not done):
 - Recall can return a superseded note as if it were current
 - Recall returns a chunk with frontmatter stripped
 - An answer cites a file but no line range
-- `pith check examples/demo-brain` needs a network call
+- `personal-memory check examples/demo-brain` needs a network call
 - Khaled's vault notes are copied into this repo
-- Filing requires the user to paste an OpenAI/Anthropic key into pith
+- Filing requires the user to paste an OpenAI/Anthropic key into Personal Memory
 - Low-confidence dumps are written into the brain with no review
 - `sources/` files are moved or edited by apply
 
 ## Implementation order
 
-1. Schema check (`pith check`) on a folder, including the demo brain
+1. Schema check (`personal-memory check`) on a folder, including the demo brain
 2. Recall over markdown + frontmatter + evidence cards (library, then MCP)
 3. Get-by-id
 4. MCP stdio server + install snippet for the three coding agents
@@ -337,11 +339,10 @@ FAILURE (any of these means v1 is not done):
 6. Dogfood on `~/vault` (including `70-sources/` as the dump pile)
 7. Optional Notion connector into `sources/`
 8. Optional vectors as a second recall arm (fail-open)
-9. Optional later: pith-owned model key for overnight filing with no
+9. Optional later: engine-owned model key for overnight filing with no
    editor session (gbrain autopilot path)
 
 ## Open
 
-- Final name (pith is a placeholder)
 - Exact MCP tool names
-- Queue file format (markdown vs JSON under `.pith/queue/`)
+- Queue file format (markdown vs JSON under `.personal-memory/queue/`)
