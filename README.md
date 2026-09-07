@@ -13,7 +13,9 @@ code.
 
 ## Status
 
-2026-09-02: spec plus a schema checker. No MCP server yet.
+2026-09-06: spec plus a schema checker. No MCP server yet. Filing loop
+is specified in `docs/v1-spec.md` (sources dump, agent proposes, pith
+applies, human reviews low confidence).
 
 ```bash
 python3 -m venv .venv

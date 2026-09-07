@@ -12,8 +12,11 @@ not be required to install or to answer correctly.
 Canonical plan: `docs/v1-spec.md`. If implementation drifts, update the spec
 in the same change or stop and say so.
 
-**Status (2026-09-02):** spec locked, `pith check` validates frontmatter,
-demo brain exists. No MCP server, no recall yet.
+**Status (2026-09-06):** spec locked, `pith check` validates frontmatter,
+demo brain exists. No MCP server, no recall, no filing queue yet.
+Filing is specified: dumps land in `sources/`, the coding agent
+proposes, pith applies high-confidence jar-valid notes, humans review
+the rest. Pith does not call an LLM API in v1.
 
 Working name: pith. Rename is allowed while the GitHub repo is private.
 Do not put Khaled's real vault notes in this repo.
@@ -39,8 +42,8 @@ Planned (do not invent extra layers before these):
 
 - Recall returning evidence cards
 - Get-by-id
-- Remember / supersede
 - MCP stdio server
+- Unfiled scan, proposal queue, apply (human review for low confidence)
 - Optional vector recall arm (fail-open)
 
 ## Development commands
