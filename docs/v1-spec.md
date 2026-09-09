@@ -334,6 +334,8 @@ FAILURE (any of these means v1 is not done):
 1. Schema check (`personal-memory check`) on a folder, including the demo brain
 2. Recall over markdown + frontmatter + evidence cards (library, then MCP)
 3. Get-by-id
+3a. Eval corpus, fixtures, baseline gate (`docs/evals-spec.md`). Lands before
+    wikilink hops so hops are measured, not assumed.
 4. MCP stdio server + install snippet for the three coding agents
 5. Unfiled scan, proposal queue, apply with human review for low confidence
 6. Dogfood on `~/vault` (including `70-sources/` as the dump pile)

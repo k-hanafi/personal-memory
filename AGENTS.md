@@ -12,12 +12,11 @@ not be required to install or to answer correctly.
 Canonical plan: `docs/v1-spec.md`. If implementation drifts, update the spec
 in the same change or stop and say so.
 
-**Status (2026-09-07):** product renamed from pith to Personal Memory. Spec
-locked, `personal-memory check` validates frontmatter, demo brain exists.
-No MCP server, no recall, no filing queue yet. Filing is specified: dumps
-land in `sources/`, the coding agent proposes, the engine applies
-high-confidence jar-valid notes, humans review the rest. Personal Memory
-does not call an LLM API in v1.
+**Status (2026-09-09):** spec locked. `check` validates frontmatter.
+`recall` returns evidence cards (keyword + exact id/title, current-only
+unless `--historical`). `get` fetches one note by id or path with
+frontmatter intact. No wikilink hops, no MCP, no filing queue yet.
+Personal Memory does not call an LLM API in v1.
 
 Do not put Khaled's real vault notes in this repo.
 
@@ -34,15 +33,16 @@ Do not put Khaled's real vault notes in this repo.
 
 Exists:
 
-- `docs/v1-spec.md` — product plan
-- `examples/demo-brain/` — fake notes with the v1 frontmatter contract
-- `src/personal_memory/` — frontmatter parse, `personal-memory check`
-- `tests/` — checker tests against the demo brain
+- `docs/v1-spec.md`: product plan
+- `docs/evals-spec.md`: eval architecture (three layers, fixture families, CI gate)
+- `docs/sources.md`: every outside source a design choice traces to
+- `examples/demo-brain/`: fake notes with the v1 frontmatter contract
+- `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`
+- `tests/`: checker, recall, and get tests against the demo brain
 
 Planned (do not invent extra layers before these):
 
-- Recall returning evidence cards
-- Get-by-id
+- `evals/`: fictional eval corpus, TOML fixtures, committed baseline, `personal-memory eval` (spec: `docs/evals-spec.md`)
 - MCP stdio server
 - Unfiled scan, proposal queue, apply (human review for low confidence)
 - Optional vector recall arm (fail-open)
@@ -55,6 +55,8 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 pytest
 personal-memory check examples/demo-brain
+personal-memory recall examples/demo-brain teaching load
+personal-memory get examples/demo-brain alex-rivera
 ```
 
 `python3 -m venv .venv` creates a local install folder. `source .venv/bin/activate`
@@ -66,7 +68,11 @@ the test runner.
 | Task | Start here |
 |------|-----------|
 | Product rules, scope, v1 vs later | `docs/v1-spec.md` |
+| Evals, fixtures, baseline gate | `docs/evals-spec.md` |
+| Why a design choice was made, what we read | `docs/sources.md` |
 | Frontmatter / `personal-memory check` | `src/personal_memory/frontmatter.py`, `src/personal_memory/check.py` |
+| Recall / evidence cards | `src/personal_memory/recall.py` |
+| Get by id or path | `src/personal_memory/get.py` |
 | Fake corpus | `examples/demo-brain/` |
 | Tests | `tests/` |
 
