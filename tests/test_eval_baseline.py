@@ -132,6 +132,9 @@ def test_gate_rule_d_regression_under_changed_hash_needs_justification() -> None
     assert result.ok
     assert "justification: a now needs wikilink hops" in result.messages
     assert not gate(fresh, to_baseline(MAIN), dict(unjustified, justification="   ")).ok
+    stale = "a now needs wikilink hops"
+    main_stale = dict(to_baseline(MAIN), justification=stale)
+    assert not gate(fresh, main_stale, dict(unjustified, justification=stale)).ok
 
 
 def test_gate_rule_e_gold_count_may_not_fall_without_justification() -> None:
@@ -141,6 +144,9 @@ def test_gate_rule_e_gold_count_may_not_fall_without_justification() -> None:
     assert not result.ok
     assert "gold count fell from 2 to 1" in result.messages
     assert gate(fresh, to_baseline(MAIN), dict(to_baseline(fresh), justification="dropped c")).ok
+    stale = "dropped c"
+    main_stale = dict(to_baseline(MAIN), justification=stale)
+    assert not gate(fresh, main_stale, dict(to_baseline(fresh), justification=stale)).ok
     grew = _receipt({"named": {"a": True, "b": True, "c": True, "h!": True}}, hash_="h2")
     assert gate(grew, to_baseline(MAIN), to_baseline(grew)).ok
 

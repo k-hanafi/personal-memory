@@ -94,7 +94,11 @@ def gate(fresh: dict, main_baseline: dict | None, head_baseline: dict | None) ->
     head = to_baseline(fresh)
     comparison = compare(main_baseline, head)
     justification = head_baseline.get("justification")
-    justified = isinstance(justification, str) and justification.strip() != ""
+    justified = (
+        isinstance(justification, str)
+        and justification.strip() != ""
+        and justification != main_baseline.get("justification")
+    )
     messages: list[str] = []
     ok = True
 
