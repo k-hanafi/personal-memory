@@ -104,6 +104,7 @@ Each case carries some subset of these fields:
 | `expect_path` | The file that should be the top card. |
 | `expect_line` | A line number that must fall inside the top card's `start_line..end_line`. |
 | `expect_status` | The `status` the top card must report. |
+| `expect_confidence` | The `confidence` the top card must report. |
 | `forbid_paths` | Files that must not appear in the top five. |
 | `also_present` | Files that must appear somewhere in the results, with the status they must carry. |
 | `abstain` | If true, the adapter must return zero cards. |
@@ -134,12 +135,12 @@ Each family is named for the ability it tests and for the source we took the ide
 An adapter is a function with this signature, in plain Python:
 
 ```python
-def search(corpus_root: Path, query: str, *, historical: bool) -> list[Hit]
+def search(corpus_root: Path, query: str, historical: bool) -> list[Hit]
 ```
 
-where a `Hit` carries `path`, `start_line`, `end_line`, `status`, and `contradicted_by`. That is a subset of the evidence card `recall` already returns, so the first adapter is a thin wrapper.
+where a `Hit` carries `path`, `start_line`, `end_line`, `status`, `confidence`, and `contradicted_by`. That is a subset of the evidence card `recall` already returns, so the first adapter is a thin wrapper.
 
-The ripgrep adapter runs `rg` over the corpus with the query's tokens, ranks files by match count, reads frontmatter to fill in `status`, and returns the first matching line as the range. It is deliberately dumb. It exists to answer "what does a good grep already get you," which is the question every user of a markdown brain should ask before installing anything.
+The grep adapter is a plain text search written in Python, with no subprocess and no `rg`. It lowercases the query, splits it into alphanumeric tokens, counts every occurrence of every token in each file, ranks files by that count, reads frontmatter to fill in `status` and `confidence`, and returns the first matching line as the range. It ignores `historical` because grep does not know what `status` means. It does not shell out to ripgrep because a default machine does not have `rg`, and the eval run must work with no extra binaries. It is deliberately dumb. It exists to answer "what does a plain text search already get you," which is the question every user of a markdown brain should ask before installing anything.
 
 Adapters that need a network (embeddings, a reranker) may exist later. They are excluded from the CI gate because they are not hermetic, and their results are published as separate rows with the model name and date recorded.
 
