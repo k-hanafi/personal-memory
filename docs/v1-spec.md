@@ -133,6 +133,79 @@ Use the current one and say the older one was replaced.
 
 "The brain doesn't have this" is a successful answer.
 
+## Write
+
+Decided 2026-09-10. Writes matter as much as reads: the brain compounds only
+if facts stated in passing get filed. The engine does not need a model to do
+this, because every write splits into two halves that want different tools.
+
+| Half | Who does it | Why |
+|---|---|---|
+| Judgment: is this durable, which note is it about, new or changed, what `type`, what `as_of`, where | The coding agent in the editor | It has the whole conversation, the filing rules, and the neighborhood from `recall`. It can ask the user. An engine-side model would see one sentence and could not ask. |
+| Consistency: valid frontmatter, no duplicate `id`/title/alias, supersession mechanics, `sources/` untouched, line-ranged cards | The engine, in code | This is bookkeeping. Models forget to flip a `status`; code does not. |
+
+The engine never decides. It refuses to let a decision be recorded wrong.
+
+### One door
+
+Every write enters through the same validated path: `submit_proposal`, then
+`apply`. `remember` is the one-call shortcut for a single fact the user stated
+in chat, and it goes through the same validation. Nothing writes markdown
+around this door. That seam is what lets a later background filer (spec step
+9) be added as another caller, not as a rewrite.
+
+### What the engine checks on every write
+
+- Required frontmatter present and valid (`id` kebab-case, `as_of` a date,
+  `status` and `confidence` from the allowed sets).
+- No existing note with the same `id`, the same normalized title, or the
+  proposed title in its `aliases`. If one exists, refuse to create and return
+  that note as the target.
+- Path is inside the brain and not under `sources/`.
+- A changed fact supersedes: the old note gets `status: superseded` and
+  `superseded_by: <new id>`; the new note is `current`. Never overwrite in
+  place. Two `current` notes on one fact is refused, not merged.
+- Provenance recorded on the note: who proposed (`user`, `agent:<name>`,
+  later `filer:<model>`) and the date. A user statement is a dated source, so
+  it satisfies the "boring signal" rule for high confidence.
+
+### What the engine returns
+
+`inserted`, `duplicate` (with the existing note), `superseded` (with the old
+and new paths), or `queued` (with the reason). Plus, without a model, the
+facts it can count: near-miss notes sharing entity tokens with the proposal,
+and where notes of the same `type` and the linked notes already live.
+
+### Placement
+
+File next to what you link to. The agent runs `recall` on the subject, sees
+where the sibling notes live, and proposes that folder. The engine's tally
+confirms or disagrees. Folder is a convention; `id` is the address, so a
+note in the wrong folder is still found by id, title, alias, keyword, and
+wikilink. Misfiling is cheap to fix and never a retrieval error. Ambiguous
+placement goes to the queue at medium confidence and the user picks. Unknown
+placement goes to `inbox/`, which is a deferred decision, not a mistake.
+
+### Automatic capture
+
+"Automatic" filing is a property of the prompt side, not the engine. The
+brain's `AGENTS.md` (and the user's own rules) tell the agent to call
+`remember` for durable facts without being asked: preferences, corrections,
+decisions, commitments, relationships, project-state changes. It also
+carries the skip list: anything derivable from the codebase or git, session
+state, unverified conclusions, secrets. No harness hook in v1.
+
+### Not in v1, and the trigger to revisit
+
+Not in v1: embedding-based dedup, a model judge for contradictions, any
+background sweep. `contradicted_by` on the evidence card is the zero-LLM
+version: surface both, let the human pick.
+
+Revisit when dogfood replay shows the failure a background pass would catch
+(two notes on one fact that never co-retrieve) three or more times. First try
+an agent-run lint over `recall` and `get`. Only if that is not enough, add an
+overnight filer with its own key as a caller of `submit_proposal`.
+
 ## Note schema
 
 Required YAML frontmatter on every note:
@@ -213,7 +286,7 @@ paying for that session. The chat UI *is* the human-in-the-loop.
 
 Personal Memory's job is the clerk work: list unfiled sources, accept or reject
 proposals, enforce jar rules, refuse silent overwrite, leave `sources/`
-alone.
+alone. The split, and why the engine holds no model, is in the Write section.
 
 Gbrain does both, on purpose:
 
@@ -250,7 +323,8 @@ v1 tools (names can shift, jobs cannot):
    auto-applies. Low stays for the user. Never silent-overwrite a
    changing fact (supersede instead).
 6. **remember** — same write path as apply, for a single fact the user
-   stated in chat rather than a `sources/` dump.
+   stated in chat rather than a `sources/` dump. Contract in the Write
+   section.
 
 Out of v1 MCP: Slack, Gmail, Calendar, a hosted HTTP MCP with OAuth, a
 reranker, query-expansion LLMs, engine-owned chat API calls.
@@ -348,3 +422,10 @@ FAILURE (any of these means v1 is not done):
 
 - Exact MCP tool names
 - Queue file format (markdown vs JSON under `.personal-memory/queue/`)
+- Note shape for entities and projects: single-fact notes, or a two-layer
+  note (a State section `remember` may rewrite, plus a dated append-only Log)
+  so one note can hold facts with different dates
+- Whether `remember` stub-creates a new note from one fact and later calls
+  append, or accepts an optional body for a whole page in one call
+- Whether `remember` edits the superseded note's frontmatter itself or queues
+  that edit as a proposal

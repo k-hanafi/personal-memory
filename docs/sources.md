@@ -30,6 +30,27 @@ Pre-registration: write the predicted number before the run, publish the miss. A
 **Gbrain v0.40.6.0 benchmark snapshot**, in gbrain-evals `docs/benchmarks/`. Read 2026-09-08.
 The ablation table (full system 49.1% P@5, no graph 19.2%, grep + BM25 17.1%, vector only 10.8%). Source of our rule that the ripgrep row is always published.
 
+**Gbrain system-of-record contract**, `docs/architecture/system-of-record.md` in the Gbrain repo. Read 2026-09-10.
+Markdown is canonical, the database is a rebuildable index, and a CI gate fails any write that skips the markdown. Also the forget and supersede encoding: rows are struck through with a date, never deleted. Source of our "one door" rule and of never overwriting in place.
+
+**Gbrain memory verbs protocol**, `docs/protocol/MEMORY_VERBS_v1.md` in the Gbrain repo. Read 2026-09-10.
+`remember(fact, provenance, entity?, kind?)` with provenance required, returning `inserted | duplicate | superseded`, and `recall` as a zero-LLM verb. Our `remember` return shape and mandatory provenance come from here. Their dedup rides embeddings and degrades without them; ours starts from exact match.
+
+**Gbrain filing rules and ambient writeback**, `skills/_brain-filing-rules.md` and `docs/guides/ambient-writeback.md` in the Gbrain repo. Read 2026-09-10.
+File by primary subject, a notability gate ("when in doubt, don't create"), source precedence when claims conflict, and automatic capture as an opt-in prompt contract with a skip list rather than a new verb. Our Write section's placement rule and automatic-capture paragraph follow this.
+
+**Andrej Karpathy, "LLM Wiki" gist.** https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f. Read 2026-09-10.
+Immutable raw sources, an LLM-maintained wiki, a small `index.md`, an append-only `log.md`, and a lint pass for contradictions, stale claims, and orphans. Source of the agent-run lint we try before any background filer, and of the "file next to what you link to" placement habit.
+
+**Mem0, "Platform: Migrating to the New Memory Algorithm."** https://docs.mem0.ai/migration/platform-v2-to-v3. Read 2026-09-10.
+They removed the in-engine LLM diff (ADD/UPDATE/DELETE) and moved to append-only with links, resolving currency at retrieval. Evidence that write-time judgment inside the engine is the part the field is walking away from.
+
+**Zep / Graphiti bi-temporal model.** https://getzep-graphiti.mintlify.app/concepts/temporal-model. Read 2026-09-10.
+Four timestamps per fact (`valid_at`, `invalid_at`, `created_at`, `expired_at`); contradictions close the old fact's window instead of deleting it. Our `as_of` plus `status: superseded` is the note-level version of `valid_at` plus `invalid_at`.
+
+**Anthropic memory tool.** https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool. Read 2026-09-10.
+Six raw file commands under `/memories`, no schema. The zero-engine floor: it shows what an agent writing files directly gets, which is what our engine's validation is there to improve on.
+
 **Sentra**, "What is a company brain?" https://www.sentra.app/articles/what-is-a-company-brain. Read 2026-09-01.
 Five requirements for a brain: gather where work happens, preserve decisions and why, stay current, respect access boundaries, one memory for people and agents. "Stay current" is the requirement our `status` and `as_of` fields serve. Sentra's benchmark numbers are vendor-stated and we do not compare against them.
 
