@@ -121,7 +121,7 @@ not have it.
 | Path | File inside the brain |
 | Lines | Inclusive line range |
 | Status | `current` or `superseded` |
-| As of | Date the claim was true (`as_of` in frontmatter) |
+| As of | Date the claim was true (`as_of` in frontmatter, or the Log line's own date) |
 | Confidence | `high` / `medium` / `low` |
 | Contradicted? | Other current notes on the same fact, if any |
 
@@ -186,6 +186,112 @@ wikilink. Misfiling is cheap to fix and never a retrieval error. Ambiguous
 placement goes to the queue at medium confidence and the user picks. Unknown
 placement goes to `inbox/`, which is a deferred decision, not a mistake.
 
+### Note shape: State and Log
+
+Decided 2026-09-10. A note may carry a `## Log` section. Everything above it
+is State: the current picture, maintained by the agent, rewritten when the
+picture changes. The Log is an append-only ledger of dated facts, one per
+line, oldest first:
+
+```markdown
+## Log
+- 2026-09-01 | user | Dean approved the sabbatical request.
+- 2026-09-10 | agent:claude-code | Start date moved to January.
+```
+
+Each entry is `- YYYY-MM-DD | provenance | claim`. `check` rejects a Log
+line that does not parse. The Log is optional: a note without one is a
+single-fact note and nothing changes for it. Khaled's vault opts in one note
+at a time.
+
+Why two layers: `as_of` in frontmatter is one date, and an entity or project
+note accumulates facts with many dates. With a Log, frontmatter `as_of` is
+when the State was last true, and every Log line carries its own date. An
+evidence card whose claim line is a Log entry reports that line's date as
+`as_of`. Every system that has run a brain at scale (Gbrain's compiled truth
+over a timeline, Karpathy's wiki over `log.md`, Zep's facts with validity
+windows) converged on this split; see `docs/sources.md`.
+
+The engine writes only to the Log and to frontmatter. Rewriting State is
+judgment, so the agent does it in the editor, and `check` catches a State
+edit that breaks the schema.
+
+### Proposals
+
+A proposal is one JSON file under `.personal-memory/queue/`. JSON, not
+markdown, because a proposal is a validated payload, not a note: it must
+never be indexed by `recall`, and it needs fields with fixed meanings.
+Applied proposals move to `.personal-memory/applied/` so the queue folder is
+always exactly the open work. The id is the first twelve hex digits of the
+SHA-256 of the proposal's content, so submitting the same proposal twice is
+a no-op.
+
+Three kinds:
+
+| Kind | Writes | Requires |
+|---|---|---|
+| `create` | A new note: frontmatter, title, body | `path`, `id`, `type`, `as_of`, `confidence`, `title`; optional `body`, `aliases`, `source` |
+| `append` | One Log entry on an existing note | `target` (note id), `claim`, `as_of` |
+| `supersede` | A new note, and flips the old one to `superseded` | Everything `create` needs, plus `supersedes` (old note id) |
+
+Every kind requires `provenance`. Empty provenance is refused with the reason,
+the same way Gbrain's `remember` refuses it.
+
+Validation, in order, stops at the first failure and records it as the
+proposal's `blocked` reason:
+
+1. Path is inside the brain, ends in `.md`, and is not under `sources/`.
+2. Frontmatter fields pass the same parser `check` uses.
+3. `create` and `supersede`: no current note already has this `id`, this
+   normalized title, or this title among its `aliases`. If one does, the
+   result is `duplicate` and names that note as the target to `append` to.
+4. `append`: the target exists and is `current`. A Log entry with the same
+   normalized claim already present is `duplicate`.
+5. `supersede`: the old note exists and is `current`.
+
+Confidence is the proposer's claim, capped by the engine. High survives only
+with a boring signal: `provenance` starts with `user`, or `source` names a
+file that exists under `sources/`, or the kind is `append` or `supersede`
+(the target was found by exact id). Otherwise the engine records
+`confidence: medium` and the proposal waits for a person.
+
+`apply` with no arguments writes every valid proposal whose effective
+confidence is high. `apply <id>` writes one named proposal at any
+confidence: that is the person choosing. Apply for `supersede` writes the new
+note and edits the old note's frontmatter in the same call, because leaving
+the flip in the queue would create the exact state this spec calls a bug:
+two current notes on one fact.
+
+On `create` and `supersede` the engine stamps `provenance` into frontmatter
+and, when given, `source`. On `append` the Log line carries provenance.
+
+### `remember`
+
+`remember(claim, provenance, target?, path?, type?, as_of?)` saves one fact
+and returns immediately. It is `propose` then `apply` for that one proposal:
+
+- With `target`: an `append` proposal. The fact becomes a Log line on that
+  note.
+- Without `target`: a `create` proposal for a stub note (frontmatter, a title
+  from the claim, and a Log with the one fact). `path` and `type` are required
+  in that case; the agent knows the folder from `recall`.
+
+`remember` does not take a whole body. A whole page is a `create` proposal.
+One call, one fact, one shape.
+
+Result is one of `inserted`, `duplicate`, `superseded`, `queued`, `blocked`,
+with the paths touched and the reason when there is one. It also carries the
+zero-LLM counts from the section above: candidate notes sharing tokens with
+the claim, and the folders where notes of this `type` and the linked notes
+already live.
+
+### Filed marker and `unfiled`
+
+A `sources/` item counts as filed when some note names it: frontmatter
+`source: <path>` on a created note, or `source:<path>` as the provenance of
+a Log line. `unfiled` lists every file under `sources/` that no note names.
+No side file, no move, no edit under `sources/`.
+
 ### Automatic capture
 
 "Automatic" filing is a property of the prompt side, not the engine. The
@@ -230,6 +336,12 @@ Rules:
   *template*, not the only legal brain.
 - People are one file each. Other notes link to them instead of restating
   who they are.
+
+Optional fields the engine reads: `aliases` (other names for exact match),
+`supersedes` and `superseded_by` (the id on the other end of a supersession;
+`check` requires that note to exist), `provenance` (who proposed the note
+and when), `source` (the `sources/` file this note files). Wikilink brackets
+around an id are allowed in `supersedes` and `superseded_by`.
 
 The engine indexes markdown files that have this frontmatter. Files without
 it (README, agent protocol files) are skipped, not rejected.
@@ -421,11 +533,12 @@ FAILURE (any of these means v1 is not done):
 ## Open
 
 - Exact MCP tool names
-- Queue file format (markdown vs JSON under `.personal-memory/queue/`)
-- Note shape for entities and projects: single-fact notes, or a two-layer
-  note (a State section `remember` may rewrite, plus a dated append-only Log)
-  so one note can hold facts with different dates
-- Whether `remember` stub-creates a new note from one fact and later calls
-  append, or accepts an optional body for a whole page in one call
-- Whether `remember` edits the superseded note's frontmatter itself or queues
-  that edit as a proposal
+- Rejecting a queued proposal: today the person deletes the file; a `reject`
+  command with a reason may be worth the audit trail
+- Whether `check` should flag a `current` note whose State was last true
+  before its newest Log line (a staleness hint, not an error)
+
+Resolved 2026-09-10 (see Write): queue format is JSON under
+`.personal-memory/queue/`; notes may carry an optional State plus Log shape;
+`remember` saves one fact and stub-creates when there is no target; the
+`supersede` kind flips the old note in the same `apply` call.
