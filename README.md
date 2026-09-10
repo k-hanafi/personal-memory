@@ -12,17 +12,37 @@ code.
 
 ## Status
 
-2026-09-07: renamed from pith. Spec plus a schema checker. No MCP server yet.
-Filing loop is specified in `docs/v1-spec.md` (sources dump, agent proposes,
-the engine applies, human reviews low confidence).
+2026-09-10: `check`, `recall`, `get`, evals with a CI gate, and the write path
+(`propose`, `queue`, `apply`, `remember`, `unfiled`). No MCP server yet. The
+engine holds no model: the coding agent decides what to file, the engine
+validates and writes. See the Write section of `docs/v1-spec.md`.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
 personal-memory check examples/demo-brain
+personal-memory recall examples/demo-brain teaching load
 pytest
 ```
+
+## Writing to a brain
+
+```bash
+personal-memory remember ~/brain "Dean approved the sabbatical." --provenance "user, 2026-09-10" --target sabbatical-plan
+personal-memory propose ~/brain proposal.json
+personal-memory queue ~/brain
+personal-memory apply ~/brain
+personal-memory unfiled ~/brain
+```
+
+`remember` saves one fact as a dated line in the note's `## Log`, or stub-creates a
+note when you pass `--path` and `--type` instead of `--target`. `propose` queues a
+JSON proposal (`create`, `append`, or `supersede`) after validating it against the
+brain. `apply` writes every high-confidence proposal; `apply <id>` writes one you
+chose. High confidence needs a boring signal (the user said it, a real `sources/`
+file, or an exact-id target), otherwise the proposal waits in the queue for you.
+`unfiled` lists files under `sources/` that no note names yet.
 
 `python3 -m venv .venv` creates a project-local install folder so Personal Memory
 does not land in your system Python. `source .venv/bin/activate` makes that folder
@@ -64,4 +84,4 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 |---|---|
 | `docs/v1-spec.md` | Product plan. Wins over code until we change it. |
 | `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
-| `src/personal_memory/` | Engine (today: frontmatter check only) |
+| `src/personal_memory/` | Engine: check, recall, get, filing (proposals, apply, remember), unfiled, evals |
