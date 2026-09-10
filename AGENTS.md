@@ -39,7 +39,7 @@ Exists:
 - `docs/eval-corpus-plan.md`: persona, note inventory, planted problems, build order for `evals/brain/`
 - `docs/sources.md`: every outside source a design choice traces to
 - `examples/demo-brain/`: fake notes with the v1 frontmatter contract
-- `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`
+- `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`, and `evals/` (fixture loader, adapters, checks)
 - `tests/`: checker, recall, and get tests against the demo brain
 - `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
 
@@ -74,6 +74,7 @@ the test runner.
 | Evals, fixtures, baseline gate | `docs/evals-spec.md` |
 | Eval corpus contents and build order | `docs/eval-corpus-plan.md` |
 | Eval corpus notes | `evals/brain/`, `docs/eval-corpus-plan.md` |
+| Eval loader, adapters, checks | `src/personal_memory/evals/` |
 | Why a design choice was made, what we read | `docs/sources.md` |
 | Frontmatter / `personal-memory check` | `src/personal_memory/frontmatter.py`, `src/personal_memory/check.py` |
 | Recall / evidence cards | `src/personal_memory/recall.py` |
