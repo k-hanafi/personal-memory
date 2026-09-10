@@ -29,7 +29,7 @@ A **gold item** is a fixture whose expected answer a human has verified against 
 
 **hit@1** asks whether the first result was the right file. **recall@5** asks whether the right file appeared anywhere in the top five. Together they say "did the right thing show up, and was it on top."
 
-An **adapter** is a small function that makes some search system answer our fixtures in a common shape. Our own `recall` is one adapter. Ripgrep is another. Later, a vector search is a third. The fixtures do not know or care which adapter is running.
+An **adapter** is a small function that makes some search system answer our fixtures in a common shape. Our own `recall` is one adapter. A plain grep is another. Later, a vector search is a third. The fixtures do not know or care which adapter is running.
 
 A **baseline** is a JSON file committed to git that records how every fixture scored on `main`. The **gate** is the CI step that runs the fixtures on a pull request and compares against the baseline.
 
@@ -128,7 +128,7 @@ Each family is named for the ability it tests and for the source we took the ide
 
 **Citation:** the line range in the returned card must contain the line that carries the claim. Today `recall` returns a single line. When it starts returning ranges, `expect_line` still works: the line must fall inside the range. This is the family that protects "an answer cites a file but no line range" from ever shipping.
 
-**Baseline comparison:** a row in the results rather than a family of fixtures. Every family is also run through the ripgrep adapter. If our engine does not beat ripgrep on a family, the engine is not yet earning its keep on that family. Gbrain publishes exactly this row (their "grep + BM25" baseline sits at 17.1% precision against their full system's 49.1%), and it is the most useful single number for a reader deciding whether to trust a retrieval claim.
+**Baseline comparison:** a row in the results rather than a family of fixtures. Every family is also run through the grep adapter. If our engine does not beat grep on a family, the engine is not yet earning its keep on that family. Gbrain publishes exactly this row (their "grep + BM25" baseline sits at 17.1% precision against their full system's 49.1%), and it is the most useful single number for a reader deciding whether to trust a retrieval claim.
 
 ### Adapters
 
@@ -140,7 +140,7 @@ def search(corpus_root: Path, query: str, historical: bool) -> list[Hit]
 
 where a `Hit` carries `path`, `start_line`, `end_line`, `status`, `confidence`, and `contradicted_by`. That is a subset of the evidence card `recall` already returns, so the first adapter is a thin wrapper.
 
-The grep adapter is a plain text search written in Python, with no subprocess and no `rg`. It lowercases the query, splits it into alphanumeric tokens, counts every occurrence of every token in each file, ranks files by that count, reads frontmatter to fill in `status` and `confidence`, and returns the first matching line as the range. It ignores `historical` because grep does not know what `status` means. It does not shell out to ripgrep because a default machine does not have `rg`, and the eval run must work with no extra binaries. It is deliberately dumb. It exists to answer "what does a plain text search already get you," which is the question every user of a markdown brain should ask before installing anything.
+The grep adapter is a plain text search written in Python, with no subprocess and no `rg`. It lowercases the query, splits it into alphanumeric tokens, counts every occurrence of every token in each file, ranks files by that count, reads frontmatter to fill in `status` and `confidence`, and returns the first matching line as the range. It ignores `historical` because grep does not know what `status` means. It does not shell out to ripgrep because a default machine does not have `rg`, and the eval run must work with no extra binaries. It is deliberately dumb. It exists to answer "what does a plain text search already get you," which is the question every user of a markdown brain should ask before installing anything. Two consequences follow and both are the point, not bugs. Because it ignores `status`, grep loses the supersession family by design, and on a tie in match count it may rank a superseded note first. Because its line is the first token match over the whole file, that line is usually the `id:` frontmatter line, so grep loses the citation family by design.
 
 Adapters that need a network (embeddings, a reranker) may exist later. They are excluded from the CI gate because they are not hermetic, and their results are published as separate rows with the model name and date recorded.
 
@@ -177,7 +177,7 @@ There is no `--allow-regression` flag in CI. A pull request cannot approve its o
 The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline.
 
 ```
-family          recall      rg         vs main
+family          recall      grep       vs main
 named-thing     9/12        6/12       +1 / -0
 supersession    4/4         1/4        +0 / -0
 abstention      5/6         2/6        +0 / -1   <- FAIL: no-such-course
@@ -255,7 +255,7 @@ Every structural choice above is copied from somewhere. This table is the map.
 | Trivial-pass filter for supersession | MEME (arXiv 2605.12477) | Credit only if the old fact is findable and labeled, not merely absent | Cascade and multi-entity propagation, which need a graph we do not have |
 | Abstention as a scored ability | LongMemEval (arXiv 2410.10813) | Queries with no answer must return nothing | Their chat-session data format. Our substrate is markdown. |
 | Index, retrieve, read as separate stages | LongMemEval | Layer 1 tests retrieve; Layer 3 tests read | Their long-context baselines |
-| Ripgrep baseline row | Gbrain scorecard, Letta filesystem experiment | Always report what grep gets you | Nothing |
+| Grep baseline row | Gbrain scorecard, Letta filesystem experiment | Always report what a plain text search gets you | Nothing |
 | Adapter interface, engine is one system under test | gbrain-evals README | Common `search()` shape; anyone can plug in | Their TypeScript harness |
 | Paired +/- comparison | Gbrain scorecards | Per-case flips instead of two averages | Bootstrap confidence intervals, which only matter for stochastic runs |
 | Pre-registration | Gbrain SEARCH_MODE_METHODOLOGY.md | Predict the number in the PR, publish the miss | Their formal hypothesis numbering |
@@ -278,7 +278,7 @@ No model grades anything in Layers 1 or 2. Evidence cards are paths and line num
 All of these run from the repository root with the virtual environment active.
 
 ```bash
-# Run every family against the eval corpus with our engine and with ripgrep,
+# Run every family against the eval corpus with our engine and with the grep baseline,
 # and compare to the committed baseline. Exit 1 on any regression.
 personal-memory eval run
 
@@ -307,7 +307,7 @@ Any of these means the eval system is not doing its job:
 - Two runs of the same commit on the same corpus produce different receipts.
 - The eval corpus contains a real name, a real course, or any text from `~/vault`.
 - A superseded note passes a supersession case by being absent rather than by being found and labeled.
-- The ripgrep row is missing from a published scoreboard.
+- The grep row is missing from a published scoreboard.
 - A model is used to grade Layer 1 or Layer 2.
 - A retrieval change ships without a written prediction and a note on whether it held.
 - Vault fixtures or vault receipts appear in this repository.
@@ -317,7 +317,7 @@ Any of these means the eval system is not doing its job:
 Evals come before the features they will measure, so that each feature is built to pass a case that already exists.
 
 1. `evals/brain/` seeded from the demo brain, plus one planted contradiction pair and one aliased person. Grep guard for real names.
-2. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `rg`.
+2. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `grep` (pure Python).
 3. Runner that writes a receipt. Table output with the paired column.
 4. Fixture families in this order: supersession, abstention, named-thing, citation, contradiction. Ten to fifteen cases total to start.
 5. Commit the first baseline. Wire the CI gate.
