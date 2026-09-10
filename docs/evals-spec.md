@@ -156,7 +156,7 @@ A run produces one JSON receipt in `evals/runs/` (gitignored). The receipt recor
 - superseded leak count: cases where a superseded note outranked a current one without `--historical`
 - abstention accuracy: abstain cases that returned zero cards, over all abstain cases
 
-The receipt is the unit of evidence. Baselines are receipts with the timestamp stripped and the floats rounded to four places so that diffs are stable.
+The receipt is the unit of evidence. Baselines are receipts with the timestamp, the commit hash, and the per-case hit lists stripped, and the floats rounded to four places, so that a baseline diff shows pass/fail flips and nothing else.
 
 Rounding and key sorting are what make a baseline diff in a pull request readable by a human, and a readable diff is how a reviewer notices that a "small refactor" flipped three gold items.
 
