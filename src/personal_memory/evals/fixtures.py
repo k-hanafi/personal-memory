@@ -90,14 +90,25 @@ def _parse_case(raw: dict, file_where: str) -> Case:
 
     expect_path = _typed(raw, "expect_path", str, where)
     expect_line = _typed(raw, "expect_line", int, where)
+    expect_status = _typed(raw, "expect_status", str, where)
+    expect_confidence = _typed(raw, "expect_confidence", str, where)
     also_present = tuple(_parse_also_present(entry, where) for entry in _table_list(raw, "also_present", where))
     abstain = _typed(raw, "abstain", bool, where) or False
     contradiction = _str_list(raw, "contradiction", where)
 
     if expect_line is not None and expect_path is None:
         raise FixtureError(f"{where}: expect_line requires expect_path")
-    if abstain and (expect_path is not None or also_present or contradiction):
-        raise FixtureError(f"{where}: abstain cannot be combined with expect_path, also_present, or contradiction")
+    if abstain and (
+        expect_path is not None
+        or expect_status is not None
+        or expect_confidence is not None
+        or also_present
+        or contradiction
+    ):
+        raise FixtureError(
+            f"{where}: abstain cannot be combined with expect_path, expect_status, "
+            "expect_confidence, also_present, or contradiction"
+        )
     if len(contradiction) == 1:
         raise FixtureError(f"{where}: contradiction needs at least two paths")
 
@@ -107,8 +118,8 @@ def _parse_case(raw: dict, file_where: str) -> Case:
         historical=_typed(raw, "historical", bool, where) or False,
         expect_path=expect_path,
         expect_line=expect_line,
-        expect_status=_typed(raw, "expect_status", str, where),
-        expect_confidence=_typed(raw, "expect_confidence", str, where),
+        expect_status=expect_status,
+        expect_confidence=expect_confidence,
         forbid_paths=_str_list(raw, "forbid_paths", where),
         also_present=also_present,
         abstain=abstain,
