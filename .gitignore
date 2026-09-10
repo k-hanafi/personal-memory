@@ -15,4 +15,5 @@ build/
 .coverage
 htmlcov/
 .python-version
+evals/runs/
 .long-term-vision.md
