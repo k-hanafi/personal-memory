@@ -42,6 +42,7 @@ Exists:
 - `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`, and `evals/` (fixture loader, adapters, checks)
 - `tests/`: checker, recall, and get tests against the demo brain
 - `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
+- `.cursor/environment.json`: Cloud Agent install script (venv + `.[dev]`)
 
 Planned (do not invent extra layers before these):
 
@@ -66,6 +67,23 @@ personal-memory get examples/demo-brain alex-rivera
 uses it in this terminal. `python -m pip install -e ".[dev]"` installs the CLI and
 the test runner.
 
+## Cursor Cloud specific instructions
+
+Cloud agents run on an Ubuntu VM. They do not have this laptop, `/Users/k/vault`,
+User Rules, or `~/.cursor/skills`. After a Build, `.venv` already exists from
+`.cursor/environment.json`. Use those binaries:
+
+```bash
+.venv/bin/pytest
+.venv/bin/personal-memory check examples/demo-brain
+.venv/bin/personal-memory recall examples/demo-brain teaching load
+.venv/bin/personal-memory get examples/demo-brain alex-rivera
+```
+
+If `.venv` is missing, run the `install` command in `.cursor/environment.json`.
+Use `examples/demo-brain/` (and later `evals/brain/`) only. Never copy real vault
+notes into this repo. No product API keys are required.
+
 ## Where to work
 
 | Task | Start here |
@@ -81,8 +99,9 @@ the test runner.
 | Get by id or path | `src/personal_memory/get.py` |
 | Fake corpus | `examples/demo-brain/` |
 | Tests | `tests/` |
+| Cloud VM install | `.cursor/environment.json` |
 
 ## Maintaining this file
 
-Update this file when structure, architecture, or milestones change.
-See ~/.cursor/user-rules/agents-md-maintenance.md for the full checklist.
+Update this file in the same change when structure, architecture, commands,
+or milestones change. Keep the cloud section accurate if install steps move.
