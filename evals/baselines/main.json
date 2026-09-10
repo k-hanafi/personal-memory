@@ -361,9 +361,9 @@
               "pass": false
             },
             "generic-to-named-department-chair": {
-              "failure": "expect_path",
+              "failure": null,
               "holdout": false,
-              "pass": false
+              "pass": true
             },
             "multi-alias-pn": {
               "failure": null,
@@ -396,8 +396,8 @@
               "pass": true
             }
           },
-          "hit_at_1": 0.8182,
-          "passed": 10,
+          "hit_at_1": 0.9091,
+          "passed": 11,
           "recall_at_5": 0.9091,
           "total": 12
         },
