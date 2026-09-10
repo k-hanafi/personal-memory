@@ -45,9 +45,9 @@ PR 0 and PR 1 run in parallel. PR 3 and PR 4 can run in parallel once PR 2 is me
 | 0 | `eval-corpus` | `evals/brain/` (109 notes), `evals/deny-list.txt`, `tests/test_eval_brain_guard.py`, `docs/eval-corpus-plan.md`, spec and AGENTS pointers | none | merged |
 | 1 | `factory-setup` | `.github/workflows/test.yml` running pytest; this plan; `evals/runs/` in `.gitignore` | none | merged |
 | 2 | `eval-loader-adapters` | `src/personal_memory/evals/`: `Case` and fixture loader, `Hit`, check functions, `recall` adapter, grep adapter in pure Python; unit tests | 0, 1 | merged |
-| 3 | `eval-runner-cli` | runner, receipt writer, table report, `personal-memory eval run` with `--corpus --fixtures --adapter --family --out`; determinism test | 2 | in flight |
-| 4 | `eval-fixtures` | five TOML files (about 30 cases) from the corpus plan's planted problems; fixture validation test; `expect_confidence` added to spec | 2 (start), 3 (merge) | in flight |
-| 5 | `eval-baseline-gate` | fixtures hash, `--update-baseline`, `--allow-regression`, `eval compare`, gate modes, `justification`, `scripts/eval-gate.sh`, `eval-gate` CI job, first `evals/baselines/main.json`, README scoreboard, spec open items closed | 3, 4 | planned |
+| 3 | `eval-runner-cli` | runner, receipt writer, table report, `personal-memory eval run` with `--corpus --fixtures --adapter --family --out`; determinism test | 2 | merged |
+| 4 | `eval-fixtures` | five TOML files (about 30 cases) from the corpus plan's planted problems; fixture validation test; `expect_confidence` added to spec | 2 (start), 3 (merge) | merged |
+| 5 | `eval-baseline-gate` | fixtures hash, `--update-baseline`, `--allow-regression`, `eval compare`, gate modes, `justification`, `scripts/eval-gate.sh`, `eval-gate` CI job, first `evals/baselines/main.json`, README scoreboard, spec open items closed | 3, 4 | in flight |
 | 6 | `wikilink-hops` | first engine change made under the gate; pre-registered prediction in the PR body | 5 | planned |
 
 Update this table when a status changes. It is the only place the whole program is visible at once.

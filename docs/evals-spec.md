@@ -156,7 +156,7 @@ A run produces one JSON receipt in `evals/runs/` (gitignored). The receipt recor
 - superseded leak count: cases where a superseded note outranked a current one without `--historical`
 - abstention accuracy: abstain cases that returned zero cards, over all abstain cases
 
-The receipt is the unit of evidence. Baselines are receipts with the timestamp stripped and the floats rounded to four places so that diffs are stable.
+The receipt is the unit of evidence. Baselines are receipts with the timestamp, the commit hash, and the per-case hit lists stripped, and the floats rounded to four places, so that a baseline diff shows pass/fail flips and nothing else.
 
 Rounding and key sorting are what make a baseline diff in a pull request readable by a human, and a readable diff is how a reviewer notices that a "small refactor" flipped three gold items.
 
@@ -166,7 +166,9 @@ CI runs the fixtures on the pull request's HEAD and compares the receipt to `eva
 
 If the hash is unchanged, the pull request touched only engine code. Any gold item that passed on `main` and fails on HEAD fails the build. There is no tolerance band. Two runs of a hermetic suite produce identical numbers, so a flipped case is a behavior change, and the reviewer should know about it even if the aggregate went up.
 
-If the hash changed, the pull request touched fixtures or the corpus. The committed baseline must then byte-match a fresh run on HEAD, so the file cannot claim a number the code does not produce. Any case that regressed against `main`'s baseline needs a `justification` string in the committed baseline. That string shows up in the diff and a human judges it. The count of gold items may not fall under an unchanged corpus, which stops the quiet trick of deleting a hard fixture to make the suite pass.
+If the hash changed, the pull request touched fixtures or the corpus. The committed baseline must then byte-match a fresh run on HEAD, so the file cannot claim a number the code does not produce. Any case that regressed against `main`'s baseline needs a `justification` string in the committed baseline. That string shows up in the diff and a human judges it. It only counts when it differs from the one on `main`, so a justification carried forward by `--update-baseline` cannot waive a later change. The count of gold items may not fall under an unchanged corpus, which stops the quiet trick of deleting a hard fixture to make the suite pass.
+
+Only the `recall` adapter gates (`grep` is the baseline row, not the system under test), and the committed baseline must byte-match a fresh run whenever it differs from `main`'s, whatever the hash did.
 
 Holdout cases (`holdout = true`) are excluded from the gate and scored only in published runs. This keeps a slice of the fixtures that nobody has tuned against. The holdout is empty until the fixture set passes fifty cases; below that size a 15% slice is too small to mean anything.
 
@@ -279,7 +281,7 @@ All of these run from the repository root with the virtual environment active.
 
 ```bash
 # Run every family against the eval corpus with our engine and with the grep baseline,
-# and compare to the committed baseline. Exit 1 on any regression.
+# and show flips against the committed baseline. Always exits 0.
 personal-memory eval run
 
 # Same, but only one family and one adapter.
@@ -291,6 +293,11 @@ personal-memory eval run --update-baseline
 
 # Compare two receipts case by case. Prints +/- flips.
 personal-memory eval compare evals/runs/a.json evals/runs/b.json
+
+# Run the suite and exit 1 if a gold recall case regressed against the given
+# baseline. The script fetches origin/main's baseline and passes it in; CI runs it.
+personal-memory eval gate --main-baseline <path>
+bash scripts/eval-gate.sh
 
 # Private replay against the vault. Never commits anything.
 personal-memory eval run --corpus ~/vault --fixtures ~/vault/90-meta/evals/vault-fixtures.toml
@@ -329,6 +336,7 @@ Evals come before the features they will measure, so that each feature is built 
 
 ## Open
 
-- Whether the receipt should include the full ranked list per case (larger files, better debugging) or only the fields the checks used.
+- Decided: receipts keep the top five hits per case; baselines drop them along with `commit` and `timestamp`, so a baseline diff shows pass/fail flips and nothing else.
+- The contradiction family has no negative assertion. There is no way to say `contradicted_by` must be empty, so a fix that stops marking unrelated current notes as contradictions cannot be measured. A `no_contradiction` field is the likely fix.
 - How to express `expect_line` once cards return multi-line ranges and a claim spans a paragraph. A range-overlap rule is the likely answer.
 - Whether Layer 3 should record the agent's full transcript for later error analysis, and where that transcript is stored given that it may contain model output about the fictional corpus only.

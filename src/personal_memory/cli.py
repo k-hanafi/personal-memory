@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime
+import json
 import sys
 from pathlib import Path
 
 from personal_memory.check import check_brain
 from personal_memory.evals.adapters import ADAPTERS
+from personal_memory.evals.baseline import BASELINE_PATH, compare, gate, to_baseline
 from personal_memory.evals.receipt import write_receipt
 from personal_memory.evals.report import render
 from personal_memory.evals.runner import run
@@ -102,6 +104,38 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Where to write the receipt (default evals/runs/<UTC timestamp>.json)",
     )
+    eval_run_parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=Path(BASELINE_PATH),
+        help=f"Baseline the vs main column compares against, if the file exists (default {BASELINE_PATH})",
+    )
+    eval_run_parser.add_argument(
+        "--update-baseline",
+        action="store_true",
+        help="Rewrite the baseline file from this run, keeping any existing justification",
+    )
+    eval_run_parser.add_argument(
+        "--allow-regression",
+        metavar="REASON",
+        help="Record a reason in the receipt for a regression you accept locally",
+    )
+    eval_compare_parser = eval_sub.add_parser(
+        "compare",
+        help="Print which cases flipped between two receipts or baselines",
+    )
+    eval_compare_parser.add_argument("main", type=Path, help="Receipt or baseline to compare from")
+    eval_compare_parser.add_argument("head", type=Path, help="Receipt or baseline to compare to")
+    eval_gate_parser = eval_sub.add_parser(
+        "gate",
+        help="Run the suite and exit 1 if a gold recall case regressed against the main baseline",
+    )
+    eval_gate_parser.add_argument(
+        "--main-baseline",
+        type=Path,
+        required=True,
+        help="Baseline as committed on main. A missing file means main has none yet.",
+    )
 
     args = parser.parse_args(argv)
     if args.command == "check":
@@ -110,14 +144,23 @@ def main(argv: list[str] | None = None) -> int:
         return _run_recall(args.brain, " ".join(args.query), historical=args.historical)
     if args.command == "get":
         return _run_get(args.brain, args.key)
-    if args.command == "eval":
+    if args.command == "eval" and args.eval_command == "run":
+        if args.update_baseline and args.allow_regression is not None:
+            parser.error("--update-baseline and --allow-regression cannot be combined")
         return _run_eval(
             args.corpus,
             args.fixtures,
             adapters=args.adapter or list(ADAPTERS),
             families=args.family,
             out=args.out,
+            baseline=args.baseline,
+            update_baseline=args.update_baseline,
+            allow_regression=args.allow_regression,
         )
+    if args.command == "eval" and args.eval_command == "compare":
+        return _run_eval_compare(args.main, args.head)
+    if args.command == "eval" and args.eval_command == "gate":
+        return _run_eval_gate(args.main_baseline)
     parser.error(f"unknown command {args.command}")
     return 2
 
@@ -179,9 +222,13 @@ def _run_eval(
     adapters: list[str],
     families: list[str] | None,
     out: Path | None,
+    baseline: Path,
+    update_baseline: bool,
+    allow_regression: str | None,
 ) -> int:
     corpus = corpus.expanduser()
     fixtures = fixtures.expanduser()
+    baseline = baseline.expanduser()
     if out is not None:
         out = out.expanduser()
     if not corpus.is_dir():
@@ -195,13 +242,68 @@ def _run_eval(
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 2
+    if allow_regression is not None:
+        receipt["allow_regression"] = allow_regression
     if out is None:
         stamp = datetime.fromisoformat(receipt["timestamp"]).strftime("%Y%m%dT%H%M%SZ")
         out = Path("evals/runs") / f"{stamp}.json"
     write_receipt(receipt, out)
-    print(render(receipt))
+    existing = _load_json(baseline)
+    print(render(receipt, existing))
     print(out)
+    if update_baseline:
+        new_baseline = to_baseline(receipt)
+        if existing is not None and "justification" in existing:
+            new_baseline["justification"] = existing["justification"]
+        write_receipt(new_baseline, baseline)
+        print(baseline)
     return 0
+
+
+def _run_eval_compare(main_path: Path, head_path: Path) -> int:
+    main = _load_json(main_path.expanduser())
+    head = _load_json(head_path.expanduser())
+    if main is None or head is None:
+        print(f"file not found: {main_path if main is None else head_path}", file=sys.stderr)
+        return 2
+    comparison = compare(main, head)
+    for adapter in sorted(head["adapters"]):
+        if adapter not in main["adapters"]:
+            continue
+        print(adapter)
+        for family in head["adapters"][adapter]["families"]:
+            improved = comparison.improved.get(adapter, {}).get(family, [])
+            regressed = comparison.regressed.get(adapter, {}).get(family, [])
+            print(f"  {family}  +{len(improved)} / -{len(regressed)}")
+            for case_id in improved:
+                print(f"    + {case_id}")
+            for case_id in regressed:
+                print(f"    - {case_id}")
+    if comparison.hash_changed:
+        print("fixtures hash changed")
+    return 0
+
+
+def _run_eval_gate(main_baseline_path: Path) -> int:
+    try:
+        fresh = run(Path("evals/brain"), Path("evals/fixtures"), list(ADAPTERS))
+    except (OSError, ValueError) as exc:
+        print(f"run eval gate from the repository root: {exc}", file=sys.stderr)
+        return 2
+    main_baseline = _load_json(main_baseline_path.expanduser())
+    head_baseline = _load_json(Path(BASELINE_PATH))
+    print(render(fresh, main_baseline))
+    result = gate(fresh, main_baseline, head_baseline)
+    for message in result.messages:
+        print(message)
+    print("gate: ok" if result.ok else "gate: FAIL")
+    return 0 if result.ok else 1
+
+
+def _load_json(path: Path) -> dict | None:
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
