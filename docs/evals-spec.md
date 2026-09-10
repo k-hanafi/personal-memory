@@ -168,6 +168,8 @@ If the hash is unchanged, the pull request touched only engine code. Any gold it
 
 If the hash changed, the pull request touched fixtures or the corpus. The committed baseline must then byte-match a fresh run on HEAD, so the file cannot claim a number the code does not produce. Any case that regressed against `main`'s baseline needs a `justification` string in the committed baseline. That string shows up in the diff and a human judges it. The count of gold items may not fall under an unchanged corpus, which stops the quiet trick of deleting a hard fixture to make the suite pass.
 
+Only the `recall` adapter gates (`grep` is the baseline row, not the system under test), and the committed baseline must byte-match a fresh run whenever it differs from `main`'s, whatever the hash did.
+
 Holdout cases (`holdout = true`) are excluded from the gate and scored only in published runs. This keeps a slice of the fixtures that nobody has tuned against. The holdout is empty until the fixture set passes fifty cases; below that size a 15% slice is too small to mean anything.
 
 There is no `--allow-regression` flag in CI. A pull request cannot approve its own regression. Locally, `personal-memory eval run --allow-regression "reason"` exists for exploratory work and records the reason in the receipt.
@@ -279,7 +281,7 @@ All of these run from the repository root with the virtual environment active.
 
 ```bash
 # Run every family against the eval corpus with our engine and with the grep baseline,
-# and compare to the committed baseline. Exit 1 on any regression.
+# and show flips against the committed baseline. Always exits 0.
 personal-memory eval run
 
 # Same, but only one family and one adapter.
@@ -291,6 +293,11 @@ personal-memory eval run --update-baseline
 
 # Compare two receipts case by case. Prints +/- flips.
 personal-memory eval compare evals/runs/a.json evals/runs/b.json
+
+# Run the suite and exit 1 if a gold recall case regressed against the given
+# baseline. The script fetches origin/main's baseline and passes it in; CI runs it.
+personal-memory eval gate --main-baseline <path>
+bash scripts/eval-gate.sh
 
 # Private replay against the vault. Never commits anything.
 personal-memory eval run --corpus ~/vault --fixtures ~/vault/90-meta/evals/vault-fixtures.toml
@@ -329,6 +336,7 @@ Evals come before the features they will measure, so that each feature is built 
 
 ## Open
 
-- Whether the receipt should include the full ranked list per case (larger files, better debugging) or only the fields the checks used.
+- Decided: receipts keep the top five hits per case; baselines drop them along with `commit` and `timestamp`, so a baseline diff shows pass/fail flips and nothing else.
+- The contradiction family has no negative assertion. There is no way to say `contradicted_by` must be empty, so a fix that stops marking unrelated current notes as contradictions cannot be measured. A `no_contradiction` field is the likely fix.
 - How to express `expect_line` once cards return multi-line ranges and a claim spans a paragraph. A range-overlap rule is the likely answer.
 - Whether Layer 3 should record the agent's full transcript for later error analysis, and where that transcript is stored given that it may contain model output about the fictional corpus only.

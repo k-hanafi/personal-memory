@@ -29,6 +29,35 @@ does not land in your system Python. `source .venv/bin/activate` makes that fold
 the active Python for this terminal. `python -m pip install -e ".[dev]"` installs
 the CLI plus test tools. The `-e` means edits to `src/` show up without reinstalling.
 
+## Evals
+
+Retrieval is measured by fixed questions against a fictional corpus. `recall` is our
+engine. `grep` is a plain text search run on the same questions, so a reader can see
+what searching the folder already gets you before installing anything.
+
+| family | recall | grep |
+|---|---|---|
+| abstention | 2/6 | 1/6 |
+| citation | 4/6 | 0/6 |
+| contradiction | 4/4 | 2/4 |
+| named-thing | 10/12 | 2/12 |
+| supersession | 7/8 | 2/8 |
+
+These numbers are for the fictional corpus in `evals/brain/` and match the committed
+baseline in `evals/baselines/main.json`. Cases that fail today are capability targets,
+not bugs in the fixtures. How scoring and the CI gate work is in
+[docs/evals-spec.md](docs/evals-spec.md).
+
+```bash
+personal-memory eval run
+personal-memory eval run --update-baseline
+bash scripts/eval-gate.sh
+```
+
+`eval run` prints the table and writes a receipt to `evals/runs/`. `--update-baseline`
+rewrites `evals/baselines/main.json` from that run. `scripts/eval-gate.sh` compares a
+fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` case broke.
+
 ## Layout
 
 | Path | What it is |

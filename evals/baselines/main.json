@@ -1,0 +1,459 @@
+{
+  "adapters": {
+    "grep": {
+      "abstention_accuracy": 0.1667,
+      "families": {
+        "abstention": {
+          "cases": {
+            "dissertation-defense-date": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "evening-elective-enrollment-number": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "parking-permit-not-in-brain": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "sabbatical-start-date": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "sponsor-contact-name": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "thesis-defense-date": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": null,
+          "passed": 1,
+          "recall_at_5": null,
+          "total": 6
+        },
+        "citation": {
+          "cases": {
+            "crlf-note-title-line": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "final-exam-weight-buried-line": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "grant-deadline-line": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "office-hours-schedule-line": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "open-textbook-rationale-line": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "teaching-load-claim-line": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": 0.5,
+          "passed": 0,
+          "recall_at_5": 1.0,
+          "total": 6
+        },
+        "contradiction": {
+          "cases": {
+            "marcus-both-present-not-a-contradiction": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "northbridge-review-three-notes-agree": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "research-budget-both-surface": {
+              "failure": "contradiction",
+              "holdout": false,
+              "pass": false
+            },
+            "research-budget-second-phrasing": {
+              "failure": "contradiction",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": null,
+          "passed": 2,
+          "recall_at_5": null,
+          "total": 4
+        },
+        "named-thing": {
+          "cases": {
+            "alias-sam": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "exact-id-assessment-policy": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "exact-title-curve-and-grading-policy": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "filed-note-beats-source-dump": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "generic-to-named-case-competition-co-organizer": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "generic-to-named-department-chair": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "multi-alias-pn": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "near-duplicate-marcus-bell": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "state-note-beats-daily-mentions": {
+              "failure": "forbid_paths",
+              "holdout": false,
+              "pass": false
+            },
+            "substring-trap-teaching-load": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "title-substring-okonkwo-both-present": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "title-substring-whitfield": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": 0.4545,
+          "passed": 2,
+          "recall_at_5": 0.8182,
+          "total": 12
+        },
+        "supersession": {
+          "cases": {
+            "case-competition-current-edition-wins": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "case-competition-history-shows-last-year": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "office-hours-current-wins": {
+              "failure": "forbid_paths",
+              "holdout": false,
+              "pass": false
+            },
+            "office-hours-history-labels-old-schedules": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "summer-teaching-current-wins": {
+              "failure": "forbid_paths",
+              "holdout": false,
+              "pass": false
+            },
+            "summer-teaching-history-labels-declined": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "teaching-load-current-wins": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "teaching-load-history-labels-old-notes": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": 0.5,
+          "passed": 2,
+          "recall_at_5": 1.0,
+          "total": 8
+        }
+      },
+      "superseded_leaks": 24
+    },
+    "recall": {
+      "abstention_accuracy": 0.3333,
+      "families": {
+        "abstention": {
+          "cases": {
+            "dissertation-defense-date": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "evening-elective-enrollment-number": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "parking-permit-not-in-brain": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "sabbatical-start-date": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "sponsor-contact-name": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            },
+            "thesis-defense-date": {
+              "failure": "abstain",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": null,
+          "passed": 2,
+          "recall_at_5": null,
+          "total": 6
+        },
+        "citation": {
+          "cases": {
+            "crlf-note-title-line": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "final-exam-weight-buried-line": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "grant-deadline-line": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "office-hours-schedule-line": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            },
+            "open-textbook-rationale-line": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "teaching-load-claim-line": {
+              "failure": "expect_line",
+              "holdout": false,
+              "pass": false
+            }
+          },
+          "hit_at_1": 1.0,
+          "passed": 4,
+          "recall_at_5": 1.0,
+          "total": 6
+        },
+        "contradiction": {
+          "cases": {
+            "marcus-both-present-not-a-contradiction": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "northbridge-review-three-notes-agree": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "research-budget-both-surface": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "research-budget-second-phrasing": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            }
+          },
+          "hit_at_1": null,
+          "passed": 4,
+          "recall_at_5": null,
+          "total": 4
+        },
+        "named-thing": {
+          "cases": {
+            "alias-sam": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "exact-id-assessment-policy": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "exact-title-curve-and-grading-policy": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "filed-note-beats-source-dump": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "generic-to-named-case-competition-co-organizer": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "generic-to-named-department-chair": {
+              "failure": "expect_path",
+              "holdout": false,
+              "pass": false
+            },
+            "multi-alias-pn": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "near-duplicate-marcus-bell": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "state-note-beats-daily-mentions": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "substring-trap-teaching-load": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "title-substring-okonkwo-both-present": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "title-substring-whitfield": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            }
+          },
+          "hit_at_1": 0.8182,
+          "passed": 10,
+          "recall_at_5": 0.9091,
+          "total": 12
+        },
+        "supersession": {
+          "cases": {
+            "case-competition-current-edition-wins": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "case-competition-history-shows-last-year": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "office-hours-current-wins": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "office-hours-history-labels-old-schedules": {
+              "failure": "also_present",
+              "holdout": false,
+              "pass": false
+            },
+            "summer-teaching-current-wins": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "summer-teaching-history-labels-declined": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "teaching-load-current-wins": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            },
+            "teaching-load-history-labels-old-notes": {
+              "failure": null,
+              "holdout": false,
+              "pass": true
+            }
+          },
+          "hit_at_1": 1.0,
+          "passed": 7,
+          "recall_at_5": 1.0,
+          "total": 8
+        }
+      },
+      "superseded_leaks": 0
+    }
+  },
+  "corpus": "evals/brain",
+  "fixtures": "evals/fixtures",
+  "fixtures_hash": "7d849e2c5aae4dc5b986c298b8d3ba3e31e161b56d9e6cbc15f8f86a936fd76a"
+}

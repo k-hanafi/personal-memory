@@ -43,6 +43,7 @@ Exists:
 - `tests/`: checker, recall, and get tests against the demo brain
 - `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
 - `evals/fixtures/`: TOML fixture files, one per family (supersession, abstention, named-thing, contradiction, citation)
+- `evals/baselines/main.json`: committed scores on `main`; `scripts/eval-gate.sh`: the CI regression gate
 - `.cursor/environment.json`: Cloud Agent install script (venv + `.[dev]`)
 
 Planned (do not invent extra layers before these):
