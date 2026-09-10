@@ -34,7 +34,7 @@ def recall_adapter(corpus_root: Path, query: str, historical: bool) -> list[Hit]
             end_line=card.end_line,
             status=card.status,
             confidence=card.confidence,
-            contradicted_by=tuple(card.contradicted_by),
+            contradicted_by=tuple(Path(p).as_posix() for p in card.contradicted_by),
         )
         for card in result.cards
     ]
