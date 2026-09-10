@@ -182,6 +182,8 @@ def _run_eval(
 ) -> int:
     corpus = corpus.expanduser()
     fixtures = fixtures.expanduser()
+    if out is not None:
+        out = out.expanduser()
     if not corpus.is_dir():
         print(f"not a directory: {corpus}", file=sys.stderr)
         return 2
