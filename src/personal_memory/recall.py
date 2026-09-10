@@ -6,6 +6,7 @@ import re
 
 from personal_memory.check import SKIP_NAMES
 from personal_memory.frontmatter import Frontmatter, FrontmatterError, parse_frontmatter, split_frontmatter
+from personal_memory.notelog import LOG_ENTRY_RE
 
 STOPWORDS = frozenset(
     {
@@ -115,6 +116,7 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
             contradicted = tuple(p for p in current_paths if p != str(note.relative))
         else:
             contradicted = ()
+        claim, as_of = _log_line(note, start, claim)
         cards.append(
             EvidenceCard(
                 claim=claim,
@@ -122,7 +124,7 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
                 start_line=start,
                 end_line=end,
                 status=note.meta.status,
-                as_of=note.meta.as_of,
+                as_of=as_of,
                 confidence=note.meta.confidence,
                 contradicted_by=contradicted,
             )
@@ -255,6 +257,16 @@ def _claim_span(note: _LoadedNote, tokens: list[str], *, exact: bool) -> tuple[s
         return note.title, title_hit, title_hit
     claim = best[2].lstrip("#").strip() or note.title
     return claim, best[1], best[1]
+
+
+def _log_line(note: _LoadedNote, line_number: int, claim: str) -> tuple[str, str]:
+    """A claim line that is a Log entry carries its own date; use it as as_of."""
+    lines = note.text.splitlines()
+    if 1 <= line_number <= len(lines):
+        match = LOG_ENTRY_RE.match(lines[line_number - 1])
+        if match is not None:
+            return match.group(3), match.group(1)
+    return claim, note.meta.as_of
 
 
 def _find_title_line(lines: list[tuple[int, str]], title: str) -> int:
