@@ -41,11 +41,12 @@ STOPWORDS = frozenset(
         "with",
     }
 )
-WIKILINK_RE = re.compile(r"\[\[[^\]|]+(?:\|([^\]]+))?\]\]")
+WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 TITLE_SCORE = 8
 ID_SCORE = 10
 BODY_SCORE = 1
+HOP_SCORE = 1
 
 
 @dataclass(frozen=True)
@@ -74,16 +75,20 @@ class _LoadedNote:
     title: str
 
 
+_Hit = tuple[int, bool, _LoadedNote, str, int, int]
+
+
 def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
     """Return evidence cards for notes that match query.
 
     Default is current notes only. historical=True includes superseded notes.
-    Wikilink targets are not searched (hops are a later slice).
+    Wikilinks on a hit's claim line are followed one hop to the target note.
     """
     tokens = _tokens(query)
-    hits: list[tuple[int, bool, _LoadedNote, str, int, int]] = []
+    notes = _iter_notes(root)
+    hits: list[_Hit] = []
 
-    for note in _iter_notes(root):
+    for note in notes:
         if not historical and note.meta.status != "current":
             continue
         exact = _exact_match(note, query)
@@ -96,6 +101,8 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
 
     if any(exact for _rank, exact, _note, _claim, _start, _end in hits):
         hits = [hit for hit in hits if hit[1]]
+
+    hits = _hop(hits, notes, tokens, historical=historical)
 
     hits.sort(key=lambda item: (-item[0], 0 if item[2].meta.status == "current" else 1, str(item[2].relative)))
 
@@ -187,7 +194,7 @@ def _exact_match(note: _LoadedNote, query: str) -> bool:
 def _keyword_score(note: _LoadedNote, tokens: list[str]) -> int:
     if not tokens:
         return 0
-    body = WIKILINK_RE.sub(lambda match: match.group(1) or "", _body_of(note.text)).lower()
+    body = WIKILINK_RE.sub(lambda match: match.group(2) or "", _body_of(note.text)).lower()
     score = 0
     for token in tokens:
         if token in note.meta.id:
@@ -199,6 +206,25 @@ def _keyword_score(note: _LoadedNote, tokens: list[str]) -> int:
         else:
             return 0
     return score
+
+
+def _hop(hits: list[_Hit], notes: list[_LoadedNote], tokens: list[str], *, historical: bool) -> list[_Hit]:
+    by_id = {note.meta.id: note for note in notes}
+    index_of = {hit[2].meta.id: index for index, hit in enumerate(hits)}
+    result = list(hits)
+    for rank, _exact, _note, claim, _start, _end in hits:
+        for match in WIKILINK_RE.finditer(claim):
+            target = by_id.get(match.group(1).strip())
+            if target is None or (not historical and target.meta.status != "current"):
+                continue
+            hop_rank = rank + HOP_SCORE
+            index = index_of.get(target.meta.id)
+            if index is None:
+                index_of[target.meta.id] = len(result)
+                result.append((hop_rank, False, target, *_claim_span(target, tokens, exact=False)))
+            elif result[index][0] < hop_rank:
+                result[index] = (hop_rank, *result[index][1:])
+    return result
 
 
 def _body_of(text: str) -> str:
@@ -219,7 +245,7 @@ def _claim_span(note: _LoadedNote, tokens: list[str], *, exact: bool) -> tuple[s
     for number, line in lines:
         if number < body_start:
             continue
-        visible = WIKILINK_RE.sub(lambda match: match.group(1) or "", line)
+        visible = WIKILINK_RE.sub(lambda match: match.group(2) or "", line)
         hits = sum(1 for token in tokens if token in visible.lower())
         if hits == 0:
             continue

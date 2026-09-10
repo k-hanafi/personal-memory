@@ -16,8 +16,9 @@ in the same change or stop and say so.
 `recall` returns evidence cards (keyword + exact id/title, current-only
 unless `--historical`). `get` fetches one note by id or path with
 frontmatter intact. Eval corpus is 109 notes with an 85-row observed
-table; fixtures and the runner still to come. No wikilink hops, no MCP, no filing
-queue yet. Personal Memory does not call an LLM API in v1.
+table; fixtures and the runner still to come. `recall` follows one wikilink hop
+from the claim line. No MCP, no filing queue yet. Personal Memory does not call
+an LLM API in v1.
 
 Do not put Khaled's real vault notes in this repo.
 
