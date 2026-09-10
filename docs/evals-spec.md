@@ -337,6 +337,7 @@ Evals come before the features they will measure, so that each feature is built 
 ## Open
 
 - Decided: receipts keep the top five hits per case; baselines drop them along with `commit` and `timestamp`, so a baseline diff shows pass/fail flips and nothing else.
+- Decided 2026-09-10: the write path (`propose`, `apply`, `remember`) is not a fixture family. Its rules are deterministic (refuse a duplicate title, flip `status` on supersede, cap confidence without a boring signal), so they are unit tests in `tests/test_filing.py`, not gated retrieval cases. Whether the agent files the right thing is a Layer 3 question.
 - The contradiction family has no negative assertion. There is no way to say `contradicted_by` must be empty, so a fix that stops marking unrelated current notes as contradictions cannot be measured. A `no_contradiction` field is the likely fix.
 - How to express `expect_line` once cards return multi-line ranges and a claim spans a paragraph. A range-overlap rule is the likely answer.
 - Whether Layer 3 should record the agent's full transcript for later error analysis, and where that transcript is stored given that it may contain model output about the fictional corpus only.
