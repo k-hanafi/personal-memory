@@ -12,13 +12,14 @@ not be required to install or to answer correctly.
 Canonical plan: `docs/v1-spec.md`. If implementation drifts, update the spec
 in the same change or stop and say so.
 
-**Status (2026-09-09):** spec locked. `check` validates frontmatter.
-`recall` returns evidence cards (keyword + exact id/title, current-only
-unless `--historical`). `get` fetches one note by id or path with
-frontmatter intact. Eval corpus is 109 notes with an 85-row observed
-table; fixtures and the runner still to come. `recall` follows one wikilink hop
-from the claim line. No MCP, no filing queue yet. Personal Memory does not call
-an LLM API in v1.
+**Status (2026-09-10):** spec locked. `check` validates frontmatter.
+`recall` returns evidence cards (keyword + exact id/title, one wikilink hop
+from the claim line, current-only unless `--historical`). `get` fetches one
+note by id or path with frontmatter intact. Layer 1 evals are complete: 109-note
+corpus, 36 fixture cases in five families, `personal-memory eval run`, a
+committed baseline, and an `eval-gate` CI job that fails on any gold regression
+(recall 28/36, grep 7/36). No MCP, no filing queue yet. Personal Memory does not
+call an LLM API in v1.
 
 Do not put Khaled's real vault notes in this repo.
 
@@ -49,7 +50,7 @@ Exists:
 
 Planned (do not invent extra layers before these):
 
-- `evals/`: TOML fixtures, committed baseline, `personal-memory eval` (spec: `docs/evals-spec.md`)
+- Layer 2 vault replay and Layer 3 agent-in-the-loop evals (spec: `docs/evals-spec.md`)
 - MCP stdio server
 - Unfiled scan, proposal queue, apply (human review for low confidence)
 - Optional vector recall arm (fail-open)
