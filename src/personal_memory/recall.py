@@ -43,7 +43,7 @@ STOPWORDS = frozenset(
 )
 WIKILINK_RE = re.compile(r"\[\[[^\]|]+(?:\|([^\]]+))?\]\]")
 TOKEN_RE = re.compile(r"[a-z0-9]+")
-TITLE_SCORE = 8
+TITLE_SCORE = 0
 ID_SCORE = 10
 BODY_SCORE = 1
 
