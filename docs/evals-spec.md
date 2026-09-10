@@ -166,7 +166,7 @@ CI runs the fixtures on the pull request's HEAD and compares the receipt to `eva
 
 If the hash is unchanged, the pull request touched only engine code. Any gold item that passed on `main` and fails on HEAD fails the build. There is no tolerance band. Two runs of a hermetic suite produce identical numbers, so a flipped case is a behavior change, and the reviewer should know about it even if the aggregate went up.
 
-If the hash changed, the pull request touched fixtures or the corpus. The committed baseline must then byte-match a fresh run on HEAD, so the file cannot claim a number the code does not produce. Any case that regressed against `main`'s baseline needs a `justification` string in the committed baseline. That string shows up in the diff and a human judges it. The count of gold items may not fall under an unchanged corpus, which stops the quiet trick of deleting a hard fixture to make the suite pass.
+If the hash changed, the pull request touched fixtures or the corpus. The committed baseline must then byte-match a fresh run on HEAD, so the file cannot claim a number the code does not produce. Any case that regressed against `main`'s baseline needs a `justification` string in the committed baseline. That string shows up in the diff and a human judges it. It only counts when it differs from the one on `main`, so a justification carried forward by `--update-baseline` cannot waive a later change. The count of gold items may not fall under an unchanged corpus, which stops the quiet trick of deleting a hard fixture to make the suite pass.
 
 Only the `recall` adapter gates (`grep` is the baseline row, not the system under test), and the committed baseline must byte-match a fresh run whenever it differs from `main`'s, whatever the hash did.
 
