@@ -1,0 +1,68 @@
+family = "citation"
+description = "The line range on the top card must contain the line that carries the claim. A heading is not a claim. An answer that cites a file but points at the wrong line fails."
+
+# Problem 11: a fact buried past line 60 of a long note.
+
+[[case]]
+id = "final-exam-weight-buried-line"
+query = "final exam weight"
+expect_path = "30-projects/econometrics-fall-2026.md"
+expect_line = 64
+expect_status = "current"
+holdout = false
+note = "Line 64 reads The final exam weight is 40 percent. A supersedes line added in phase 2 moved it from 63, so this number guards against silent drift."
+
+# Problem 1 as a citation: the claim is the sentence, not the heading.
+
+[[case]]
+id = "teaching-load-claim-line"
+query = "teaching load"
+expect_path = "40-areas/teaching-load-2026-09.md"
+expect_line = 12
+expect_status = "current"
+holdout = false
+note = "Line 12 reads Two courses: intro micro and econometrics. Line 10 is the heading Teaching load (fall). The heading names the note; line 12 answers the question."
+
+# Problem 16 as a citation: the schedule line, not the title.
+
+[[case]]
+id = "office-hours-schedule-line"
+query = "office hours"
+expect_path = "40-areas/office-hours.md"
+expect_line = 12
+expect_status = "current"
+holdout = false
+note = "Line 12 reads Tuesdays and Thursdays 2 to 4. The exact title match on line 10 is how the note is found, but the schedule is the claim."
+
+# Problem 28: a date line in a short project note, against a source dump with the same date.
+
+[[case]]
+id = "grant-deadline-line"
+query = "grant application deadline"
+expect_path = "30-projects/grant-application.md"
+expect_line = 14
+expect_status = "current"
+holdout = false
+note = "Line 14 reads The grant application deadline is 2026-10-01. The PDF dump grant-call-pdf-text carries the same date at confidence low and may appear below."
+
+# Problem 71: a note saved with CRLF line endings.
+
+[[case]]
+id = "crlf-note-title-line"
+query = "hiring frictions survey"
+expect_path = "80-reading/reading-hiring-frictions-survey.md"
+expect_line = 9
+expect_status = "current"
+holdout = false
+note = "The file uses CRLF endings. Line counting must not drift, and the claim text must not carry a stray carriage return. Line 9 is the title Notes on a hiring frictions survey, which names the reading."
+
+# Problem 73: a claim that spans three lines.
+
+[[case]]
+id = "open-textbook-rationale-line"
+query = "open textbook rationale intro micro"
+expect_path = "60-decisions/adopt-open-textbook-intro-micro.md"
+expect_line = 13
+expect_status = "current"
+holdout = false
+note = "The rationale runs from line 13 to 15. Line 13 carries the most query words and is the anchor. When cards return ranges, any range covering 13 to 15 still passes."
