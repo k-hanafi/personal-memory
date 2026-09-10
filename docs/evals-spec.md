@@ -55,7 +55,7 @@ Layer 3 is where models enter, and where the numbers become probabilities. It is
 
 ### The corpus
 
-The eval corpus lives at `evals/brain/`. It is a fictional brain in the v1 frontmatter format, seeded by copying `examples/demo-brain/` and then adding notes that exist only to trigger failure paths.
+The eval corpus lives at `evals/brain/`. It is a fictional brain in the v1 frontmatter format, seeded by copying `examples/demo-brain/` and then adding notes that exist only to trigger failure paths. The note inventory, the planted problems, and the build order are in `docs/eval-corpus-plan.md`.
 
 It is a separate folder from the demo brain on purpose. The demo brain is what a new user sees first and it should be small and clean. The eval corpus needs planted problems: two `current` notes that disagree, a person note with an alias that differs from the title, a note whose title is a substring of another title. Those belong in a test bed, not in onboarding material.
 
