@@ -4,46 +4,11 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 
-from personal_memory.check import SKIP_NAMES
-from personal_memory.frontmatter import Frontmatter, FrontmatterError, parse_frontmatter, split_frontmatter
+from personal_memory.frontmatter import split_frontmatter
 from personal_memory.notelog import LOG_ENTRY_RE
+from personal_memory.notes import Note, load_notes, norm, tokenize
 
-STOPWORDS = frozenset(
-    {
-        "a",
-        "an",
-        "and",
-        "are",
-        "as",
-        "at",
-        "be",
-        "but",
-        "do",
-        "for",
-        "from",
-        "how",
-        "i",
-        "in",
-        "is",
-        "it",
-        "my",
-        "of",
-        "on",
-        "or",
-        "the",
-        "this",
-        "to",
-        "was",
-        "what",
-        "when",
-        "where",
-        "who",
-        "why",
-        "with",
-    }
-)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
-TOKEN_RE = re.compile(r"[a-z0-9]+")
 TITLE_SCORE = 8
 ID_SCORE = 10
 BODY_SCORE = 1
@@ -67,16 +32,7 @@ class RecallResult:
     cards: tuple[EvidenceCard, ...]
 
 
-@dataclass(frozen=True)
-class _LoadedNote:
-    path: Path
-    relative: Path
-    text: str
-    meta: Frontmatter
-    title: str
-
-
-_Hit = tuple[int, bool, _LoadedNote, str, int, int]
+_Hit = tuple[int, bool, Note, str, int, int]
 
 
 def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
@@ -85,8 +41,8 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
     Default is current notes only. historical=True includes superseded notes.
     Wikilinks on a hit's claim line are followed one hop to the target note.
     """
-    tokens = _tokens(query)
-    notes = _iter_notes(root)
+    tokens = tokenize(query)
+    notes = load_notes(root)
     hits: list[_Hit] = []
 
     for note in notes:
@@ -132,68 +88,19 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
     return RecallResult(tuple(cards))
 
 
-def _iter_notes(root: Path) -> list[_LoadedNote]:
-    notes: list[_LoadedNote] = []
-    for path in sorted(root.rglob("*.md")):
-        if path.name in SKIP_NAMES:
-            continue
-        text = path.read_text(encoding="utf-8")
-        try:
-            split = split_frontmatter(text)
-        except FrontmatterError:
-            continue
-        if split is None:
-            continue
-        fields, body = split
-        try:
-            meta = parse_frontmatter(fields)
-        except FrontmatterError:
-            continue
-        notes.append(
-            _LoadedNote(
-                path=path,
-                relative=path.relative_to(root),
-                text=text,
-                meta=meta,
-                title=_title(body, meta.id),
-            )
-        )
-    return notes
-
-
-def _title(body: str, fallback: str) -> str:
-    for line in body.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("#"):
-            return stripped.lstrip("#").strip()
-    return fallback
-
-
-def _norm(value: str) -> str:
-    return " ".join(TOKEN_RE.findall(value.lower()))
-
-
-def _tokens(query: str) -> list[str]:
-    return [token for token in TOKEN_RE.findall(query.lower()) if token not in STOPWORDS and len(token) > 1]
-
-
-def _aliases(note: _LoadedNote) -> str:
-    return note.meta.extra.get("aliases", "")
-
-
-def _exact_match(note: _LoadedNote, query: str) -> bool:
+def _exact_match(note: Note, query: str) -> bool:
     stripped = query.strip().lower()
     if not stripped:
         return False
     if stripped == note.meta.id.lower():
         return True
-    if _norm(query) == _norm(note.title):
+    if norm(query) == norm(note.title):
         return True
-    aliases = _norm(_aliases(note))
-    return bool(aliases) and _norm(query) == aliases
+    aliases = norm(note.aliases)
+    return bool(aliases) and norm(query) == aliases
 
 
-def _keyword_score(note: _LoadedNote, tokens: list[str]) -> int:
+def _keyword_score(note: Note, tokens: list[str]) -> int:
     if not tokens:
         return 0
     body = WIKILINK_RE.sub(lambda match: match.group(2) or "", _body_of(note.text)).lower()
@@ -201,7 +108,7 @@ def _keyword_score(note: _LoadedNote, tokens: list[str]) -> int:
     for token in tokens:
         if token in note.meta.id:
             score += ID_SCORE
-        elif token in _norm(note.title) or token in _norm(_aliases(note)):
+        elif token in norm(note.title) or token in norm(note.aliases):
             score += TITLE_SCORE
         elif token in body:
             score += BODY_SCORE
@@ -210,7 +117,7 @@ def _keyword_score(note: _LoadedNote, tokens: list[str]) -> int:
     return score
 
 
-def _hop(hits: list[_Hit], notes: list[_LoadedNote], tokens: list[str], *, historical: bool) -> list[_Hit]:
+def _hop(hits: list[_Hit], notes: list[Note], tokens: list[str], *, historical: bool) -> list[_Hit]:
     by_id = {note.meta.id: note for note in notes}
     index_of = {hit[2].meta.id: index for index, hit in enumerate(hits)}
     result = list(hits)
@@ -236,7 +143,7 @@ def _body_of(text: str) -> str:
     return split[1]
 
 
-def _claim_span(note: _LoadedNote, tokens: list[str], *, exact: bool) -> tuple[str, int, int]:
+def _claim_span(note: Note, tokens: list[str], *, exact: bool) -> tuple[str, int, int]:
     lines = list(enumerate(note.text.splitlines(), start=1))
     title_hit = _find_title_line(lines, note.title)
     if exact:
@@ -259,7 +166,7 @@ def _claim_span(note: _LoadedNote, tokens: list[str], *, exact: bool) -> tuple[s
     return claim, best[1], best[1]
 
 
-def _log_line(note: _LoadedNote, line_number: int, claim: str) -> tuple[str, str]:
+def _log_line(note: Note, line_number: int, claim: str) -> tuple[str, str]:
     """A claim line that is a Log entry carries its own date; use it as as_of."""
     lines = note.text.splitlines()
     if 1 <= line_number <= len(lines):
