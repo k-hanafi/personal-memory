@@ -285,7 +285,7 @@ def _is_source(root: Path, source: str, sources_dir: str) -> bool:
 
 
 def _candidates(notes: list[Note], proposal: Proposal) -> tuple[str, ...]:
-    wanted = set(tokenize(" ".join(filter(None, (proposal.title, proposal.claim)))))
+    wanted = {token for token in tokenize(" ".join(filter(None, (proposal.title, proposal.claim)))) if not token.isdigit()}
     if not wanted:
         return ()
     found = []

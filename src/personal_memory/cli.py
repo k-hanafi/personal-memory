@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import asdict
 from datetime import datetime
 import json
 import sys
@@ -12,8 +13,10 @@ from personal_memory.evals.baseline import BASELINE_PATH, compare, gate, to_base
 from personal_memory.evals.receipt import write_receipt
 from personal_memory.evals.report import render
 from personal_memory.evals.runner import run
+from personal_memory.filing import Outcome, Proposal, apply, list_queue, remember, submit
 from personal_memory.get import get_note
 from personal_memory.recall import recall
+from personal_memory.unfiled import unfiled
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -66,6 +69,53 @@ def main(argv: list[str] | None = None) -> int:
         "key",
         help="Note id (alex-rivera) or path relative to the brain",
     )
+
+    def brain_arg(p: argparse.ArgumentParser) -> None:
+        p.add_argument("brain", type=Path, help="Folder of markdown notes (for example examples/demo-brain)")
+        p.add_argument("--sources", default="sources", metavar="DIR", help="Immutable dump folder inside the brain (default sources)")
+        p.add_argument("--json", action="store_true", help="Print the result as JSON for an agent to read")
+
+    propose_parser = sub.add_parser(
+        "propose",
+        help="Validate a filing proposal (JSON) and queue it. Writes no note.",
+    )
+    brain_arg(propose_parser)
+    propose_parser.add_argument(
+        "file",
+        nargs="?",
+        type=Path,
+        help="Proposal JSON: kind, provenance, confidence, as_of, and the kind's fields. Default stdin.",
+    )
+
+    queue_parser = sub.add_parser("queue", help="List queued proposals and what the engine thinks of each")
+    brain_arg(queue_parser)
+
+    apply_parser = sub.add_parser(
+        "apply",
+        help="Write queued proposals: every high-confidence one, or the one you name at any confidence",
+    )
+    brain_arg(apply_parser)
+    apply_parser.add_argument("id", nargs="?", help="Proposal id to apply regardless of confidence")
+
+    remember_parser = sub.add_parser(
+        "remember",
+        help="Save one fact now: append to a note, or stub-create one at --path",
+    )
+    brain_arg(remember_parser)
+    remember_parser.add_argument("claim", help="One fact, one line")
+    remember_parser.add_argument(
+        "--provenance",
+        required=True,
+        help="Who proposed it and when, for example 'user, 2026-09-10' or 'agent:claude-code, 2026-09-10'",
+    )
+    remember_parser.add_argument("--target", help="Note id to append the fact to")
+    remember_parser.add_argument("--path", help="Where to create a new note when there is no target")
+    remember_parser.add_argument("--type", help="Note type for a new note")
+    remember_parser.add_argument("--title", help="Title for a new note (default: from the file name)")
+    remember_parser.add_argument("--as-of", dest="as_of", help="When the fact was true (default today)")
+
+    unfiled_parser = sub.add_parser("unfiled", help="List files under sources/ that no note has filed yet")
+    brain_arg(unfiled_parser)
 
     eval_parser = sub.add_parser(
         "eval",
@@ -144,6 +194,20 @@ def main(argv: list[str] | None = None) -> int:
         return _run_recall(args.brain, " ".join(args.query), historical=args.historical)
     if args.command == "get":
         return _run_get(args.brain, args.key)
+    if args.command in ("propose", "queue", "apply", "remember", "unfiled"):
+        root = args.brain.expanduser().resolve()
+        if not root.is_dir():
+            print(f"not a directory: {root}", file=sys.stderr)
+            return 2
+        if args.command == "propose":
+            return _run_propose(root, args.file, args.sources, args.json)
+        if args.command == "queue":
+            return _run_queue(root, args.sources, args.json)
+        if args.command == "apply":
+            return _run_apply(root, args.id, args.sources, args.json)
+        if args.command == "remember":
+            return _run_remember(root, args)
+        return _run_unfiled(root, args.sources, args.json)
     if args.command == "eval" and args.eval_command == "run":
         if args.update_baseline and args.allow_regression is not None:
             parser.error("--update-baseline and --allow-regression cannot be combined")
@@ -213,6 +277,96 @@ def _run_get(brain: Path, key: str) -> int:
         return 0
     print(doc.text, end="" if doc.text.endswith("\n") else "\n")
     return 0
+
+
+def _run_propose(root: Path, file: Path | None, sources: str, as_json: bool) -> int:
+    raw = sys.stdin.read() if file is None else file.read_text(encoding="utf-8")
+    try:
+        proposal = Proposal.from_dict(json.loads(raw))
+    except (json.JSONDecodeError, TypeError) as exc:
+        print(f"proposal must be a JSON object with kind, provenance, confidence, as_of: {exc}", file=sys.stderr)
+        return 2
+    outcome = submit(root, proposal, sources_dir=sources)
+    _print_outcomes([outcome], as_json)
+    return 0 if outcome.status == "queued" else 1
+
+
+def _run_queue(root: Path, sources: str, as_json: bool) -> int:
+    items = list_queue(root, sources_dir=sources)
+    if as_json:
+        print(json.dumps([{"id": q.proposal_id, "submitted_at": q.submitted_at, "proposal": asdict(q.proposal), "outcome": asdict(q.outcome)} for q in items], indent=2))
+        return 0
+    if not items:
+        print("queue is empty")
+        return 0
+    for item in items:
+        p = item.proposal
+        what = p.claim if p.kind == "append" else f"{p.path} ({p.title})"
+        print(f"{item.proposal_id}  {p.kind:<9} {item.outcome.status:<9} {item.outcome.confidence or p.confidence:<6} {what}")
+        if item.outcome.reason:
+            print(f"  {item.outcome.reason}")
+    return 0
+
+
+def _run_apply(root: Path, proposal_id: str | None, sources: str, as_json: bool) -> int:
+    outcomes = apply(root, proposal_id=proposal_id, sources_dir=sources)
+    _print_outcomes(outcomes, as_json)
+    if proposal_id is not None and outcomes and outcomes[0].status not in ("inserted", "superseded"):
+        return 1
+    return 0
+
+
+def _run_remember(root: Path, args: argparse.Namespace) -> int:
+    outcome = remember(
+        root,
+        args.claim,
+        args.provenance,
+        target=args.target,
+        path=args.path,
+        type=args.type,
+        as_of=args.as_of,
+        title=args.title,
+        sources_dir=args.sources,
+    )
+    _print_outcomes([outcome], args.json)
+    return 0 if outcome.status in ("inserted", "superseded", "queued") else 1
+
+
+def _run_unfiled(root: Path, sources: str, as_json: bool) -> int:
+    result = unfiled(root, sources_dir=sources)
+    if as_json:
+        print(json.dumps({"sources": result.sources, "unfiled": [p.as_posix() for p in result.unfiled]}, indent=2))
+        return 0
+    print(f"{result.sources} files under {sources}/, {len(result.unfiled)} unfiled")
+    for path in result.unfiled:
+        print(f"  {path.as_posix()}")
+    return 0
+
+
+def _print_outcomes(outcomes: list[Outcome], as_json: bool) -> None:
+    if as_json:
+        print(json.dumps([asdict(o) for o in outcomes], indent=2))
+        return
+    if not outcomes:
+        print("nothing to apply")
+        return
+    for o in outcomes:
+        line = f"{o.status}  {o.proposal_id}"
+        if o.confidence:
+            line += f"  confidence: {o.confidence}"
+        print(line)
+        for path in o.paths:
+            print(f"  wrote {path}")
+        if o.target and o.status in ("duplicate", "blocked"):
+            print(f"  target: {o.target}")
+        if o.reason:
+            print(f"  {o.reason}")
+        if o.candidates:
+            print(f"  candidates: {', '.join(o.candidates)}")
+        for kind, tally in o.placement.items():
+            if tally:
+                folders = ", ".join(f"{folder} ({n})" for folder, n in sorted(tally.items(), key=lambda kv: -kv[1]))
+                print(f"  {kind} live in: {folders}")
 
 
 def _run_eval(
