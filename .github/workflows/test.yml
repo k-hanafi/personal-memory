@@ -6,8 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test:
-    name: test
+  pytest:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -22,3 +21,12 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Test
         run: pytest -q
+
+  test:
+    name: test
+    if: always()
+    needs: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require pytest matrix
+        run: test "${{ needs.pytest.result }}" = "success"
