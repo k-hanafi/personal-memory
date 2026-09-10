@@ -9,7 +9,7 @@ confidence: high
 # Labor markets paper
 
 Draft of a coauthored paper on hiring frictions.
-[[priya-natarajan]] holds the empirics. [[marcus-bellamy]] has the file.
+[[priya-natarajan]] and [[felix-brandvold]] hold the empirics. [[marcus-bellamy]] has the file.
 
 The shared outline and revision list live here. Next pass is
 the identification section, then a cleaner results table.

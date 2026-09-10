@@ -1,22 +1,22 @@
 ---
-id: econometrics-fall-2026
+id: econometrics-fall-2025
 type: course
-as_of: 2026-08-25
-status: current
+as_of: 2025-09-05
+status: superseded
 confidence: high
-supersedes: econometrics-fall-2025
+superseded_by: econometrics-fall-2026
 ---
 
-# Econometrics (fall 2026)
+# Econometrics (fall 2025)
 
 ## Overview
 
-Fall 2026 econometrics for undergrads at the university. The course
+Fall 2025 econometrics for undergrads at the university. The course
 covers identification, simple and multiple regression, and a first
 pass at panel methods. This is the filed syllabus note.
 
-The assigned text is Markets in Numbers by Rhea Calder. See
-[[switch-econometrics-textbook]] for why the book changed.
+The assigned text is Causes in Tables by Nora Ellison. The book
+puts identification in an appendix that readers skipped.
 
 Office hours are on the course page. Lecture is twice a week.
 Recitation is once a week. The course page also holds the slides.
@@ -40,7 +40,7 @@ Week 14: review session and leftover questions.
 
 ## Readings
 
-Calder, Markets in Numbers, chapters 1 to 12 in order.
+Ellison, Causes in Tables, chapters 1 to 11 in order.
 Skip the optional appendices unless a problem set names them.
 One short applied paper is posted each week on the course page.
 Students read the paper before the Thursday meeting.
@@ -58,10 +58,10 @@ Problem sets go out on Monday. Late work follows the policy below.
 
 Late problem sets lose ten percent per day, weekends included.
 Collaboration on method is fine. Copied writeups are not.
-The midterm is 25 percent of the course grade.
+The midterm is 30 percent of the course grade.
 The problem sets are 25 percent of the course grade.
 The replication memo is 10 percent of the course grade.
-The final exam weight is 40 percent.
+The final exam weight is 35 percent.
 
 ## Software notes
 
@@ -78,4 +78,4 @@ Questions on software go to the TA first.
 Alex handles grading disputes and the replication memo.
 Recitation is not optional in the first four weeks.
 
-supersedes: [[econometrics-fall-2025]]
+superseded_by: [[econometrics-fall-2026]]

@@ -1,7 +1,7 @@
 ---
 id: adopt-codex-for-grading
 type: decision
-as_of: 2026-08-12
+as_of: 2026-08-05
 status: current
 confidence: high
 ---

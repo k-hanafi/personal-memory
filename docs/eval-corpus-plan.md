@@ -141,7 +141,7 @@ the engine gets smarter, and the flip must be understood, not waved through.
 |---|---|---|---|---|
 | 1 | Three-note supersession chain | `teaching load` | supersession | Passes. Status filter drops the old two. |
 | 2 | Chain under `--historical` | `teaching load` (historical) | supersession | Passes. Both old notes appear labeled `superseded`. `decline-summer-teaching` also matches. |
-| 3 | Reversed decision | `summer teaching` | supersession | Passes. |
+| 3 | Reversed decision | `summer teaching` | supersession | Passes. Current accept note first; the superseded decline note is absent. Phase 2 dailies `2026-03-02` and `2026-04-21` and `grant-call-pdf-text` also match, so `contradicted_by` fires across four current hits. |
 | 4 | Title substring trap | `teaching load` | named-thing | Passes by tie-break. Both `teaching-load-2026-09` and `teaching-load-committee` score the same; path sort puts `2` before `c`. Fragile. Good early tripwire. `contradicted_by` fires on the pair because any two current notes matching the query are marked as contradicting. |
 | 5 | Exact id vs exact title diverge | `assessment-policy` and `Curve and grading policy` | named-thing | Passes. Both are exact matches. |
 | 6 | Single alias | `Sam` | named-thing | Passes. |
@@ -149,14 +149,14 @@ the engine gets smarter, and the flip must be understood, not waved through.
 | 8 | Near-duplicate names | `Marcus Bell` | named-thing | Passes. Exact title suppresses the keyword hit on Bellamy. |
 | 9 | Near-duplicate names, ambiguous | `Marcus` | contradiction (negative) | Passes for the wrong reason, then fails. Both notes return, and `contradicted_by` links them although they do not disagree. This is the case that shows `contradicted_by` fires on any two current hits. |
 | 10 | Generic-to-named | `who is the department chair` | named-thing | Fails. Stopwords leave `department chair`; hits Dana, `department-service`, and `drop-evening-section`, and flags all three as contradicting. Capability target. |
-| 11 | Buried fact in a long note | `final exam weight` | citation | Passes if the line with the most token hits is the claim line. `expect_line` guards it. |
+| 11 | Buried fact in a long note | `final exam weight` | citation | Passes. Claim line is 64 (the buried 40 percent weight). A `supersedes` line added in phase 2 moved it from 63. `expect_line` guards it. |
 | 12 | Planted contradiction | `research budget` | contradiction | Passes. Both notes return, each listing the other. |
 | 13 | Daily log mentions the same number | `research budget` | contradiction | Passes for the wrong reason. Daily `2026-09-02` also matches and is listed as a third contradicting note. A daily entry is timeline, not state. Deciding how the engine treats `type: daily` is an open question below. |
 | 14 | Source dump vs filed note | `econometrics syllabus` | named-thing | Passes. The filed note scores on id plus body; the dump scores on body only. The dump appears below it with `confidence: low`. |
 | 15 | File with no frontmatter | any | all | Passes. `pasted-email-chair.md` has no frontmatter, so the loader skips it. |
 | 16 | State note vs daily mention | `office hours` | named-thing | Passes. Exact title match on `office-hours.md` suppresses every keyword hit, so the daily notes never return. Title boost is not what does it; if the title were "Office hours (fall)" the dailies would appear below it. |
 | 17 | Clean abstention | `parking permit` | abstention | Passes. Zero hits. |
-| 18 | Near-miss abstention | `evening elective enrollment` | abstention | Fails. Every token appears in `drop-evening-section`, so it is returned, but the note says enrollment was thin and gives no number. Token matching cannot tell "mentions the topic" from "answers the question." Capability target. Note that adding `number` to the query would make the engine pass by accident, since `recall` requires every token to match; the query is kept to words the note contains. |
+| 18 | Near-miss abstention | `evening elective enrollment` | abstention | Fails. `drop-evening-section` returns, and daily `2026-08-19` also matches, so `contradicted_by` fires. The decision note says enrollment was thin and gives no number. Token matching cannot tell "mentions the topic" from "answers the question." Capability target. Note that adding `number` to the query would make the engine pass by accident, since `recall` requires every token to match; the query is kept to words the note contains. |
 | 19 | Near-miss abstention, low confidence | `sabbatical start date` | abstention | Fails. `sabbatical-plan` matches and is returned. The card carries `confidence: low`, which is the honest part. Capability target. |
 | 20 | Open `type` string | `econometrics` | check | Passes. `check` accepts `type: course`. |
 
@@ -208,8 +208,8 @@ exist yet are easy to leave dangling.
    recorded. Verify: `check` passes; `recall "final exam weight"` reports the
    buried line.
 5. **Daily and sources.** Write the five daily entries and two source files.
-   Verify: `check` passes; `recall "chair email"` does not return the
-   `.txt` file.
+   Verify: `check` passes; `recall "chair email"` does not return
+   `pasted-email-chair.md`.
 6. **Record reality.** Run every query in the planted-problems table. Write
    what actually happened into the `Today` column of `evals/brain/README.md`.
    Where this plan's prediction was wrong, fix the table, not the note. That
@@ -256,17 +256,17 @@ one or two cards, so id, title, and body weights rarely decide anything.
 
 | Measure | After phase 1 | After phase 2 |
 |---|---|---|
-| Indexed notes (frontmatter present) | 38 | 108 |
+| Indexed notes (frontmatter present) | 38 | 109 |
 | Files under `sources/` with no frontmatter | 1 | 3 |
-| Words | 2,600 | about 15,000 |
+| Words | 2,600 | 8,603 |
 | People | 6 | 20 |
 | Daily notes | 5 | 25 |
 | Sources | 2 | 7 |
 | Long notes (60 or more lines) | 1 | 6 |
-| Supersession chains | 4 | 9 (2 with no current successor) |
+| Supersession chains | 4 | 10 (2 with no current successor) |
 | Superseded notes | 5 | 12 |
 | Folders | 7 | 9 (`70-meetings/`, `80-reading/` added) |
-| Distinct supportable queries | 22 | about 90 |
+| Distinct supportable queries | 22 | 87 |
 | Fixture families | 5 (+ `check`) | 8 (+ `check`, `get`, `filing` rows) |
 
 The word target cannot be met with 8 to 25 line notes alone (110 such notes
@@ -421,18 +421,18 @@ engine code; wave 4 records what happened.
 
 | # | Problem | Query | Family | Today |
 |---|---|---|---|---|
-| 21 | (a) Single token, three id matches | `load` | named-thing | Passes for the wrong reason. `advising-load`, `teaching-load-2026-09`, and `teaching-load-committee` all score 10 on id; path sort puts advising first. Gold is `also_present` for the load note, not hit@1. `contradicted_by` fires across all three. |
-| 22 | (a) Long decision id beats the state note | `afternoon office hours`* | named-thing | Fails. `move-office-hours-to-afternoon` scores 30 on id; `office-hours` scores 20 plus 1. Gold is the schedule note. Id length inflates score. rg counts more mentions in the schedule note and gets it right. |
-| 23 | (a) Title and id beat eight body hits | `grading policy`* | named-thing | Passes. `assessment-policy` scores 10 (id) plus 8 (title) against body-only hits in the course note and the Codex decision. rg ranks the long course note first. |
+| 21 | (a) Single token, three id matches | `load` | named-thing | Passes for the wrong reason. `advising-load`, `teaching-load-2026-09`, and `teaching-load-committee` all score 10 on id; path sort puts advising first. Six more body hits join them (both minutes, the transcript, `journal-refereeing`, `bea-okonkwo`, `nadia-ferrante`), so nine cards return and `contradicted_by` fires across all nine. Gold is `also_present` for the load note, not hit@1. |
+| 22 | (a) Long decision id beats the state note | `afternoon office hours`* | named-thing | Fails. `move-office-hours-to-afternoon` scores 30 on id and returns first. `office-hours` scores 0: AND matching drops it because the schedule note never says "afternoon". Extra hit: `econometrics-fall-2026`. Gold is the schedule note. Id length inflates score. rg counts more mentions in the schedule note and gets it right. |
+| 23 | (a) Title and id beat eight body hits | `grading policy`* | named-thing | Passes. `assessment-policy` scores 10 (id) plus 8 (title) against a body hit in the course note. The Codex decision lacks `policy` and does not return. `contradicted_by` fires on the pair. rg ranks the long course note first. |
 | 24 | (a) Shared surname | `Okonkwo` | named-thing | Fails. Both `bea-okonkwo` and `samir-okonkwo` score 10; path sort puts Bea first. Gold is both present. `contradicted_by` fires on the pair (i). |
 | 25 | (a, d) Alias collides with a real first name | `Sam`* | named-thing | Fails on `also_present`. Exact alias match on Samir suppresses every keyword hit, so `sam-delacroix` (id hit) never returns. rg finds both plus "same". |
 | 26 | (a) Exact title through the collision | `Sam Delacroix` | named-thing | Passes. Exact title. |
 | 27 | (k) First name that is a common noun | `Grant`* | named-thing | Fails. Four ids contain `grant` (`research-grant-2026`, `grant-oyelaran`, `meeting-grant-officer-2026-07-22`, `grant-call-pdf-text`); tie at 10; path sort puts `30-projects/grant-application.md` first. Gold is the person. A case-sensitive grep on "Grant" would find only the person and the dailies that capitalize him. |
-| 28 | (a) Buried date in the grant note | `grant application deadline` | citation | Passes. `research-grant-2026` scores 10 (id) plus 8 (title "application") plus 1; the dump scores 3. Claim line is the deadline line. |
+| 28 | (a) Buried date in the grant note | `grant application deadline` | citation | Passes. `research-grant-2026` scores 10 (id) plus 8 (title "application") plus 1 and wins. The dump id `grant-call-pdf-text` contains `grant`, so it scores on id, not body only, and still ranks second. Claim line is the deadline line. `contradicted_by` fires on the pair. |
 | 29 | (a) `review` pressure | `journal review` | named-thing | Passes. `journal-refereeing` scores 11 on id plus body; `decline-associate-editor-role` scores 2; `marcus-bellamy` scores 1 or 0. |
 | 30 | (b) One hop | `labor markets paper editor` | hop | Fails. AND matching: the paper note lacks "editor"; the editor's note only links the paper, and links are stripped from the body. Zero cards. Gold `marcus-bellamy` via the paper note's link. |
 | 31 | (b) Two hops | `journal for Priya's paper` | hop | Fails. Zero cards. Gold `marcus-bellamy` via `priya-natarajan` to `labor-markets-paper` to the editor. |
-| 32 | (b) Hop into a superseded note | `case competition sponsor 2025` | hop | Fails by default (zero cards: the current note has no "2025"). Passes under `--historical` by id. Gold is `case-competition-2025` labeled superseded, reached through the new `supersedes` link. |
+| 32 | (b) Hop into a superseded note | `case competition sponsor 2025` | hop | Fails by default: daily `2025-11-08` returns (it has the tokens) rather than the current project note, which has no "2025". Passes under `--historical` by id: `case-competition-2025` first, labeled superseded, plus the daily. Gold is `case-competition-2025` labeled superseded, reached through the new `supersedes` link. |
 | 33 | (b, n) Generic-to-named through a meeting | `who is the program officer for the grant` | hop | Fails. `meeting-grant-officer-2026-07-22` scores 21 and returns first with the link on its claim line; gold is `grant-oyelaran`. |
 | 34 | (b, n) Identity to project to people | `Alex's coauthor on hiring frictions` | hop | Fails. Zero cards: no note carries "alex" next to "hiring frictions". Gold `priya-natarajan` and `felix-brandvold` via the paper note. |
 | 35 | (c) Get by id when path differs | `get research-grant-2026` | get | Passes. Id scan finds `30-projects/grant-application.md`. |
@@ -452,23 +452,23 @@ engine code; wave 4 records what happened.
 | 49 | (m) Which figure is newer | `budget August statement` | temporal | Passes. Only `research-account` has all three tokens. The fixture cannot assert `as_of: 2026-08-15` because the format has no `expect_as_of`. Add the field when fixtures land. |
 | 50 | (h) Paraphrase | `gaming the curve` | paraphrase | Fails. "gaming" appears nowhere; zero cards. Gold `exam-integrity` ("strategic exam sitting"). |
 | 51 | (h) Paraphrase | `burnout` | paraphrase | Fails. Zero cards. Gold `health` ("running on empty"). |
-| 52 | (h, d) Paraphrase with a substring trap | `rent`* | paraphrase | Fails. `rent` is inside "current", "different", "parent"; dozens of body hits at score 1, all marked contradicting. Gold `home-admin` ("lease payment"). rg with `-w` returns nothing. |
+| 52 | (h, d) Paraphrase with a substring trap | `rent`* | paraphrase | Fails. `rent` is inside "current" and "different"; three cards (`labor-markets-paper`, `rubric-redesign`, `reading-diff-in-diff-handbook`) at score 1, all marked contradicting. Gold `home-admin` ("lease payment") is absent. rg with `-w` returns nothing. |
 | 53 | (h) Paraphrase into a daily | `procrastinating on the paper` | paraphrase | Fails. Zero cards. Gold daily `2026-08-31` ("put off the results table again"). |
 | 54 | (h) Paraphrase | `AI tools for grading` | paraphrase | Fails. `ai` matches inside "said" and "email"; no note pairs it with both other tokens except by accident. Gold `adopt-codex-for-grading`. |
 | 55 | (i) Agreeing notes flagged as contradicting | `midterm week 7`* | contradiction (negative) | Fails. The digit `7` is a one-character token and is dropped. Both course notes and the Notion dump return and list each other. rg keeps the 7. |
-| 56 | (i) Two meetings, same phrase | `release request` | contradiction (negative) | Fails. Both minutes notes and `teaching-load-committee` return, each listing the others. |
+| 56 | (i) Two meetings, same phrase | `release request` | contradiction (negative) | Fails. Five cards: daily `2026-05-08` first, then `teaching-load-committee`, both minutes notes, and the transcript dump, each listing the others. |
 | 57 | (i) Same journal, three notes | `Northbridge Review` | contradiction (negative) | Fails. `marcus-bellamy`, `journal-refereeing`, and `decline-associate-editor-role` return as a contradicting triple. |
 | 58 | (i, n) Two people share a trait | `who prefers async comments` | contradiction (negative) | Fails. `working-preferences` and `samir-okonkwo` return and list each other. Gold is both present, no contradiction. |
 | 59 | (j) Not in corpus | `dissertation defense date` | abstention | Passes. "dissertation" appears nowhere. |
 | 60 | (j) Mentioned but not named | `sponsor contact at Quill and Timber` | abstention | Fails. The sponsor call note has every token and returns, but names nobody. |
-| 61 | (j) Under-specified | `the meeting` | abstention | Fails. Stopwords leave `meeting`; six meeting notes plus dailies return as a contradicting set. |
+| 61 | (j) Under-specified | `the meeting` | abstention | Fails. Stopwords leave `meeting`; sixteen cards return as a contradicting set (five meeting notes, two dailies, plus people, lab-budget, the load committee, and a decline). |
 | 62 | (j) Superseded, never replaced | `intermediate macro` | abstention | Passes by default (zero cards). Under `--historical` the superseded note returns labeled. No field says "never replaced"; open. |
 | 63 | (j) Superseded, never replaced, area | `commute` | abstention | Same shape as 62. Passes by default. |
 | 64 | (j) Near miss on a date | `thesis defense date` | abstention | Fails. `thesis-supervision-amankwah` returns; it says the date is not set. |
-| 65 | (k) Misspelled name | `Jonas Wier` and `Jonas Weir` | named-thing | First query fails: only daily `2026-06-10` (the typo) returns; the person note scores 0 on "wier". Second passes by exact title and never finds the daily. |
+| 65 | (k) Misspelled name | `Jonas Wier` and `Jonas Weir` | named-thing | First query fails: daily `2026-06-10` (the typo) and the conference programme dump return; the person note scores 0 on "wier". Second passes by exact title and never finds the daily. |
 | 66 | (k) Surname only | `Ferrante`* | named-thing | Passes. Person id scores 10; two dailies and the minutes score 1. rg ranks by count and puts the minutes first. |
 | 67 | (k) Lowercase mention | `mira`* | named-thing | Passes. Id 10 over the lowercase daily. rg without `-i` misses the title. |
-| 68 | (k) Diacritic | `Søren`, `Søren Kjær`, `Soren Kjaer` | named-thing | `Søren` passes for the wrong reason: the token becomes `ren`, which is in the id, and in "current", "reference", "different" across the corpus, so dozens of cards return. `Søren Kjær` passes for the wrong reason: both sides normalize to `s ren kj r`. `Soren Kjaer` passes on id. |
+| 68 | (k) Diacritic | `Søren`, `Søren Kjær`, `Soren Kjaer` | named-thing | `Søren` passes for the wrong reason: TOKEN_RE splits it into `s` and `ren`, drops `s` as too short, and `ren` substring-matches many ids and bodies, so twenty cards return. `Søren Kjær` passes by exact title: both sides normalize to `s ren kj r`, so exact match fires and suppresses keyword hits. `Soren Kjaer` passes on id. |
 | 69 | (k) Person nobody links to | `Tobias Renquist` and `reference letter` | named-thing | Both pass (exact title; body). A hop implementation must not require inbound links. |
 | 70 | (k) Missing `superseded_by` | `check` | check | Passes, which is the finding: `check` validates fields, not chains. |
 | 71 | (k) CRLF note | `hiring frictions survey` | citation | Passes. The frontmatter regex allows `\r?\n`, `splitlines` handles CRLF, `strip` removes the stray `\r` from the claim. Watch the claim string in wave 4. |
@@ -477,9 +477,9 @@ engine code; wave 4 records what happened.
 | 74 | (l) Motion spans three lines | `committee motion release cap` | citation | Same shape as 73. |
 | 75 | (n) Role lookup, course outranks person | `who is the TA for econometrics`* | named-thing | Fails. Course note scores 11 (id plus `ta` inside "stats"); `ines-castellanos` scores 2. Gold is the person. |
 | 76 | (n) Role lookup, second course | `who is the TA for intro micro`* | named-thing | Fails. `intro-micro-fall-2026` scores 21; `marcus-bell` scores 3. Matches what phase 1 already showed for this query. |
-| 77 | (n) Multi-entity | `labor markets paper` | named-thing | Passes. Paper note first; both coauthor notes present on body hits. The editor is absent because his note links rather than restates, so a full answer needs a hop. |
+| 77 | (n) Multi-entity | `labor markets paper` | named-thing | Passes for the wrong reason. Exact title on the paper suppresses every keyword hit, so the coauthor notes never return. The editor is absent because his note links rather than restates, so a full answer needs a hop. |
 | 78 | (n) Multi-entity phrased | `which people are on the labor markets paper` | hop | Fails. "which" is not a stopword and appears in no note with the other tokens; zero cards. |
-| 79 | (o) Timeline fact | `case competition day` (historical) | temporal | Passes for the wrong reason. Neither project note says "day", so daily `2025-11-08` is the only card. |
+| 79 | (o) Timeline fact | `case competition day` (historical) | temporal | Passes for the wrong reason. Neither project note says "day", so daily `2025-11-08` ranks first; `drop-evening-section` and `meeting-chair-staffing-2026-08-19` also match and `contradicted_by` fires. |
 | 80 | (o) Daily mention through a link | `last met Priya` | temporal | Fails. Daily `2026-08-28` writes `[[priya-natarajan]]`; the link is stripped before scoring, so "priya" is not in its body. Zero cards. Links hide names from keyword search. |
 | 81 | (o) Meeting note vs daily | `sponsor call` | named-thing | Passes. Meeting id scores 20; daily `2026-08-05` scores 2. |
 | 82 | (g) Unfiled scan | none | filing | Not runnable today. Expected list once `unfiled` exists: `chat-log-yuki-pipeline-2026-09-04.md` and `pasted-email-editor-decision.md` unfiled; the other five have counterparts. `pasted-email-chair.md` has no counterpart either. How "filed" is marked is the feature's decision. |
@@ -490,6 +490,10 @@ engine code; wave 4 records what happened.
 Predicted: 35 pass (7 for the wrong reason), 28 fail, 2 not runnable or
 open (39, 82). With phase 1 that is 49 of 85 passing, which keeps the
 baseline seedable while leaving hills to climb in every new family.
+Observed 2026-09-09: 35 pass (7 for the wrong reason: 21, 48, 68, 73, 74,
+77, 79), 28 fail (22, 24, 25, 27, 30, 31, 32, 33, 34, 42, 50, 51, 52, 53,
+54, 55, 56, 57, 58, 60, 61, 64, 65, 75, 76, 78, 80, 84), 2 not runnable
+(39, 82).
 
 ### Layer 3 question bank
 
@@ -503,7 +507,7 @@ This table is the source for the Layer 3 set when the MCP server lands
 | L1 | What is Alex's teaching load this term? | `40-areas/teaching-load-2026-09.md` | 12 | current | no |
 | L2 | What was the teaching load in winter 2026? | `40-areas/teaching-load-2026-01.md` | 13 | superseded | no |
 | L3 | Who is the department chair? | `50-people/dana-whitfield.md` | 11 | current | no |
-| L4 | What is the final exam weight in econometrics? | `30-projects/econometrics-fall-2026.md` | 63 | current | no |
+| L4 | What is the final exam weight in econometrics? | `30-projects/econometrics-fall-2026.md` | 64 | current | no |
 | L5 | What is the research budget? | `40-areas/lab-budget.md` and `40-areas/research-account.md` | 11 and 11 | current, both | no; must report both |
 | L6 | Who is Sam? | `50-people/samir-okonkwo.md` | title line (10) | current | no |
 | L7 | When are office hours? | `40-areas/office-hours.md` | 12 | current | no |
@@ -513,11 +517,11 @@ This table is the source for the Layer 3 set when the MCP server lands
 | L11 | Who sponsored the 2025 case competition? | `30-projects/case-competition-2025.md` | 14 | superseded | no |
 | L12 | Who is the program officer on the grant? | `50-people/grant-oyelaran.md` | title line | current | no |
 | L13 | Who is the TA for intro micro? | `50-people/marcus-bell.md` | 11 | current | no |
-| L14 | Who is the TA for econometrics? | `50-people/ines-castellanos.md` | wave 4 | current | no |
+| L14 | Who is the TA for econometrics? | `50-people/ines-castellanos.md` | 11 | current | no |
 | L15 | What did Alex decide about summer teaching? | `60-decisions/accept-summer-teaching.md` | 12 | current | no |
 | L16 | Is Alex still teaching intermediate macro? | `30-projects/intermediate-macro-fall-2025.md` | title line | superseded, no successor | no; answer is "no, and nothing replaced it" |
 | L17 | Who is the sponsor's contact at Quill and Timber? | none | none | none | yes, mentioned but not named |
-| L18 | Where did we leave off on the survey pipeline? | `10-daily/2026-09-04.md` | wave 4 | current | no |
+| L18 | Where did we leave off on the survey pipeline? | `10-daily/2026-09-04.md` | 11 | current | no |
 | L19 | What did the meeting decide? | none | none | none | yes, under-specified; agent should ask which meeting |
 | L20 | What were office hours in fall 2025? | `40-areas/office-hours-2025-09.md` | title line | superseded | no |
 
@@ -612,3 +616,7 @@ After wave 4 the corpus is frozen for the rest of v1.
 - **Claim text keeps link markup.** The card `claim` is the raw line, so it
   shows `[[dana-whitfield]]` while scoring saw the stripped line (defect 12
   in the phase 2 audit). Decide whether cards render links or strip them.
+- **Diacritic tokenization.** Row 68: TOKEN_RE `[a-z0-9]+` splits `Søren`
+  into `s` and `ren`, drops `s` as too short, and `ren` substring-matches
+  many ids and bodies, so a diacritic query returns twenty cards.
+  Non-ASCII normalization is an engine gap the corpus now exposes.
