@@ -1,0 +1,10 @@
+# Real names that must never appear in evals/brain. Short public list; the full private list lives outside this repo.
+khaled
+hanafi
+k-hanafi
+jan bena
+bena
+pith
+sentra
+varick
+kolas

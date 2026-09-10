@@ -15,8 +15,9 @@ in the same change or stop and say so.
 **Status (2026-09-09):** spec locked. `check` validates frontmatter.
 `recall` returns evidence cards (keyword + exact id/title, current-only
 unless `--historical`). `get` fetches one note by id or path with
-frontmatter intact. No wikilink hops, no MCP, no filing queue yet.
-Personal Memory does not call an LLM API in v1.
+frontmatter intact. Eval corpus is 109 notes with an 85-row observed
+table; fixtures and the runner still to come. No wikilink hops, no MCP, no filing
+queue yet. Personal Memory does not call an LLM API in v1.
 
 Do not put Khaled's real vault notes in this repo.
 
@@ -35,14 +36,16 @@ Exists:
 
 - `docs/v1-spec.md`: product plan
 - `docs/evals-spec.md`: eval architecture (three layers, fixture families, CI gate)
+- `docs/eval-corpus-plan.md`: persona, note inventory, planted problems, build order for `evals/brain/`
 - `docs/sources.md`: every outside source a design choice traces to
 - `examples/demo-brain/`: fake notes with the v1 frontmatter contract
 - `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`
 - `tests/`: checker, recall, and get tests against the demo brain
+- `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
 
 Planned (do not invent extra layers before these):
 
-- `evals/`: fictional eval corpus, TOML fixtures, committed baseline, `personal-memory eval` (spec: `docs/evals-spec.md`)
+- `evals/`: TOML fixtures, committed baseline, `personal-memory eval` (spec: `docs/evals-spec.md`)
 - MCP stdio server
 - Unfiled scan, proposal queue, apply (human review for low confidence)
 - Optional vector recall arm (fail-open)
@@ -69,6 +72,8 @@ the test runner.
 |------|-----------|
 | Product rules, scope, v1 vs later | `docs/v1-spec.md` |
 | Evals, fixtures, baseline gate | `docs/evals-spec.md` |
+| Eval corpus contents and build order | `docs/eval-corpus-plan.md` |
+| Eval corpus notes | `evals/brain/`, `docs/eval-corpus-plan.md` |
 | Why a design choice was made, what we read | `docs/sources.md` |
 | Frontmatter / `personal-memory check` | `src/personal_memory/frontmatter.py`, `src/personal_memory/check.py` |
 | Recall / evidence cards | `src/personal_memory/recall.py` |
