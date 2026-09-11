@@ -65,6 +65,8 @@ pytest
 personal-memory check examples/demo-brain
 personal-memory recall examples/demo-brain teaching load
 personal-memory get examples/demo-brain alex-rivera
+personal-memory eval run
+bash scripts/eval-gate.sh
 ```
 
 `python3 -m venv .venv` creates a local install folder. `source .venv/bin/activate`
@@ -82,6 +84,8 @@ User Rules, or `~/.cursor/skills`. After a Build, `.venv` already exists from
 .venv/bin/personal-memory check examples/demo-brain
 .venv/bin/personal-memory recall examples/demo-brain teaching load
 .venv/bin/personal-memory get examples/demo-brain alex-rivera
+.venv/bin/personal-memory eval run
+bash scripts/eval-gate.sh
 ```
 
 If `.venv` is missing, run the `install` command in `.cursor/environment.json`.

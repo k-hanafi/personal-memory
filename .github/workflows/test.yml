@@ -25,11 +25,11 @@ jobs:
   test:
     name: test
     if: always()
-    needs: pytest
+    needs: [pytest, eval-gate]
     runs-on: ubuntu-latest
     steps:
-      - name: Require pytest matrix
-        run: test "${{ needs.pytest.result }}" = "success"
+      - name: Require pytest and eval-gate
+        run: test "${{ needs.pytest.result }}" = "success" && test "${{ needs.eval-gate.result }}" = "success"
 
   eval-gate:
     name: eval-gate
