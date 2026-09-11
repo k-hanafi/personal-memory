@@ -133,6 +133,18 @@ def apply(root: Path, *, proposal_id: str | None = None, sources_dir: str = "sou
     for item in list_queue(root, sources_dir=sources_dir):
         if proposal_id is not None and item.proposal_id != proposal_id:
             continue
+        verdict = _validate(root, load_notes(root), item.proposal, sources_dir)
+        status = "queued" if verdict.status == "valid" else verdict.status
+        item = replace(
+            item,
+            outcome=Outcome(
+                status,
+                item.proposal_id,
+                verdict.reason,
+                verdict.target,
+                confidence=_effective_confidence(root, item.proposal, sources_dir),
+            ),
+        )
         if item.outcome.status != "queued":
             outcomes.append(item.outcome)
             continue

@@ -217,6 +217,89 @@ def test_list_queue_revalidates_against_the_current_brain(brain: Path) -> None:
     assert remaining[0].outcome.target == "dana-whitfield"
 
 
+def test_apply_revalidates_between_batch_writes(brain: Path) -> None:
+    first = Proposal(
+        "supersede",
+        "user, 2027-01-05",
+        "high",
+        "2027-01-05",
+        path="40-areas/teaching-load-2027-01.md",
+        id="teaching-load-2027-01",
+        type="area",
+        title="Teaching load (fall)",
+        body="Three courses.",
+        supersedes="teaching-load-2026-09",
+    )
+    second = Proposal(
+        "supersede",
+        "user, 2027-01-06",
+        "high",
+        "2027-01-06",
+        path="40-areas/teaching-load-2027-02.md",
+        id="teaching-load-2027-02",
+        type="area",
+        title="Teaching load (winter)",
+        body="Four courses.",
+        supersedes="teaching-load-2026-09",
+    )
+    submit(brain, first)
+    submit(brain, second)
+    by_id = {outcome.proposal_id: outcome for outcome in apply(brain)}
+    written = [outcome for outcome in by_id.values() if outcome.status == "superseded"]
+    refused = [outcome for outcome in by_id.values() if outcome.status == "blocked"]
+    assert len(written) == 1
+    assert len(refused) == 1
+    assert "already superseded" in (refused[0].reason or "")
+    winner = written[0].target
+    loser = "teaching-load-2027-02" if winner == "teaching-load-2027-01" else "teaching-load-2027-01"
+    assert get_note(brain, "teaching-load-2026-09").meta.extra["superseded_by"] == winner
+    assert get_note(brain, winner).meta.status == "current"
+    assert get_note(brain, loser) is None
+    remaining = list_queue(brain)
+    assert [item.proposal_id for item in remaining] == [refused[0].proposal_id]
+    assert remaining[0].outcome.status == "blocked"
+    assert check_brain(brain).ok
+
+
+def test_apply_second_create_at_same_path_stays_queued(brain: Path) -> None:
+    first = _create()
+    second = _create(as_of="2026-09-11", id="dana-other", title="Dana Other")
+    submit(brain, first)
+    submit(brain, second)
+    by_id = {outcome.proposal_id: outcome for outcome in apply(brain)}
+    written = [outcome for outcome in by_id.values() if outcome.status == "inserted"]
+    refused = [outcome for outcome in by_id.values() if outcome.status == "blocked"]
+    assert len(written) == 1
+    assert len(refused) == 1
+    assert "already exists" in (refused[0].reason or "")
+    winner = written[0].target
+    loser = "dana-other" if winner == "dana-whitfield" else "dana-whitfield"
+    assert get_note(brain, winner) is not None
+    assert get_note(brain, loser) is None
+    assert [item.proposal_id for item in list_queue(brain)] == [refused[0].proposal_id]
+    assert check_brain(brain).ok
+
+
+def test_apply_second_append_of_same_claim_stays_queued(brain: Path) -> None:
+    first = Proposal(
+        "append", "user, 2026-09-10", "high", "2026-09-10", target="undergrad-case-competition", claim="Cases locked."
+    )
+    second = Proposal(
+        "append", "user, 2026-09-11", "high", "2026-09-11", target="undergrad-case-competition", claim="Cases locked!"
+    )
+    submit(brain, first)
+    submit(brain, second)
+    by_id = {outcome.proposal_id: outcome for outcome in apply(brain)}
+    written = [outcome for outcome in by_id.values() if outcome.status == "inserted"]
+    refused = [outcome for outcome in by_id.values() if outcome.status == "duplicate"]
+    assert len(written) == 1
+    assert len(refused) == 1
+    text = get_note(brain, "undergrad-case-competition").text
+    assert text.count("Cases locked") == 1
+    assert [item.proposal_id for item in list_queue(brain)] == [refused[0].proposal_id]
+    assert check_brain(brain).ok
+
+
 def test_remember_appends_when_target_given(brain: Path) -> None:
     outcome = remember(brain, "Samir will draft the first case.", "user, 2026-09-10", target="samir-okonkwo", as_of="2026-09-10")
     assert outcome.status == "inserted"
