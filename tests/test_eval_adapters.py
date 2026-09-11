@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from personal_memory.check import SKIP_NAMES
+from personal_memory.notes import SKIP_NAMES
 from personal_memory.evals.adapters import ADAPTERS, grep_adapter, recall_adapter
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"

@@ -3,9 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from personal_memory.frontmatter import FrontmatterError, parse_frontmatter, split_frontmatter
-
-SKIP_NAMES = frozenset({"README.md", "AGENTS.md", "CHANGELOG.md"})
+from personal_memory.notes import SKIP_NAMES, try_load_note
 
 
 @dataclass(frozen=True)
@@ -40,31 +38,23 @@ def check_brain(root: Path) -> CheckResult:
         if path.name in SKIP_NAMES:
             skipped += 1
             continue
-        text = path.read_text(encoding="utf-8")
-        try:
-            split = split_frontmatter(text)
-        except FrontmatterError as exc:
-            issues.append(NoteIssue(path, str(exc)))
+        note, error = try_load_note(root, path)
+        if error is not None:
+            issues.append(NoteIssue(path, error))
             continue
-        if split is None:
+        if note is None:
             skipped += 1
             continue
-        fields, _body = split
-        try:
-            meta = parse_frontmatter(fields)
-        except FrontmatterError as exc:
-            issues.append(NoteIssue(path, str(exc)))
-            continue
         notes += 1
-        previous = seen_ids.get(meta.id)
+        previous = seen_ids.get(note.meta.id)
         if previous is not None:
             issues.append(
                 NoteIssue(
                     path,
-                    f"duplicate id {meta.id!r} (also {previous.relative_to(root)})",
+                    f"duplicate id {note.meta.id!r} (also {previous.relative_to(root)})",
                 )
             )
         else:
-            seen_ids[meta.id] = path
+            seen_ids[note.meta.id] = path
 
     return CheckResult(notes=notes, skipped=skipped, issues=issues)
