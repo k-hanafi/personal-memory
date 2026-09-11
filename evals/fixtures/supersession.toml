@@ -1,5 +1,4 @@
 family = "supersession"
-description = "Current notes must outrank superseded ones on a default query. Under historical, the superseded notes must be findable and labeled superseded. Cases come in pairs so a retriever that simply never indexes old notes cannot pass."
 
 # Problem 1 and 2: three-note teaching load chain.
 
@@ -9,8 +8,6 @@ query = "teaching load"
 expect_path = "40-areas/teaching-load-2026-09.md"
 expect_status = "current"
 forbid_paths = ["40-areas/teaching-load-2026-01.md", "40-areas/teaching-load-2025-09.md"]
-holdout = false
-note = "Head of a three-note chain. The winter and fall 2025 notes are superseded and must not appear without historical. teaching-load-committee is a current note that also matches; it may appear but must not be on top."
 
 [[case]]
 id = "teaching-load-history-labels-old-notes"
@@ -18,8 +15,6 @@ query = "teaching load"
 historical = true
 expect_path = "40-areas/teaching-load-2026-09.md"
 expect_status = "current"
-holdout = false
-note = "Same query with history on. The current note stays on top and both older notes come back labeled superseded."
 
 [[case.also_present]]
 path = "40-areas/teaching-load-2026-01.md"
@@ -37,8 +32,6 @@ query = "summer teaching"
 expect_path = "60-decisions/accept-summer-teaching.md"
 expect_status = "current"
 forbid_paths = ["60-decisions/decline-summer-teaching.md"]
-holdout = false
-note = "Alex first declined, then accepted. The accept note supersedes the decline note. Two daily entries mention the decision in passing and may appear below the decision."
 
 [[case]]
 id = "summer-teaching-history-labels-declined"
@@ -46,8 +39,6 @@ query = "summer teaching"
 historical = true
 expect_path = "60-decisions/accept-summer-teaching.md"
 expect_status = "current"
-holdout = false
-note = "With history on, the reversed decision comes back labeled superseded so a reader can see the change of mind."
 
 [[case.also_present]]
 path = "60-decisions/decline-summer-teaching.md"
@@ -61,8 +52,6 @@ query = "office hours"
 expect_path = "40-areas/office-hours.md"
 expect_status = "current"
 forbid_paths = ["40-areas/office-hours-2026-01.md", "40-areas/office-hours-2025-09.md"]
-holdout = false
-note = "The current schedule note has the exact title Office hours. The winter and fall 2025 schedules are superseded."
 
 [[case]]
 id = "office-hours-history-labels-old-schedules"
@@ -70,8 +59,6 @@ query = "office hours"
 historical = true
 expect_path = "40-areas/office-hours.md"
 expect_status = "current"
-holdout = false
-note = "office-hours-2025-09 has no superseded_by field (a deliberate broken chain link). It is still status superseded, so it must be labeled that way here."
 
 [[case.also_present]]
 path = "40-areas/office-hours-2026-01.md"
@@ -89,8 +76,6 @@ query = "case competition"
 expect_path = "30-projects/undergrad-case-competition.md"
 expect_status = "current"
 forbid_paths = ["30-projects/case-competition-2025.md"]
-holdout = false
-note = "Both editions have the same title and near-identical bodies. Only the frontmatter status separates them. Several dailies and people notes mention the competition and may appear below the project note."
 
 [[case]]
 id = "case-competition-history-shows-last-year"
@@ -98,8 +83,6 @@ query = "case competition"
 historical = true
 expect_path = "30-projects/undergrad-case-competition.md"
 expect_status = "current"
-holdout = false
-note = "With history on, the 2025 edition comes back labeled superseded. This is the note that holds last year's sponsor."
 
 [[case.also_present]]
 path = "30-projects/case-competition-2025.md"
