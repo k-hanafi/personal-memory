@@ -1,8 +1,6 @@
 from pathlib import Path
 import json
 
-import pytest
-
 from personal_memory.cli import main
 from personal_memory.evals.baseline import compare, gate, gold, to_baseline
 from personal_memory.evals.receipt import write_receipt
@@ -193,7 +191,7 @@ def test_cli_compare_prints_flips(tmp_path: Path, capsys) -> None:
     assert out[-1] == "fixtures hash changed"
 
 
-def test_cli_update_baseline_preserves_justification_and_rejects_allow_regression(tmp_path: Path, capsys) -> None:
+def test_cli_update_baseline_preserves_justification(tmp_path: Path, capsys) -> None:
     baseline = tmp_path / "main.json"
     fixture = FIXTURES / "contradiction.toml"
     base_args = ["eval", "run", "--fixtures", str(fixture), "--corpus", str(BRAIN), "--out", str(tmp_path / "r.json")]
@@ -206,11 +204,6 @@ def test_cli_update_baseline_preserves_justification_and_rejects_allow_regressio
     assert main([*base_args, "--baseline", str(baseline), "--update-baseline"]) == 0
     assert json.loads(baseline.read_text())["justification"] == "keep me"
     assert "+0 / -0" in capsys.readouterr().out
-
-    assert main([*base_args, "--allow-regression", "trying things"]) == 0
-    assert json.loads((tmp_path / "r.json").read_text())["allow_regression"] == "trying things"
-    with pytest.raises(SystemExit):
-        main([*base_args, "--update-baseline", "--allow-regression", "no"])
 
 
 def test_committed_baseline_matches_fresh_run_and_gate_passes(monkeypatch) -> None:

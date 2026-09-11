@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 from personal_memory.cli import main
-from personal_memory.evals.receipt import strip_timestamp, write_receipt
+from personal_memory.evals.receipt import write_receipt
 from personal_memory.evals.report import render
 from personal_memory.evals.runner import fixtures_hash, run
 
@@ -45,6 +45,10 @@ confidence: high
 """
 
 
+def _strip_timestamp(receipt: dict) -> dict:
+    return {key: value for key, value in receipt.items() if key != "timestamp"}
+
+
 def _write(path: Path, text: str) -> Path:
     path.write_text(text, encoding="utf-8")
     return path
@@ -64,15 +68,15 @@ def test_run_is_deterministic(tmp_path: Path) -> None:
     fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
     first = run(BRAIN, fixture, ["recall", "grep"])
     second = run(BRAIN, fixture, ["recall", "grep"])
-    assert strip_timestamp(first) == strip_timestamp(second)
-    assert "timestamp" not in strip_timestamp(first)
+    assert _strip_timestamp(first) == _strip_timestamp(second)
+    assert "timestamp" not in _strip_timestamp(first)
     assert "timestamp" in first
 
     write_receipt(first, tmp_path / "runs" / "a.json")
     write_receipt(second, tmp_path / "runs" / "b.json")
     a = json.loads((tmp_path / "runs" / "a.json").read_text())
     b = json.loads((tmp_path / "runs" / "b.json").read_text())
-    assert strip_timestamp(a) == strip_timestamp(b)
+    assert _strip_timestamp(a) == _strip_timestamp(b)
     assert (tmp_path / "runs" / "a.json").read_text().endswith("}\n")
 
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 from personal_memory.evals.adapters import Hit
 from personal_memory.evals.fixtures import Case
 
+TOP_N = 5
+
 
 def check_abstain(case: Case, hits: list[Hit]) -> str | None:
     if not case.abstain:
@@ -39,7 +41,7 @@ def check_expect_confidence(case: Case, hits: list[Hit]) -> str | None:
 def check_forbid_paths(case: Case, hits: list[Hit]) -> str | None:
     if not case.forbid_paths:
         return None
-    top = {hit.path for hit in hits[:5]}
+    top = {hit.path for hit in hits[:TOP_N]}
     return "forbid_paths" if any(path in top for path in case.forbid_paths) else None
 
 

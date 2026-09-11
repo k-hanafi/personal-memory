@@ -11,7 +11,7 @@ from personal_memory.evals.adapters import ADAPTERS
 from personal_memory.evals.baseline import BASELINE_PATH, compare, gate, to_baseline
 from personal_memory.evals.receipt import write_receipt
 from personal_memory.evals.report import render
-from personal_memory.evals.runner import run
+from personal_memory.evals.runner import DEFAULT_CORPUS, DEFAULT_FIXTURES, run
 from personal_memory.get import get_note
 from personal_memory.recall import recall
 
@@ -76,18 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         "run",
         help="Run every fixture through each adapter, print the table, write a receipt",
     )
-    eval_run_parser.add_argument(
-        "--corpus",
-        type=Path,
-        default=Path("evals/brain"),
-        help="Folder of markdown notes to search (default evals/brain)",
-    )
-    eval_run_parser.add_argument(
-        "--fixtures",
-        type=Path,
-        default=Path("evals/fixtures"),
-        help="Folder of TOML fixture files, or one file (default evals/fixtures)",
-    )
+    _add_corpus_fixtures(eval_run_parser)
     eval_run_parser.add_argument(
         "--adapter",
         action="append",
@@ -115,11 +104,6 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Rewrite the baseline file from this run, keeping any existing justification",
     )
-    eval_run_parser.add_argument(
-        "--allow-regression",
-        metavar="REASON",
-        help="Record a reason in the receipt for a regression you accept locally",
-    )
     eval_compare_parser = eval_sub.add_parser(
         "compare",
         help="Print which cases flipped between two receipts or baselines",
@@ -130,6 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         "gate",
         help="Run the suite and exit 1 if a gold recall case regressed against the main baseline",
     )
+    _add_corpus_fixtures(eval_gate_parser)
     eval_gate_parser.add_argument(
         "--main-baseline",
         type=Path,
@@ -145,8 +130,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "get":
         return _run_get(args.brain, args.key)
     if args.command == "eval" and args.eval_command == "run":
-        if args.update_baseline and args.allow_regression is not None:
-            parser.error("--update-baseline and --allow-regression cannot be combined")
         return _run_eval(
             args.corpus,
             args.fixtures,
@@ -155,18 +138,33 @@ def main(argv: list[str] | None = None) -> int:
             out=args.out,
             baseline=args.baseline,
             update_baseline=args.update_baseline,
-            allow_regression=args.allow_regression,
         )
     if args.command == "eval" and args.eval_command == "compare":
         return _run_eval_compare(args.main, args.head)
-    if args.command == "eval" and args.eval_command == "gate":
-        return _run_eval_gate(args.main_baseline)
-    parser.error(f"unknown command {args.command}")
-    return 2
+    return _run_eval_gate(args.main_baseline, args.corpus, args.fixtures)
+
+
+def _add_corpus_fixtures(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--corpus",
+        type=Path,
+        default=DEFAULT_CORPUS,
+        help="Folder of markdown notes to search (default evals/brain)",
+    )
+    parser.add_argument(
+        "--fixtures",
+        type=Path,
+        default=DEFAULT_FIXTURES,
+        help="Folder of TOML fixture files, or one file (default evals/fixtures)",
+    )
+
+
+def _resolve(path: Path) -> Path:
+    return path.expanduser().resolve()
 
 
 def _run_check(brain: Path) -> int:
-    root = brain.expanduser().resolve()
+    root = _resolve(brain)
     if not root.is_dir():
         print(f"not a directory: {root}", file=sys.stderr)
         return 2
@@ -182,7 +180,7 @@ def _run_check(brain: Path) -> int:
 
 
 def _run_recall(brain: Path, query: str, *, historical: bool) -> int:
-    root = brain.expanduser().resolve()
+    root = _resolve(brain)
     if not root.is_dir():
         print(f"not a directory: {root}", file=sys.stderr)
         return 2
@@ -203,7 +201,7 @@ def _run_recall(brain: Path, query: str, *, historical: bool) -> int:
 
 
 def _run_get(brain: Path, key: str) -> int:
-    root = brain.expanduser().resolve()
+    root = _resolve(brain)
     if not root.is_dir():
         print(f"not a directory: {root}", file=sys.stderr)
         return 2
@@ -224,13 +222,12 @@ def _run_eval(
     out: Path | None,
     baseline: Path,
     update_baseline: bool,
-    allow_regression: str | None,
 ) -> int:
-    corpus = corpus.expanduser()
-    fixtures = fixtures.expanduser()
-    baseline = baseline.expanduser()
+    corpus = _resolve(corpus)
+    fixtures = _resolve(fixtures)
+    baseline = _resolve(baseline)
     if out is not None:
-        out = out.expanduser()
+        out = _resolve(out)
     if not corpus.is_dir():
         print(f"not a directory: {corpus}", file=sys.stderr)
         return 2
@@ -242,8 +239,6 @@ def _run_eval(
     except ValueError as exc:
         print(exc, file=sys.stderr)
         return 2
-    if allow_regression is not None:
-        receipt["allow_regression"] = allow_regression
     if out is None:
         stamp = datetime.fromisoformat(receipt["timestamp"]).strftime("%Y%m%dT%H%M%SZ")
         out = Path("evals/runs") / f"{stamp}.json"
@@ -261,8 +256,8 @@ def _run_eval(
 
 
 def _run_eval_compare(main_path: Path, head_path: Path) -> int:
-    main = _load_json(main_path.expanduser())
-    head = _load_json(head_path.expanduser())
+    main = _load_json(_resolve(main_path))
+    head = _load_json(_resolve(head_path))
     if main is None or head is None:
         print(f"file not found: {main_path if main is None else head_path}", file=sys.stderr)
         return 2
@@ -284,14 +279,14 @@ def _run_eval_compare(main_path: Path, head_path: Path) -> int:
     return 0
 
 
-def _run_eval_gate(main_baseline_path: Path) -> int:
+def _run_eval_gate(main_baseline_path: Path, corpus: Path, fixtures: Path) -> int:
     try:
-        fresh = run(Path("evals/brain"), Path("evals/fixtures"), list(ADAPTERS))
+        fresh = run(_resolve(corpus), _resolve(fixtures), list(ADAPTERS))
     except (OSError, ValueError) as exc:
         print(f"run eval gate from the repository root: {exc}", file=sys.stderr)
         return 2
-    main_baseline = _load_json(main_baseline_path.expanduser())
-    head_baseline = _load_json(Path(BASELINE_PATH))
+    main_baseline = _load_json(_resolve(main_baseline_path))
+    head_baseline = _load_json(_resolve(Path(BASELINE_PATH)))
     print(render(fresh, main_baseline))
     result = gate(fresh, main_baseline, head_baseline)
     for message in result.messages:
