@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from personal_memory.check import check_brain
 from personal_memory.frontmatter import FrontmatterError, parse_frontmatter, split_frontmatter
 
@@ -17,7 +19,7 @@ def test_split_skips_files_without_frontmatter() -> None:
 
 
 def test_parse_rejects_non_kebab_id() -> None:
-    try:
+    with pytest.raises(FrontmatterError, match="kebab-case"):
         parse_frontmatter(
             {
                 "id": "Teaching Load",
@@ -27,14 +29,10 @@ def test_parse_rejects_non_kebab_id() -> None:
                 "confidence": "high",
             }
         )
-    except FrontmatterError as exc:
-        assert "kebab-case" in str(exc)
-    else:
-        raise AssertionError("expected FrontmatterError")
 
 
 def test_parse_rejects_bad_status() -> None:
-    try:
+    with pytest.raises(FrontmatterError, match="status"):
         parse_frontmatter(
             {
                 "id": "teaching-load",
@@ -44,7 +42,3 @@ def test_parse_rejects_bad_status() -> None:
                 "confidence": "high",
             }
         )
-    except FrontmatterError as exc:
-        assert "status" in str(exc)
-    else:
-        raise AssertionError("expected FrontmatterError")

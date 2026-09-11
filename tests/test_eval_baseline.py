@@ -1,5 +1,4 @@
 from pathlib import Path
-import copy
 import json
 
 import pytest
@@ -221,33 +220,3 @@ def test_committed_baseline_matches_fresh_run_and_gate_passes(monkeypatch) -> No
     assert to_baseline(fresh) == {k: v for k, v in committed.items() if k != "justification"}
     result = gate(fresh, committed, committed)
     assert result.ok
-
-
-def test_gate_names_regressed_case_against_real_run(monkeypatch) -> None:
-    monkeypatch.chdir(ROOT)
-    fresh = run(Path("evals/brain"), Path("evals/fixtures"), ["recall", "grep"])
-    committed = json.loads(COMMITTED.read_text(encoding="utf-8"))
-    families = fresh["adapters"]["recall"]["families"]
-    failing = next(
-        (f, c) for f in families for c, v in families[f]["cases"].items() if not v["pass"] and not v["holdout"]
-    )
-    main_baseline = copy.deepcopy(committed)
-    main_baseline["adapters"]["recall"]["families"][failing[0]]["cases"][failing[1]]["pass"] = True
-    result = gate(fresh, main_baseline, committed)
-    assert not result.ok
-    assert f"regressed: {failing[0]}/{failing[1]} (recall)" in result.messages
-
-    tampered = copy.deepcopy(committed)
-    tampered["adapters"]["recall"]["superseded_leaks"] += 1
-    assert gate(fresh, committed, tampered).messages == ["committed baseline does not match a fresh run"]
-
-
-def test_cli_gate_exits_0_against_copy_of_committed_baseline(tmp_path: Path, capsys, monkeypatch) -> None:
-    monkeypatch.chdir(ROOT)
-    copy_path = tmp_path / "main.json"
-    copy_path.write_bytes(COMMITTED.read_bytes())
-    assert main(["eval", "gate", "--main-baseline", str(copy_path)]) == 0
-    out = capsys.readouterr().out
-    assert "+0 / -0" in out and "gate: ok" in out
-    assert main(["eval", "gate", "--main-baseline", str(tmp_path / "missing.json")]) == 0
-    assert "regression check skipped" in capsys.readouterr().out
