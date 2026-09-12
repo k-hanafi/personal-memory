@@ -31,3 +31,5 @@ def test_eval_brain_has_no_denied_names() -> None:
 def test_eval_brain_passes_check() -> None:
     result = check_brain(BRAIN)
     assert result.ok, [f"{i.path.name}: {i.message}" for i in result.issues]
+    assert result.notes == 109
+    assert result.skipped == 5
