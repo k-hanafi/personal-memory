@@ -1,6 +1,6 @@
 family = "citation"
 
-# Problem 11: a fact buried past line 60 of a long note.
+# Problem 11
 
 [[case]]
 id = "final-exam-weight-buried-line"
@@ -9,7 +9,7 @@ expect_path = "30-projects/econometrics-fall-2026.md"
 expect_line = 64
 expect_status = "current"
 
-# Problem 1 as a citation: the claim is the sentence, not the heading.
+# Problem 1
 
 [[case]]
 id = "teaching-load-claim-line"
@@ -18,7 +18,7 @@ expect_path = "40-areas/teaching-load-2026-09.md"
 expect_line = 12
 expect_status = "current"
 
-# Problem 16 as a citation: the schedule line, not the title.
+# Problem 16
 
 [[case]]
 id = "office-hours-schedule-line"
@@ -27,7 +27,7 @@ expect_path = "40-areas/office-hours.md"
 expect_line = 12
 expect_status = "current"
 
-# Problem 28: a date line in a short project note, against a source dump with the same date.
+# Problem 28
 
 [[case]]
 id = "grant-deadline-line"
@@ -36,7 +36,7 @@ expect_path = "30-projects/grant-application.md"
 expect_line = 14
 expect_status = "current"
 
-# Problem 71: a note saved with CRLF line endings.
+# Problem 71
 
 [[case]]
 id = "crlf-note-title-line"
@@ -45,7 +45,7 @@ expect_path = "80-reading/reading-hiring-frictions-survey.md"
 expect_line = 9
 expect_status = "current"
 
-# Problem 73: a claim that spans three lines.
+# Problem 73
 
 [[case]]
 id = "open-textbook-rationale-line"

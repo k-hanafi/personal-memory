@@ -1,6 +1,6 @@
 family = "contradiction"
 
-# Problem 12: the planted contradiction. 12,000 versus 9,500.
+# Problem 12
 
 [[case]]
 id = "research-budget-both-surface"
@@ -12,10 +12,10 @@ id = "research-budget-second-phrasing"
 query = "budget for the year"
 contradiction = ["40-areas/lab-budget.md", "40-areas/research-account.md"]
 
-# Problem 9: near-duplicate names are not a contradiction.
+# Problem 9
 
 [[case]]
-id = "marcus-both-present-not-a-contradiction"
+id = "marcus-both-present"
 query = "Marcus"
 
 [[case.also_present]]
@@ -26,10 +26,10 @@ status = "current"
 path = "50-people/marcus-bellamy.md"
 status = "current"
 
-# Problem 57: three notes agree about the same journal.
+# Problem 57
 
 [[case]]
-id = "northbridge-review-three-notes-agree"
+id = "northbridge-review-three-notes-present"
 query = "Northbridge Review"
 
 [[case.also_present]]

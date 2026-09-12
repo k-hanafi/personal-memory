@@ -1,6 +1,6 @@
 family = "named-thing"
 
-# Problem 5: id and title diverge. Both must find the same note.
+# Problem 5
 
 [[case]]
 id = "exact-id-assessment-policy"
@@ -16,7 +16,7 @@ expect_path = "40-areas/assessment-policy.md"
 expect_line = 9
 expect_status = "current"
 
-# Problem 6: single alias in frontmatter.
+# Problem 6
 
 [[case]]
 id = "alias-sam"
@@ -25,7 +25,7 @@ expect_path = "50-people/samir-okonkwo.md"
 expect_line = 10
 expect_status = "current"
 
-# Problem 7: multi-alias written as one comma string.
+# Problem 7
 
 [[case]]
 id = "multi-alias-pn"
@@ -43,7 +43,7 @@ expect_path = "50-people/dana-whitfield.md"
 expect_line = 9
 expect_status = "current"
 
-# Problem 24: two people share the surname.
+# Problem 24
 
 [[case]]
 id = "title-substring-okonkwo-both-present"
@@ -57,7 +57,7 @@ status = "current"
 path = "50-people/bea-okonkwo.md"
 status = "current"
 
-# Problem 8: near-duplicate names.
+# Problem 8
 
 [[case]]
 id = "near-duplicate-marcus-bell"
@@ -67,7 +67,7 @@ expect_line = 9
 expect_status = "current"
 forbid_paths = ["50-people/marcus-bellamy.md"]
 
-# Problem 10 and the spec example: generic-to-named.
+# Problem 10
 
 [[case]]
 id = "generic-to-named-department-chair"
@@ -83,7 +83,7 @@ expect_path = "50-people/samir-okonkwo.md"
 expect_line = 12
 expect_status = "current"
 
-# Problem 14: the filed note must beat the raw source dump.
+# Problem 14
 
 [[case]]
 id = "filed-note-beats-source-dump"
@@ -92,7 +92,7 @@ expect_path = "30-projects/econometrics-fall-2026.md"
 expect_status = "current"
 expect_confidence = "high"
 
-# Problem 16: the state note must beat passing daily mentions.
+# Problem 16
 
 [[case]]
 id = "state-note-beats-daily-mentions"
