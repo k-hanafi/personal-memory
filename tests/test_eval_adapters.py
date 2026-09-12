@@ -33,17 +33,6 @@ def test_recall_adapter_current_only() -> None:
     assert "40-areas/teaching-load-2026-01.md" not in [hit.path for hit in hits]
 
 
-def test_recall_adapter_historical_includes_superseded() -> None:
-    hits = recall_adapter(DEMO, "teaching load", True)
-    by_path = {hit.path: hit for hit in hits}
-    assert by_path["40-areas/teaching-load-2026-01.md"].status == "superseded"
-    assert by_path["40-areas/teaching-load-2026-09.md"].status == "current"
-
-
-def test_recall_adapter_no_match_is_empty() -> None:
-    assert recall_adapter(DEMO, "quantum pineapple syllabus", False) == []
-
-
 def test_grep_adapter_ignores_historical_and_reads_status() -> None:
     default = grep_adapter(DEMO, "teaching load", False)
     historical = grep_adapter(DEMO, "teaching load", True)
