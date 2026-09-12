@@ -79,6 +79,32 @@ def test_submit_refuses_bad_frontmatter(brain: Path) -> None:
     assert "kebab-case" in outcome.reason
 
 
+@pytest.mark.parametrize("field", ["type", "title", "aliases", "source", "supersedes"])
+def test_submit_refuses_newline_in_rendered_fields(brain: Path, field: str) -> None:
+    outcome = submit(brain, _create(**{field: "x\n---\n"}))
+    assert outcome.status == "blocked"
+    assert "one line" in (outcome.reason or "")
+    assert not (brain / QUEUE_DIR).exists()
+
+
+def test_supersede_with_newline_in_type_does_not_flip_old(brain: Path) -> None:
+    proposal = Proposal(
+        "supersede",
+        "user, 2027-01-05",
+        "high",
+        "2027-01-05",
+        path="40-areas/teaching-load-2027-01.md",
+        id="teaching-load-2027-01",
+        type="area\n---\n",
+        title="Teaching load (fall)",
+        body="Three courses.",
+        supersedes="teaching-load-2026-09",
+    )
+    assert submit(brain, proposal).status == "blocked"
+    assert get_note(brain, "teaching-load-2026-09").meta.status == "current"
+    assert get_note(brain, "teaching-load-2027-01") is None
+
+
 def test_submit_reports_duplicate_id_and_names_target(brain: Path) -> None:
     outcome = submit(brain, _create(path="50-people/samir.md", id="samir-okonkwo", title="Someone else"))
     assert outcome.status == "duplicate"

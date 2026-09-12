@@ -11,6 +11,7 @@ from personal_memory.frontmatter import DATE_RE, FRONTMATTER_RE, FrontmatterErro
 from personal_memory.notelog import append_entry, normalize_claim, parse_log
 from personal_memory.notes import Note, load_notes, norm, tokenize
 from personal_memory.recall import WIKILINK_RE
+from personal_memory.unfiled import resolve_source
 
 QUEUE_DIR = Path(".personal-memory") / "queue"
 APPLIED_DIR = Path(".personal-memory") / "applied"
@@ -229,10 +230,16 @@ def _validate_new_note(root: Path, notes: list[Note], proposal: Proposal, source
         return _Verdict("blocked", f"a file already exists at {proposal.path!r}")
     if not proposal.title:
         return _Verdict("blocked", "title is required")
+    if "\n" in proposal.title:
+        return _Verdict("blocked", "title must be one line")
+    fields = _frontmatter_fields(proposal, proposal.confidence)
     try:
-        parse_frontmatter(_frontmatter_fields(proposal, proposal.confidence))
+        parse_frontmatter(fields)
     except FrontmatterError as exc:
         return _Verdict("blocked", str(exc))
+    for name, value in fields.items():
+        if "\n" in value:
+            return _Verdict("blocked", f"{name} must be one line")
     if proposal.source is not None and not _is_source(root, proposal.source, sources_dir):
         return _Verdict("blocked", f"source {proposal.source!r} is not a file under {sources_dir}/")
 
@@ -288,12 +295,7 @@ def _effective_confidence(root: Path, proposal: Proposal, sources_dir: str) -> s
 
 
 def _is_source(root: Path, source: str, sources_dir: str) -> bool:
-    path = (root / source).resolve()
-    try:
-        relative = path.relative_to(root)
-    except ValueError:
-        return False
-    return path.is_file() and relative.parts[:1] == (sources_dir,)
+    return resolve_source(root, source, sources_dir) is not None
 
 
 def _candidates(notes: list[Note], proposal: Proposal) -> tuple[str, ...]:

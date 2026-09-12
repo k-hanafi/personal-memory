@@ -13,6 +13,18 @@ class UnfiledResult:
     unfiled: tuple[Path, ...]
 
 
+def resolve_source(root: Path, source: str, sources_dir: str) -> str | None:
+    """Posix path of source relative to root, if it is a file under sources_dir/."""
+    path = (root / source).resolve()
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return None
+    if path.is_file() and relative.parts[:1] == (sources_dir,):
+        return relative.as_posix()
+    return None
+
+
 def unfiled(root: Path, *, sources_dir: str = "sources") -> UnfiledResult:
     """Files under sources/ that no note names as its source.
 
@@ -28,10 +40,11 @@ def unfiled(root: Path, *, sources_dir: str = "sources") -> UnfiledResult:
     for note in load_notes(root):
         source = note.meta.extra.get("source", "").strip()
         if source:
-            filed.add(source)
+            filed.add(resolve_source(root, source, sources_dir) or source)
         for entry in parse_log(note.text).entries:
             if entry.provenance.startswith("source:"):
-                filed.add(entry.provenance.removeprefix("source:").strip())
+                raw = entry.provenance.removeprefix("source:").strip()
+                filed.add(resolve_source(root, raw, sources_dir) or raw)
     items = sorted(
         path.relative_to(root)
         for path in folder.rglob("*")
