@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from personal_memory.frontmatter import (
-    FRONTMATTER_RE,
     Frontmatter,
     FrontmatterError,
     parse_frontmatter,
@@ -16,7 +15,6 @@ SKIP_NAMES = frozenset({"README.md", "AGENTS.md", "CHANGELOG.md"})
 
 @dataclass(frozen=True)
 class Note:
-    path: Path
     relative: Path
     text: str
     meta: Frontmatter
@@ -66,25 +64,18 @@ def try_load_note(
         meta = parse_frontmatter(fields)
     except FrontmatterError as exc:
         return None, str(exc)
+    header = text[: len(text) - len(body)]
     return (
         Note(
-            path=path,
             relative=path.relative_to(root),
             text=text,
             meta=meta,
             body=body,
-            body_start_line=_body_start_line(text),
+            body_start_line=header.count("\n") + 1,
             title=_title_of(body, meta.id),
         ),
         None,
     )
-
-
-def _body_start_line(text: str) -> int:
-    match = FRONTMATTER_RE.match(text)
-    if match is None:
-        return 1
-    return text[: match.end()].count("\n") + 1
 
 
 def _title_of(body: str, fallback: str) -> str:
