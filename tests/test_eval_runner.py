@@ -64,7 +64,7 @@ def _budget_corpus(tmp_path: Path) -> Path:
     return corpus
 
 
-def test_run_is_deterministic(tmp_path: Path) -> None:
+def test_receipt_shape_and_determinism(tmp_path: Path) -> None:
     fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
     first = run(BRAIN, fixture, ["recall", "grep"])
     second = run(BRAIN, fixture, ["recall", "grep"])
@@ -79,14 +79,10 @@ def test_run_is_deterministic(tmp_path: Path) -> None:
     assert _strip_timestamp(a) == _strip_timestamp(b)
     assert (tmp_path / "runs" / "a.json").read_text().endswith("}\n")
 
-
-def test_receipt_shape_and_counts(tmp_path: Path) -> None:
-    fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
-    receipt = run(BRAIN, fixture, ["recall", "grep"])
-    assert set(receipt) == {"commit", "fixtures_hash", "corpus", "fixtures", "timestamp", "adapters"}
-    assert receipt["fixtures_hash"] == fixtures_hash(fixture, BRAIN)
-    assert set(receipt["adapters"]) == {"recall", "grep"}
-    for result in receipt["adapters"].values():
+    assert set(first) == {"commit", "fixtures_hash", "corpus", "fixtures", "timestamp", "adapters"}
+    assert first["fixtures_hash"] == fixtures_hash(fixture, BRAIN)
+    assert set(first["adapters"]) == {"recall", "grep"}
+    for result in first["adapters"].values():
         assert set(result) == {"families", "superseded_leaks", "abstention_accuracy"}
         family = result["families"]["smoke"]
         assert set(family) == {"passed", "total", "hit_at_1", "recall_at_5", "cases"}
@@ -100,7 +96,7 @@ def test_receipt_shape_and_counts(tmp_path: Path) -> None:
                 assert set(hit) == {"path", "start_line", "end_line", "status", "confidence", "contradicted_by"}
         assert family["cases"]["samir-by-id"]["holdout"] is True
 
-    recall_smoke = receipt["adapters"]["recall"]["families"]["smoke"]
+    recall_smoke = first["adapters"]["recall"]["families"]["smoke"]
     assert recall_smoke["passed"] == 3
     assert recall_smoke["cases"]["teaching-load-current"]["hits"][0]["path"] == "40-areas/teaching-load-2026-09.md"
 

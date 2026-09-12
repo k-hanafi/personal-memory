@@ -45,6 +45,7 @@ def test_family_name_matches_filename(family: Family) -> None:
 
 
 def test_referenced_paths_exist_in_brain(family: Family, case: Case) -> None:
+    assert case.holdout is False
     missing = [path for path in referenced_paths(case) if not (BRAIN / path).is_file()]
     assert not missing
 

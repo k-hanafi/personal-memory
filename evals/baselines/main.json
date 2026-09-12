@@ -81,12 +81,12 @@
         },
         "contradiction": {
           "cases": {
-            "marcus-both-present-not-a-contradiction": {
+            "marcus-both-present": {
               "failure": null,
               "holdout": false,
               "pass": true
             },
-            "northbridge-review-three-notes-agree": {
+            "northbridge-review-three-notes-present": {
               "failure": null,
               "holdout": false,
               "pass": true
@@ -302,12 +302,12 @@
         },
         "contradiction": {
           "cases": {
-            "marcus-both-present-not-a-contradiction": {
+            "marcus-both-present": {
               "failure": null,
               "holdout": false,
               "pass": true
             },
-            "northbridge-review-three-notes-agree": {
+            "northbridge-review-three-notes-present": {
               "failure": null,
               "holdout": false,
               "pass": true
@@ -445,6 +445,6 @@
   },
   "corpus": "evals/brain",
   "fixtures": "evals/fixtures",
-  "fixtures_hash": "6c7d48da2c109ac843a1819f033448218b3f148b98b23634179f94d1eb9f8edf",
-  "justification": "Dropped named-thing/substring-trap-teaching-load: same query and expect_path/status as supersession/teaching-load-current-wins, with no extra assert."
+  "fixtures_hash": "b654ecb609ce03de986cbc71edc11a2f7bde276004fcea34b0eb4edfb6100353",
+  "justification": "Renamed contradiction presence-only case ids (marcus-both-present, northbridge-review-three-notes-present). Fixture comments keep Problem N only."
 }

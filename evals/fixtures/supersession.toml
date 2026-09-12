@@ -1,6 +1,6 @@
 family = "supersession"
 
-# Problem 1 and 2: three-note teaching load chain.
+# Problem 1 and 2
 
 [[case]]
 id = "teaching-load-current-wins"
@@ -24,7 +24,7 @@ status = "superseded"
 path = "40-areas/teaching-load-2025-09.md"
 status = "superseded"
 
-# Problem 3: a reversed decision. Supersession across decisions, not areas.
+# Problem 3
 
 [[case]]
 id = "summer-teaching-current-wins"
@@ -44,7 +44,7 @@ expect_status = "current"
 path = "60-decisions/decline-summer-teaching.md"
 status = "superseded"
 
-# Problem 16 plus the office hours chain: two superseded schedules.
+# Problem 16
 
 [[case]]
 id = "office-hours-current-wins"

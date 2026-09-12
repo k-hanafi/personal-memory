@@ -8,8 +8,6 @@ from personal_memory.evals.report import render
 from personal_memory.evals.runner import run
 
 ROOT = Path(__file__).resolve().parents[1]
-BRAIN = ROOT / "evals" / "brain"
-FIXTURES = ROOT / "evals" / "fixtures"
 COMMITTED = ROOT / "evals" / "baselines" / "main.json"
 
 
@@ -192,9 +190,17 @@ def test_cli_compare_prints_flips(tmp_path: Path, capsys) -> None:
 
 
 def test_cli_update_baseline_preserves_justification(tmp_path: Path, capsys) -> None:
+    (tmp_path / "n.md").write_text(
+        "---\nid: n\ntype: area\nas_of: 2026-09-01\nstatus: current\nconfidence: high\n---\n\n# n\n\nbudget\n",
+        encoding="utf-8",
+    )
+    fixture = tmp_path / "smoke.toml"
+    fixture.write_text(
+        'family = "smoke"\n\n[[case]]\nid = "hit"\nquery = "budget"\nexpect_path = "n.md"\n',
+        encoding="utf-8",
+    )
     baseline = tmp_path / "main.json"
-    fixture = FIXTURES / "contradiction.toml"
-    base_args = ["eval", "run", "--fixtures", str(fixture), "--corpus", str(BRAIN), "--out", str(tmp_path / "r.json")]
+    base_args = ["eval", "run", "--fixtures", str(fixture), "--corpus", str(tmp_path), "--out", str(tmp_path / "r.json")]
     assert main([*base_args, "--baseline", str(baseline), "--update-baseline"]) == 0
     assert capsys.readouterr().out.splitlines()[-1] == str(baseline)
     written = json.loads(baseline.read_text())
