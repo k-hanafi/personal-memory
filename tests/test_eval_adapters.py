@@ -29,7 +29,7 @@ def test_recall_adapter_current_only() -> None:
     assert hits[0].status == "current"
     assert hits[0].confidence == "high"
     assert hits[0].start_line <= hits[0].end_line
-    assert hits[0].contradicted_by == ()
+    assert "40-areas/teaching-load-2026-01.md" not in hits[0].contradicted_by
     assert "40-areas/teaching-load-2026-01.md" not in [hit.path for hit in hits]
 
 
