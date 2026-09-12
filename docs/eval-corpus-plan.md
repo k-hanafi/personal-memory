@@ -597,18 +597,15 @@ After wave 4 the corpus is frozen for the rest of v1.
   Options: exclude `type: daily` from `contradicted_by`, or leave it and let
   the fixture fail until a rule is chosen. Leaning toward the fixture
   failing first so the rule is measured, not assumed.
-- **`expect_confidence`.** Problem 19 wants to assert that the returned card
-  carries `confidence: low`. The fixture format in the spec has no such
-  field. Adding it is a one-line spec change; do it when fixtures land.
 - **Course titles vs codes.** Real courses have codes and users will search
   by them. Fictional codes risk colliding with real ones. Current choice is
   titles only. Revisit if a Layer 2 failure shows code-style queries matter.
 - **`get` fixtures.** Rows 35 to 39 and 85 test `get`, but the fixture
   format only describes `recall` queries. Either add a `get` field to a
   case or give `get` its own fixture file. Decide when fixtures land.
-- **`expect_as_of` and `expect_confidence`.** Row 49 needs to assert the
-  card's `as_of`; rows 19 and 60 need to assert `confidence`. Neither field
-  exists in the spec's fixture table. Both are one-line spec changes.
+- **`expect_as_of`.** Row 49 needs to assert the card's `as_of`. The
+  fixture format has no such field. `expect_confidence` is already in the
+  spec and used in fixtures.
 - **Links hide names from keyword search.** `_keyword_score` strips
   `[[priya-natarajan]]` before scoring, so a daily that links Priya has no
   "priya" token in its body (row 80). Timeline questions about people fail

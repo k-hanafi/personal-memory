@@ -67,26 +67,24 @@ The corpus is versioned by content hash. Any change to any file in `evals/brain/
 
 Fixtures are TOML files, one per family, in `evals/fixtures/`. TOML because Python 3.11 reads it with the standard library (`tomllib`), because it is easier for a person to write than JSON, and because this project has no dependencies and test data is not a good reason to add one.
 
-Here is the supersession family, using notes that exist in the demo brain today:
+The suite runs on `evals/brain/`. Live cases are in `evals/fixtures/`; this is a shortened copy of `evals/fixtures/supersession.toml`:
 
 ```toml
 family = "supersession"
-description = "Current notes must outrank superseded ones. Superseded notes must be findable and labeled when asked for history."
+description = "Current notes must outrank superseded ones on a default query. Under historical, the superseded notes must be findable and labeled superseded."
 
 [[case]]
 id = "teaching-load-current-wins"
 query = "teaching load"
 expect_path = "40-areas/teaching-load-2026-09.md"
-expect_line = 12
 expect_status = "current"
-forbid_paths = ["40-areas/teaching-load-2026-01.md"]
+forbid_paths = ["40-areas/teaching-load-2026-01.md", "40-areas/teaching-load-2025-09.md"]
 
 [[case]]
-id = "teaching-load-history-labels-old-note"
+id = "teaching-load-history-labels-old-notes"
 query = "teaching load"
 historical = true
 expect_path = "40-areas/teaching-load-2026-09.md"
-expect_line = 12
 expect_status = "current"
 
 [[case.also_present]]
@@ -323,11 +321,11 @@ Any of these means the eval system is not doing its job:
 
 Evals come before the features they will measure, so that each feature is built to pass a case that already exists.
 
-1. `evals/brain/` seeded from the demo brain, plus one planted contradiction pair and one aliased person. Grep guard for real names.
-2. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `grep` (pure Python).
-3. Runner that writes a receipt. Table output with the paired column.
-4. Fixture families in this order: supersession, abstention, named-thing, citation, contradiction. Ten to fifteen cases total to start.
-5. Commit the first baseline. Wire the CI gate.
+1. Done. `evals/brain/` seeded from the demo brain, plus one planted contradiction pair and one aliased person. Grep guard for real names.
+2. Done. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `grep` (pure Python).
+3. Done. Runner that writes a receipt. Table output with the paired column.
+4. Done. Fixture families in this order: supersession, abstention, named-thing, citation, contradiction. Ten to fifteen cases total to start.
+5. Done. Commit the first baseline. Wire the CI gate.
 6. Vault fixture file and the first replay session. Turn the first three real failures into fictional fixtures.
 7. Wikilink hops, measured against the named-thing family. First pre-registered prediction.
 8. When the MCP server lands: Layer 3 question set, pass^3 runner, token logging.

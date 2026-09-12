@@ -12,16 +12,21 @@ code.
 
 ## Status
 
-2026-09-07: renamed from pith. Spec plus a schema checker. No MCP server yet.
-Filing loop is specified in `docs/v1-spec.md` (sources dump, agent proposes,
-the engine applies, human reviews low confidence).
+2026-09-11: spec locked. `check` validates frontmatter. `recall` returns
+evidence cards. `get` fetches one note by id or path. Layer 1 evals are
+complete (`personal-memory eval run`, committed baseline, `eval-gate` CI).
+No MCP, no filing queue yet. Filing is specified in `docs/v1-spec.md`.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
-personal-memory check examples/demo-brain
 pytest
+personal-memory check examples/demo-brain
+personal-memory recall examples/demo-brain teaching load
+personal-memory get examples/demo-brain alex-rivera
+personal-memory eval run
+bash scripts/eval-gate.sh
 ```
 
 `python3 -m venv .venv` creates a project-local install folder so Personal Memory
@@ -63,5 +68,7 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 | Path | What it is |
 |---|---|
 | `docs/v1-spec.md` | Product plan. Wins over code until we change it. |
+| `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
 | `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
-| `src/personal_memory/` | Engine (today: frontmatter check only) |
+| `evals/brain/` | Fictional Layer 1 eval corpus |
+| `src/personal_memory/` | Engine: `check`, `recall`, `get`, and `eval` |
