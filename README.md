@@ -12,18 +12,24 @@ code.
 
 ## Status
 
-2026-09-10: `check`, `recall`, `get`, evals with a CI gate, and the write path
-(`propose`, `queue`, `apply`, `remember`, `unfiled`). No MCP server yet. The
-engine holds no model: the coding agent decides what to file, the engine
-validates and writes. See the Write section of `docs/v1-spec.md`.
+2026-09-12: spec locked. `check` validates frontmatter. `recall` returns
+evidence cards. `get` fetches one note by id or path. Layer 1 evals are
+complete (`personal-memory eval run`, committed baseline, `eval-gate` CI).
+The write path exists (`propose`, `queue`, `apply`, `remember`, `unfiled`).
+No MCP server yet. The engine holds no model: the coding agent decides what
+to file, the engine validates and writes. See the Write section of
+`docs/v1-spec.md`.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e ".[dev]"
+pytest
 personal-memory check examples/demo-brain
 personal-memory recall examples/demo-brain teaching load
-pytest
+personal-memory get examples/demo-brain alex-rivera
+personal-memory eval run
+bash scripts/eval-gate.sh
 ```
 
 ## Writing to a brain
@@ -60,7 +66,7 @@ what searching the folder already gets you before installing anything.
 | abstention | 2/6 | 1/6 |
 | citation | 4/6 | 0/6 |
 | contradiction | 4/4 | 2/4 |
-| named-thing | 11/12 | 2/12 |
+| named-thing | 10/11 | 2/11 |
 | supersession | 7/8 | 2/8 |
 
 These numbers are for the fictional corpus in `evals/brain/` and match the committed
@@ -83,5 +89,7 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 | Path | What it is |
 |---|---|
 | `docs/v1-spec.md` | Product plan. Wins over code until we change it. |
+| `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
 | `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
-| `src/personal_memory/` | Engine: check, recall, get, filing (proposals, apply, remember), unfiled, evals |
+| `evals/brain/` | Fictional Layer 1 eval corpus |
+| `src/personal_memory/` | Engine: `check`, `recall`, `get`, filing (`propose`, `apply`, `remember`), `unfiled`, and `eval` |

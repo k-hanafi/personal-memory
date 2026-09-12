@@ -2,6 +2,7 @@ from pathlib import Path
 
 from personal_memory.cli import main
 from personal_memory.get import get_note
+from personal_memory.notes import SKIP_NAMES
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
 
@@ -34,6 +35,17 @@ def test_get_returns_superseded_note() -> None:
 def test_get_missing_is_none() -> None:
     assert get_note(DEMO, "no-such-note") is None
     assert get_note(DEMO, "../outside.md") is None
+
+
+def test_get_by_path_skips_protocol_names(tmp_path: Path) -> None:
+    text = (
+        "---\nid: readme\ntype: area\nas_of: 2026-09-01\n"
+        "status: current\nconfidence: high\n---\n\n# Readme\n"
+    )
+    for name in SKIP_NAMES:
+        (tmp_path / name).write_text(text, encoding="utf-8")
+        assert get_note(tmp_path, name) is None
+        assert get_note(tmp_path, "readme") is None
 
 
 def test_cli_get_prints_note(capsys) -> None:

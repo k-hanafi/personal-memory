@@ -1,56 +1,43 @@
 family = "abstention"
-description = "Queries the brain cannot answer must return zero cards. Saying the brain does not have it is a successful answer. Near misses share words with a real note but ask for something that note does not say."
 
-# Problem 17: clean abstention. No note mentions parking.
+# Problem 17
 
 [[case]]
 id = "parking-permit-not-in-brain"
 query = "parking permit"
 abstain = true
-holdout = false
-note = "Neither word appears anywhere in the corpus."
 
-# Problem 18: near miss. The decision note says enrollment was thin but gives no number.
+# Problem 18
 
 [[case]]
 id = "evening-elective-enrollment-number"
 query = "evening elective enrollment"
 abstain = true
-holdout = false
-note = "drop-evening-section says enrollment was already thin and gives no figure. Daily 2026-08-19 mentions enrollment talk. Neither answers how many students were enrolled, so the right answer is nothing. Token matching cannot tell mentions the topic from answers the question."
 
-# Problem 19: near miss on a low-confidence note.
+# Problem 19
 
 [[case]]
 id = "sabbatical-start-date"
 query = "sabbatical start date"
 abstain = true
-holdout = false
-note = "sabbatical-plan says the start date is undecided and carries confidence low. A card that says undecided is not an answer to when. The fixture format cannot pair abstain with expect_confidence, so the low label is not asserted here."
 
-# Problem 59: clean abstention with a word that appears nowhere.
+# Problem 59
 
 [[case]]
 id = "dissertation-defense-date"
 query = "dissertation defense date"
 abstain = true
-holdout = false
-note = "The word dissertation appears in no note. The thesis note uses thesis, never dissertation."
 
-# Problem 64: near miss on a date the note explicitly says is not set.
+# Problem 64
 
 [[case]]
 id = "thesis-defense-date"
 query = "thesis defense date"
 abstain = true
-holdout = false
-note = "thesis-supervision-amankwah says the thesis defense date is not set. Every query word is in that line, and the line says there is no answer."
 
-# Problem 60: mentioned but never named.
+# Problem 60
 
 [[case]]
 id = "sponsor-contact-name"
 query = "sponsor contact at Quill and Timber"
 abstain = true
-holdout = false
-note = "The sponsor call note says their marketing lead is the sponsor contact and that no name was given. A note that says no name was given cannot answer who."

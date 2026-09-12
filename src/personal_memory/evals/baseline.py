@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 BASELINE_PATH = "evals/baselines/main.json"
 GATED_ADAPTER = "recall"
 
-# adapter -> family -> case ids
 Flips = dict[str, dict[str, list[str]]]
 
 

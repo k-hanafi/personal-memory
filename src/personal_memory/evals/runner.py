@@ -7,10 +7,11 @@ from pathlib import Path
 import subprocess
 
 from personal_memory.evals.adapters import ADAPTERS, Hit
-from personal_memory.evals.checks import check_case
+from personal_memory.evals.checks import TOP_N, check_case
 from personal_memory.evals.fixtures import Family, load_fixture_file, load_fixtures
 
-TOP_N = 5
+DEFAULT_CORPUS = Path("evals/brain")
+DEFAULT_FIXTURES = Path("evals/fixtures")
 
 
 def fixtures_hash(fixtures: Path, corpus_root: Path) -> str:
@@ -32,6 +33,8 @@ def run(
     families: list[str] | None = None,
 ) -> dict:
     """Run every case through every requested adapter and return the receipt."""
+    corpus_root = corpus_root.expanduser().resolve()
+    fixtures = fixtures.expanduser().resolve()
     loaded = [load_fixture_file(fixtures)] if fixtures.is_file() else load_fixtures(fixtures)
     if families is not None:
         loaded = [family for family in loaded if family.name in families]
@@ -41,8 +44,8 @@ def run(
     return {
         "commit": _git_commit(),
         "fixtures_hash": fixtures_hash(fixtures, corpus_root),
-        "corpus": str(corpus_root),
-        "fixtures": str(fixtures),
+        "corpus": _display_path(corpus_root),
+        "fixtures": _display_path(fixtures),
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "adapters": {name: _run_adapter(name, corpus_root, loaded) for name in adapters},
     }
@@ -88,6 +91,13 @@ def _run_adapter(name: str, corpus_root: Path, families: list[Family]) -> dict:
 
     result["abstention_accuracy"] = _ratio(abstain_correct, abstain_total)
     return result
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def _hit_dict(hit: Hit) -> dict:

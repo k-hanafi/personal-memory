@@ -55,7 +55,7 @@ Layer 3 is where models enter, and where the numbers become probabilities. It is
 
 ### The corpus
 
-The eval corpus lives at `evals/brain/`. It is a fictional brain in the v1 frontmatter format, seeded by copying `examples/demo-brain/` and then adding notes that exist only to trigger failure paths. The note inventory, the planted problems, and the build order are in `docs/eval-corpus-plan.md`.
+The eval corpus lives at `evals/brain/`. It is a fictional brain in the v1 frontmatter format, seeded by copying `examples/demo-brain/` and then adding notes that exist only to trigger failure paths. The note inventory and why each note exists are in `docs/eval-corpus-plan.md`.
 
 It is a separate folder from the demo brain on purpose. The demo brain is what a new user sees first and it should be small and clean. The eval corpus needs planted problems: two `current` notes that disagree, a person note with an alias that differs from the title, a note whose title is a substring of another title. Those belong in a test bed, not in onboarding material.
 
@@ -67,26 +67,25 @@ The corpus is versioned by content hash. Any change to any file in `evals/brain/
 
 Fixtures are TOML files, one per family, in `evals/fixtures/`. TOML because Python 3.11 reads it with the standard library (`tomllib`), because it is easier for a person to write than JSON, and because this project has no dependencies and test data is not a good reason to add one.
 
-Here is the supersession family, using notes that exist in the demo brain today:
+The suite runs on `evals/brain/`. Live cases are in `evals/fixtures/`; this is a shortened copy of `evals/fixtures/supersession.toml`:
 
 ```toml
 family = "supersession"
-description = "Current notes must outrank superseded ones. Superseded notes must be findable and labeled when asked for history."
+
+# Current notes must outrank superseded ones on a default query.
 
 [[case]]
 id = "teaching-load-current-wins"
 query = "teaching load"
 expect_path = "40-areas/teaching-load-2026-09.md"
-expect_line = 12
 expect_status = "current"
-forbid_paths = ["40-areas/teaching-load-2026-01.md"]
+forbid_paths = ["40-areas/teaching-load-2026-01.md", "40-areas/teaching-load-2025-09.md"]
 
 [[case]]
-id = "teaching-load-history-labels-old-note"
+id = "teaching-load-history-labels-old-notes"
 query = "teaching load"
 historical = true
 expect_path = "40-areas/teaching-load-2026-09.md"
-expect_line = 12
 expect_status = "current"
 
 [[case.also_present]]
@@ -94,7 +93,7 @@ path = "40-areas/teaching-load-2026-01.md"
 status = "superseded"
 ```
 
-Each case carries some subset of these fields:
+Human asides are `#` comments, not fields. Each case carries some subset of these fields:
 
 | Field | Meaning |
 |---|---|
@@ -110,7 +109,6 @@ Each case carries some subset of these fields:
 | `abstain` | If true, the adapter must return zero cards. |
 | `contradiction` | A list of two or more current paths. All must appear, and each must list the others in `contradicted_by`. |
 | `holdout` | If true, this case is scored in published runs but excluded from the CI gate. |
-| `note` | Free text for the human reading the file. |
 
 A case passes only if every field it declares is satisfied. There is no partial credit inside a case. Partial credit lives one level up, as the pass rate across a family.
 
@@ -118,7 +116,7 @@ A case passes only if every field it declares is satisfied. There is no partial 
 
 Each family is named for the ability it tests and for the source we took the idea from.
 
-**Named thing:** find the page a query names. Gbrain's NamedThingBench splits this into sub-families that fail in different ways, and we borrow the split: exact id (`samir-okonkwo`), exact title (`Samir Okonkwo`), alias (a nickname in the `aliases` frontmatter field), title substring (`Okonkwo`), and generic-to-named (`who co-organizes the case competition`, where the answer is a person the query does not name). Today's `recall` handles the first three and will likely miss the last two. That is fine. Those cases start as capability targets.
+**Named thing:** find the page a query names. Gbrain's NamedThingBench splits this into sub-families that fail in different ways, and we borrow the split: exact id (`samir-okonkwo`), exact title (`Samir Okonkwo`), alias (a nickname in the `aliases` frontmatter field), title substring (`Okonkwo`), and generic-to-named (`who co-organizes the case competition`, where the answer is a person the query does not name). Exact id, exact title, alias, and substring are gold. Generic-to-named is mixed: one hop makes `who is the department chair` pass; `who co-organizes the case competition` still fails and stays a capability target.
 
 **Supersession:** the current note outranks the superseded one on a default query. Under `--historical`, both appear and the old one is labeled `superseded`. This family takes its scoring rule from MEME's trivial-pass filter: the engine gets credit for handling a superseded note only if it can also find that note when asked. A retriever that never indexes old notes would pass a naive version of this test while failing the product promise, and the filter closes that hole.
 
@@ -156,7 +154,7 @@ A run produces one JSON receipt in `evals/runs/` (gitignored). The receipt recor
 - superseded leak count: cases where a superseded note outranked a current one without `--historical`
 - abstention accuracy: abstain cases that returned zero cards, over all abstain cases
 
-The receipt is the unit of evidence. Baselines are receipts with the timestamp, the commit hash, and the per-case hit lists stripped, and the floats rounded to four places, so that a baseline diff shows pass/fail flips and nothing else.
+The receipt is the unit of evidence. Receipts keep the top five hits per case. Baselines drop those hit lists along with the timestamp and the commit hash, and the floats are rounded to four places, so a baseline diff shows pass/fail flips and nothing else.
 
 Rounding and key sorting are what make a baseline diff in a pull request readable by a human, and a readable diff is how a reviewer notices that a "small refactor" flipped three gold items.
 
@@ -172,7 +170,7 @@ Only the `recall` adapter gates (`grep` is the baseline row, not the system unde
 
 Holdout cases (`holdout = true`) are excluded from the gate and scored only in published runs. This keeps a slice of the fixtures that nobody has tuned against. The holdout is empty until the fixture set passes fifty cases; below that size a 15% slice is too small to mean anything.
 
-There is no `--allow-regression` flag in CI. A pull request cannot approve its own regression. Locally, `personal-memory eval run --allow-regression "reason"` exists for exploratory work and records the reason in the receipt.
+There is no `--allow-regression` flag. A pull request cannot approve its own regression. The only waiver is a `justification` string in the committed baseline when fixtures or the corpus changed.
 
 ### Reading a result
 
@@ -193,13 +191,13 @@ The `vs main` column is a paired comparison: for each case, did it flip from fai
 
 Anthropic's eval writeup draws a line we adopt. A capability eval is one the system currently fails; its job is to give you a hill to climb, and it should start with a low pass rate. A regression eval is one the system passes; its job is to stay at 100%, and any drop is a bug.
 
-In our fixtures the same case moves between roles over time. `generic-to-named` cases fail today, so they are capability targets and they are not in the baseline's gold set. When wikilink hops or a synonym table make them pass, they get promoted: the baseline records the pass and from then on they gate. A case never moves the other way without a justification string.
+In our fixtures the same case moves between roles over time. A fail is a capability target; a pass is gold and gates. One generic-to-named case is gold after the hop (`generic-to-named-department-chair`). The other (`generic-to-named-case-competition-co-organizer`) still fails and stays a capability target. A case never moves from gold back to capability without a justification string.
 
 This is also how the fixture set grows without the gate becoming a wall. You can add ten cases the engine fails today and CI stays green, because the gate only cares about gold items flipping.
 
 ### Pre-registration
 
-Before a retrieval change, write down what you expect the fixtures to do. One sentence in the pull request description is enough: "Wikilink hops should move named-thing from 9/12 to 11/12 and change nothing else."
+Before a retrieval change, write down what you expect the fixtures to do. One sentence in the pull request description is enough: "A synonym table should move named-thing from 10/11 to 11/11 and change nothing else."
 
 Then run the evals and publish whether the prediction held. If it did not, say so in the same place.
 
@@ -323,20 +321,19 @@ Any of these means the eval system is not doing its job:
 
 Evals come before the features they will measure, so that each feature is built to pass a case that already exists.
 
-1. `evals/brain/` seeded from the demo brain, plus one planted contradiction pair and one aliased person. Grep guard for real names.
-2. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `grep` (pure Python).
-3. Runner that writes a receipt. Table output with the paired column.
-4. Fixture families in this order: supersession, abstention, named-thing, citation, contradiction. Ten to fifteen cases total to start.
-5. Commit the first baseline. Wire the CI gate.
+1. Done. `evals/brain/` seeded from the demo brain, plus one planted contradiction pair and one aliased person. Grep guard for real names.
+2. Done. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `grep` (pure Python).
+3. Done. Runner that writes a receipt. Table output with the paired column.
+4. Done. Fixture families in this order: supersession, abstention, named-thing, citation, contradiction. Ten to fifteen cases total to start.
+5. Done. Commit the first baseline. Wire the CI gate.
 6. Vault fixture file and the first replay session. Turn the first three real failures into fictional fixtures.
-7. Wikilink hops, measured against the named-thing family. First pre-registered prediction.
+7. Done. Wikilink hops, measured against the named-thing family. First pre-registered prediction.
 8. When the MCP server lands: Layer 3 question set, pass^3 runner, token logging.
 9. Holdout slice once fixtures pass fifty cases.
 10. Model-generated corpus growth once hand-written notes stop covering the families.
 
 ## Open
 
-- Decided: receipts keep the top five hits per case; baselines drop them along with `commit` and `timestamp`, so a baseline diff shows pass/fail flips and nothing else.
 - Decided 2026-09-10: the write path (`propose`, `apply`, `remember`) is not a fixture family. Its rules are deterministic (refuse a duplicate title, flip `status` on supersede, cap confidence without a boring signal), so they are unit tests in `tests/test_filing.py`, not gated retrieval cases. Whether the agent files the right thing is a Layer 3 question.
 - The contradiction family has no negative assertion. There is no way to say `contradicted_by` must be empty, so a fix that stops marking unrelated current notes as contradictions cannot be measured. A `no_contradiction` field is the likely fix.
 - How to express `expect_line` once cards return multi-line ranges and a claim spans a paragraph. A range-overlap rule is the likely answer.

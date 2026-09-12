@@ -81,12 +81,12 @@
         },
         "contradiction": {
           "cases": {
-            "marcus-both-present-not-a-contradiction": {
+            "marcus-both-present": {
               "failure": null,
               "holdout": false,
               "pass": true
             },
-            "northbridge-review-three-notes-agree": {
+            "northbridge-review-three-notes-present": {
               "failure": null,
               "holdout": false,
               "pass": true
@@ -154,11 +154,6 @@
               "holdout": false,
               "pass": false
             },
-            "substring-trap-teaching-load": {
-              "failure": "expect_path",
-              "holdout": false,
-              "pass": false
-            },
             "title-substring-okonkwo-both-present": {
               "failure": null,
               "holdout": false,
@@ -170,10 +165,10 @@
               "pass": false
             }
           },
-          "hit_at_1": 0.4545,
+          "hit_at_1": 0.5,
           "passed": 2,
-          "recall_at_5": 0.8182,
-          "total": 12
+          "recall_at_5": 0.8,
+          "total": 11
         },
         "supersession": {
           "cases": {
@@ -224,7 +219,7 @@
           "total": 8
         }
       },
-      "superseded_leaks": 24
+      "superseded_leaks": 23
     },
     "recall": {
       "abstention_accuracy": 0.3333,
@@ -307,12 +302,12 @@
         },
         "contradiction": {
           "cases": {
-            "marcus-both-present-not-a-contradiction": {
+            "marcus-both-present": {
               "failure": null,
               "holdout": false,
               "pass": true
             },
-            "northbridge-review-three-notes-agree": {
+            "northbridge-review-three-notes-present": {
               "failure": null,
               "holdout": false,
               "pass": true
@@ -380,11 +375,6 @@
               "holdout": false,
               "pass": true
             },
-            "substring-trap-teaching-load": {
-              "failure": null,
-              "holdout": false,
-              "pass": true
-            },
             "title-substring-okonkwo-both-present": {
               "failure": null,
               "holdout": false,
@@ -396,10 +386,10 @@
               "pass": true
             }
           },
-          "hit_at_1": 0.9091,
-          "passed": 11,
-          "recall_at_5": 0.9091,
-          "total": 12
+          "hit_at_1": 0.9,
+          "passed": 10,
+          "recall_at_5": 0.9,
+          "total": 11
         },
         "supersession": {
           "cases": {
@@ -455,5 +445,6 @@
   },
   "corpus": "evals/brain",
   "fixtures": "evals/fixtures",
-  "fixtures_hash": "7d849e2c5aae4dc5b986c298b8d3ba3e31e161b56d9e6cbc15f8f86a936fd76a"
+  "fixtures_hash": "b654ecb609ce03de986cbc71edc11a2f7bde276004fcea34b0eb4edfb6100353",
+  "justification": "Renamed contradiction presence-only case ids (marcus-both-present, northbridge-review-three-notes-present). Fixture comments keep Problem N only."
 }

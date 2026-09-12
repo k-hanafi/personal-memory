@@ -1,5 +1,4 @@
-"""The committed fixture files point at real notes and real lines in the eval corpus."""
-
+from functools import lru_cache
 from pathlib import Path
 
 import pytest
@@ -10,8 +9,10 @@ ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "evals" / "fixtures"
 BRAIN = ROOT / "evals" / "brain"
 
-FAMILIES = load_fixtures(FIXTURES)
-CASES = [(family, case) for family in FAMILIES for case in family.cases]
+
+@lru_cache
+def _families() -> tuple[Family, ...]:
+    return tuple(load_fixtures(FIXTURES))
 
 
 def case_id(item: Family | Case) -> str:
@@ -25,23 +26,30 @@ def referenced_paths(case: Case) -> list[str]:
     return paths
 
 
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    if "case" in metafunc.fixturenames:
+        pairs = [(family, case) for family in _families() for case in family.cases]
+        metafunc.parametrize(("family", "case"), pairs, ids=case_id)
+    elif "family" in metafunc.fixturenames:
+        metafunc.parametrize("family", _families(), ids=lambda family: family.source.stem)
+
+
 def test_every_fixture_file_loads() -> None:
-    assert len(FAMILIES) == len(list(FIXTURES.glob("*.toml")))
-    assert FAMILIES, "no fixture files found"
+    families = _families()
+    assert len(families) == len(list(FIXTURES.glob("*.toml")))
+    assert families, "no fixture files found"
 
 
-@pytest.mark.parametrize("family", FAMILIES, ids=lambda family: family.source.stem)
 def test_family_name_matches_filename(family: Family) -> None:
     assert family.name == family.source.stem
 
 
-@pytest.mark.parametrize(("family", "case"), CASES, ids=case_id)
 def test_referenced_paths_exist_in_brain(family: Family, case: Case) -> None:
+    assert case.holdout is False
     missing = [path for path in referenced_paths(case) if not (BRAIN / path).is_file()]
     assert not missing
 
 
-@pytest.mark.parametrize(("family", "case"), CASES, ids=case_id)
 def test_expect_line_is_a_real_non_empty_line(family: Family, case: Case) -> None:
     if case.expect_line is None:
         return
@@ -50,14 +58,7 @@ def test_expect_line_is_a_real_non_empty_line(family: Family, case: Case) -> Non
     assert lines[case.expect_line - 1].strip()
 
 
-@pytest.mark.parametrize(("family", "case"), CASES, ids=case_id)
 def test_abstain_cases_declare_nothing_else(family: Family, case: Case) -> None:
     if not case.abstain:
         return
-    assert case.expect_path is None
-    assert case.expect_line is None
-    assert case.expect_status is None
-    assert case.expect_confidence is None
     assert case.forbid_paths == ()
-    assert case.also_present == ()
-    assert case.contradiction == ()

@@ -1,29 +1,22 @@
 family = "contradiction"
-description = "Two current notes that disagree about the same fact must both surface, and each must name the other in contradicted_by. Notes that merely share a topic are not a contradiction; the format cannot yet assert the absence of contradicted_by, so the negative cases below check only that every note is present."
 
-# Problem 12: the planted contradiction. 12,000 versus 9,500.
+# Problem 12
 
 [[case]]
 id = "research-budget-both-surface"
 query = "research budget"
 contradiction = ["40-areas/lab-budget.md", "40-areas/research-account.md"]
-holdout = false
-note = "lab-budget says 12,000 as of July; research-account says 9,500 as of August. Both are current. Problem 13: daily 2026-09-02 repeats the 12,000 figure and today is listed as a third contradicting note. A daily is timeline, not state. The format has no way to say the daily must be excluded from contradicted_by, so that part of problem 13 is not asserted."
 
 [[case]]
 id = "research-budget-second-phrasing"
 query = "budget for the year"
 contradiction = ["40-areas/lab-budget.md", "40-areas/research-account.md"]
-holdout = false
-note = "Both claim lines read The research budget for the year is. A second phrasing of problem 12 that skips the word research."
 
-# Problem 9: near-duplicate names are not a contradiction.
+# Problem 9
 
 [[case]]
-id = "marcus-both-present-not-a-contradiction"
+id = "marcus-both-present"
 query = "Marcus"
-holdout = false
-note = "Negative case. Marcus Bell and Marcus Bellamy are two people who share a first name; they do not disagree about anything. Both must be present. Today recall marks any two current hits as contradicting each other, and this format cannot assert that contradicted_by is empty, so the case passes on presence only."
 
 [[case.also_present]]
 path = "50-people/marcus-bell.md"
@@ -33,13 +26,11 @@ status = "current"
 path = "50-people/marcus-bellamy.md"
 status = "current"
 
-# Problem 57: three notes agree about the same journal.
+# Problem 57
 
 [[case]]
-id = "northbridge-review-three-notes-agree"
+id = "northbridge-review-three-notes-present"
 query = "Northbridge Review"
-holdout = false
-note = "Negative case. The editor note, the refereeing note, and the declined editor role all mention the Northbridge Review and agree. All three must be present. Same format limit as the Marcus case: absence of contradicted_by is not asserted."
 
 [[case.also_present]]
 path = "40-areas/journal-refereeing.md"

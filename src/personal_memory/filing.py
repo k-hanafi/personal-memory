@@ -353,7 +353,7 @@ def _render_note(proposal: Proposal, confidence: str) -> str:
 def _write(root: Path, proposal: Proposal, confidence: str) -> Outcome:
     if proposal.kind == "append":
         note = next(note for note in load_notes(root) if note.meta.id == proposal.target)
-        note.path.write_text(append_entry(note.text, proposal.as_of, proposal.provenance, proposal.claim or ""), encoding="utf-8")
+        (root / note.relative).write_text(append_entry(note.text, proposal.as_of, proposal.provenance, proposal.claim or ""), encoding="utf-8")
         return Outcome("inserted", proposal.proposal_id, target=note.meta.id, paths=(str(note.relative),), confidence=confidence)
 
     new_path = root / (proposal.path or "")
@@ -365,7 +365,7 @@ def _write(root: Path, proposal: Proposal, confidence: str) -> Outcome:
     old = next(note for note in load_notes(root) if note.meta.id == proposal.supersedes)
     text = _set_frontmatter(old.text, "status", "superseded")
     text = _set_frontmatter(text, "superseded_by", proposal.id or "")
-    old.path.write_text(text, encoding="utf-8")
+    (root / old.relative).write_text(text, encoding="utf-8")
     return Outcome(
         "superseded",
         proposal.proposal_id,

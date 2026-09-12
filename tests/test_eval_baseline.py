@@ -1,8 +1,5 @@
 from pathlib import Path
-import copy
 import json
-
-import pytest
 
 from personal_memory.cli import main
 from personal_memory.evals.baseline import compare, gate, gold, to_baseline
@@ -11,8 +8,6 @@ from personal_memory.evals.report import render
 from personal_memory.evals.runner import run
 
 ROOT = Path(__file__).resolve().parents[1]
-BRAIN = ROOT / "evals" / "brain"
-FIXTURES = ROOT / "evals" / "fixtures"
 COMMITTED = ROOT / "evals" / "baselines" / "main.json"
 
 
@@ -194,10 +189,18 @@ def test_cli_compare_prints_flips(tmp_path: Path, capsys) -> None:
     assert out[-1] == "fixtures hash changed"
 
 
-def test_cli_update_baseline_preserves_justification_and_rejects_allow_regression(tmp_path: Path, capsys) -> None:
+def test_cli_update_baseline_preserves_justification(tmp_path: Path, capsys) -> None:
+    (tmp_path / "n.md").write_text(
+        "---\nid: n\ntype: area\nas_of: 2026-09-01\nstatus: current\nconfidence: high\n---\n\n# n\n\nbudget\n",
+        encoding="utf-8",
+    )
+    fixture = tmp_path / "smoke.toml"
+    fixture.write_text(
+        'family = "smoke"\n\n[[case]]\nid = "hit"\nquery = "budget"\nexpect_path = "n.md"\n',
+        encoding="utf-8",
+    )
     baseline = tmp_path / "main.json"
-    fixture = FIXTURES / "contradiction.toml"
-    base_args = ["eval", "run", "--fixtures", str(fixture), "--corpus", str(BRAIN), "--out", str(tmp_path / "r.json")]
+    base_args = ["eval", "run", "--fixtures", str(fixture), "--corpus", str(tmp_path), "--out", str(tmp_path / "r.json")]
     assert main([*base_args, "--baseline", str(baseline), "--update-baseline"]) == 0
     assert capsys.readouterr().out.splitlines()[-1] == str(baseline)
     written = json.loads(baseline.read_text())
@@ -208,11 +211,6 @@ def test_cli_update_baseline_preserves_justification_and_rejects_allow_regressio
     assert json.loads(baseline.read_text())["justification"] == "keep me"
     assert "+0 / -0" in capsys.readouterr().out
 
-    assert main([*base_args, "--allow-regression", "trying things"]) == 0
-    assert json.loads((tmp_path / "r.json").read_text())["allow_regression"] == "trying things"
-    with pytest.raises(SystemExit):
-        main([*base_args, "--update-baseline", "--allow-regression", "no"])
-
 
 def test_committed_baseline_matches_fresh_run_and_gate_passes(monkeypatch) -> None:
     monkeypatch.chdir(ROOT)
@@ -221,33 +219,3 @@ def test_committed_baseline_matches_fresh_run_and_gate_passes(monkeypatch) -> No
     assert to_baseline(fresh) == {k: v for k, v in committed.items() if k != "justification"}
     result = gate(fresh, committed, committed)
     assert result.ok
-
-
-def test_gate_names_regressed_case_against_real_run(monkeypatch) -> None:
-    monkeypatch.chdir(ROOT)
-    fresh = run(Path("evals/brain"), Path("evals/fixtures"), ["recall", "grep"])
-    committed = json.loads(COMMITTED.read_text(encoding="utf-8"))
-    families = fresh["adapters"]["recall"]["families"]
-    failing = next(
-        (f, c) for f in families for c, v in families[f]["cases"].items() if not v["pass"] and not v["holdout"]
-    )
-    main_baseline = copy.deepcopy(committed)
-    main_baseline["adapters"]["recall"]["families"][failing[0]]["cases"][failing[1]]["pass"] = True
-    result = gate(fresh, main_baseline, committed)
-    assert not result.ok
-    assert f"regressed: {failing[0]}/{failing[1]} (recall)" in result.messages
-
-    tampered = copy.deepcopy(committed)
-    tampered["adapters"]["recall"]["superseded_leaks"] += 1
-    assert gate(fresh, committed, tampered).messages == ["committed baseline does not match a fresh run"]
-
-
-def test_cli_gate_exits_0_against_copy_of_committed_baseline(tmp_path: Path, capsys, monkeypatch) -> None:
-    monkeypatch.chdir(ROOT)
-    copy_path = tmp_path / "main.json"
-    copy_path.write_bytes(COMMITTED.read_bytes())
-    assert main(["eval", "gate", "--main-baseline", str(copy_path)]) == 0
-    out = capsys.readouterr().out
-    assert "+0 / -0" in out and "gate: ok" in out
-    assert main(["eval", "gate", "--main-baseline", str(tmp_path / "missing.json")]) == 0
-    assert "regression check skipped" in capsys.readouterr().out

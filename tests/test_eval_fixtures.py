@@ -6,7 +6,6 @@ from personal_memory.evals.fixtures import AlsoPresent, FixtureError, load_fixtu
 
 VALID = """
 family = "supersession"
-description = "Current beats superseded."
 
 [[case]]
 id = "current-wins"
@@ -16,7 +15,6 @@ expect_line = 12
 expect_status = "current"
 expect_confidence = "high"
 forbid_paths = ["40-areas/teaching-load-2026-01.md"]
-note = "gold"
 
 [[case]]
 id = "history-labels-old"
@@ -55,7 +53,6 @@ def test_valid_file_loads_with_field_values(tmp_path: Path) -> None:
     path = write(tmp_path, "supersession.toml", VALID)
     family = load_fixture_file(path)
     assert family.name == "supersession"
-    assert family.description == "Current beats superseded."
     assert family.source == path
     first, second, third, fourth = family.cases
 
@@ -67,7 +64,6 @@ def test_valid_file_loads_with_field_values(tmp_path: Path) -> None:
     assert first.expect_status == "current"
     assert first.expect_confidence == "high"
     assert first.forbid_paths == ("40-areas/teaching-load-2026-01.md",)
-    assert first.note == "gold"
     assert first.also_present == ()
     assert first.abstain is False
     assert first.holdout is False
@@ -82,9 +78,9 @@ def test_valid_file_loads_with_field_values(tmp_path: Path) -> None:
     assert fourth.contradiction == ("40-areas/a.md", "40-areas/b.md")
 
 
-def test_description_defaults_to_empty(tmp_path: Path) -> None:
+def test_family_without_cases(tmp_path: Path) -> None:
     family = load_fixture_file(write(tmp_path, "f.toml", 'family = "f"\n'))
-    assert family.description == ""
+    assert family.name == "f"
     assert family.cases == ()
 
 
@@ -112,7 +108,8 @@ def test_missing_family_names_file(tmp_path: Path) -> None:
         ('id = "x"\nquery = "q"\nexpect_line = "12"\nexpect_path = "a.md"', "expect_line"),
         ('id = "x"\nquery = "q"\nforbid_paths = "a.md"', "forbid_paths"),
         ('id = "x"\nquery = "q"\ncontradiction = [1, 2]', "contradiction"),
-        ('id = "x"\nquery = "q"\nnote = 3', "note"),
+        ('id = "x"\nquery = "q"\nholdout = 3', "holdout"),
+        ('id = "x"\nquery = "q"\nnote = "unused"', "note"),
         ('id = "x"\nquery = 7', "query"),
     ],
 )

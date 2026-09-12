@@ -1,7 +1,6 @@
 family = "named-thing"
-description = "Find the page a query names. Sub-families: exact id, exact title, alias, title substring, and generic-to-named, where the answer is a person the query does not name. For a name lookup the gold line is the title line that carries the name."
 
-# Problem 5: id and title diverge. Both must find the same note.
+# Problem 5
 
 [[case]]
 id = "exact-id-assessment-policy"
@@ -9,8 +8,6 @@ query = "assessment-policy"
 expect_path = "40-areas/assessment-policy.md"
 expect_line = 9
 expect_status = "current"
-holdout = false
-note = "The id is assessment-policy; the title is Curve and grading policy. Querying the id must land on this note."
 
 [[case]]
 id = "exact-title-curve-and-grading-policy"
@@ -18,10 +15,8 @@ query = "Curve and grading policy"
 expect_path = "40-areas/assessment-policy.md"
 expect_line = 9
 expect_status = "current"
-holdout = false
-note = "Same note as the exact-id case, reached through the title instead."
 
-# Problem 6: single alias in frontmatter.
+# Problem 6
 
 [[case]]
 id = "alias-sam"
@@ -29,10 +24,8 @@ query = "Sam"
 expect_path = "50-people/samir-okonkwo.md"
 expect_line = 10
 expect_status = "current"
-holdout = false
-note = "aliases: Sam on the Samir note. Sam Delacroix also exists in the corpus; the alias is the stronger signal, so Samir stays on top."
 
-# Problem 7: multi-alias written as one comma string.
+# Problem 7
 
 [[case]]
 id = "multi-alias-pn"
@@ -40,8 +33,6 @@ query = "PN"
 expect_path = "50-people/priya-natarajan.md"
 expect_line = 10
 expect_status = "current"
-holdout = false
-note = "aliases: PN, Dr. Natarajan is one string because frontmatter is flat. Exact alias matching does not fire on PN alone; today this passes because keyword scoring finds pn inside the alias string. Passes for the wrong reason until aliases are split."
 
 # Title substring. Two sub-cases: a clean surname and a shared one.
 
@@ -51,14 +42,12 @@ query = "Whitfield"
 expect_path = "50-people/dana-whitfield.md"
 expect_line = 9
 expect_status = "current"
-holdout = false
-note = "One word of a two-word title. Only one person carries this surname. Source dumps that list the name may appear below."
+
+# Problem 24
 
 [[case]]
 id = "title-substring-okonkwo-both-present"
 query = "Okonkwo"
-holdout = false
-note = "Problem 24. Two people share the surname, so no single note is the gold top. Both must be present and current."
 
 [[case.also_present]]
 path = "50-people/samir-okonkwo.md"
@@ -68,7 +57,7 @@ status = "current"
 path = "50-people/bea-okonkwo.md"
 status = "current"
 
-# Problem 8: near-duplicate names.
+# Problem 8
 
 [[case]]
 id = "near-duplicate-marcus-bell"
@@ -77,20 +66,8 @@ expect_path = "50-people/marcus-bell.md"
 expect_line = 9
 expect_status = "current"
 forbid_paths = ["50-people/marcus-bellamy.md"]
-holdout = false
-note = "Marcus Bell is the TA; Marcus Bellamy is a journal editor. The full name must return Bell only."
 
-# Problem 4: the substring trap in the other direction.
-
-[[case]]
-id = "substring-trap-teaching-load"
-query = "teaching load"
-expect_path = "40-areas/teaching-load-2026-09.md"
-expect_status = "current"
-holdout = false
-note = "teaching-load-committee has the query as a substring of its title but is about committee membership, not the load. Today the load note wins only by path sort on a tied score. Fragile by design; this case is the tripwire."
-
-# Problem 10 and the spec example: generic-to-named. Capability targets.
+# Problem 10
 
 [[case]]
 id = "generic-to-named-department-chair"
@@ -98,8 +75,6 @@ query = "who is the department chair"
 expect_path = "50-people/dana-whitfield.md"
 expect_line = 11
 expect_status = "current"
-holdout = false
-note = "The answer is a person the query does not name. Line 11 of the Dana note says The department chair. department-service also states it through a link and may appear, but the person note is the gold."
 
 [[case]]
 id = "generic-to-named-case-competition-co-organizer"
@@ -107,10 +82,8 @@ query = "who co-organizes the case competition"
 expect_path = "50-people/samir-okonkwo.md"
 expect_line = 12
 expect_status = "current"
-holdout = false
-note = "Spec example. The Samir note says Co-organizer of the department's undergraduate case competition on line 12. Needs either a hop from the project note or a looser match than every token present."
 
-# Problem 14: the filed note must beat the raw source dump.
+# Problem 14
 
 [[case]]
 id = "filed-note-beats-source-dump"
@@ -118,10 +91,8 @@ query = "econometrics syllabus"
 expect_path = "30-projects/econometrics-fall-2026.md"
 expect_status = "current"
 expect_confidence = "high"
-holdout = false
-note = "notion-export-2026-08-15 repeats much of the course note but is a raw dump with confidence low. The filed course note must be on top with confidence high."
 
-# Problem 16: the state note must beat passing daily mentions.
+# Problem 16
 
 [[case]]
 id = "state-note-beats-daily-mentions"
@@ -129,5 +100,3 @@ query = "office hours"
 expect_path = "40-areas/office-hours.md"
 expect_status = "current"
 forbid_paths = ["10-daily/2025-09-18.md", "10-daily/2026-01-12.md", "10-daily/2026-08-28.md"]
-holdout = false
-note = "Three dailies mention office hours in passing. The schedule note is the answer and the dailies must stay out of the top five."

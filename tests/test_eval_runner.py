@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 
 from personal_memory.cli import main
-from personal_memory.evals.receipt import strip_timestamp, write_receipt
+from personal_memory.evals.receipt import write_receipt
 from personal_memory.evals.report import render
 from personal_memory.evals.runner import fixtures_hash, run
 
@@ -12,7 +12,6 @@ DEMO = ROOT / "examples" / "demo-brain"
 
 BRAIN_FIXTURE = """
 family = "smoke"
-description = "A few cases the eval corpus answers today."
 
 [[case]]
 id = "teaching-load-current"
@@ -46,6 +45,10 @@ confidence: high
 """
 
 
+def _strip_timestamp(receipt: dict) -> dict:
+    return {key: value for key, value in receipt.items() if key != "timestamp"}
+
+
 def _write(path: Path, text: str) -> Path:
     path.write_text(text, encoding="utf-8")
     return path
@@ -61,29 +64,25 @@ def _budget_corpus(tmp_path: Path) -> Path:
     return corpus
 
 
-def test_run_is_deterministic(tmp_path: Path) -> None:
+def test_receipt_shape_and_determinism(tmp_path: Path) -> None:
     fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
     first = run(BRAIN, fixture, ["recall", "grep"])
     second = run(BRAIN, fixture, ["recall", "grep"])
-    assert strip_timestamp(first) == strip_timestamp(second)
-    assert "timestamp" not in strip_timestamp(first)
+    assert _strip_timestamp(first) == _strip_timestamp(second)
+    assert "timestamp" not in _strip_timestamp(first)
     assert "timestamp" in first
 
     write_receipt(first, tmp_path / "runs" / "a.json")
     write_receipt(second, tmp_path / "runs" / "b.json")
     a = json.loads((tmp_path / "runs" / "a.json").read_text())
     b = json.loads((tmp_path / "runs" / "b.json").read_text())
-    assert strip_timestamp(a) == strip_timestamp(b)
+    assert _strip_timestamp(a) == _strip_timestamp(b)
     assert (tmp_path / "runs" / "a.json").read_text().endswith("}\n")
 
-
-def test_receipt_shape_and_counts(tmp_path: Path) -> None:
-    fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
-    receipt = run(BRAIN, fixture, ["recall", "grep"])
-    assert set(receipt) == {"commit", "fixtures_hash", "corpus", "fixtures", "timestamp", "adapters"}
-    assert receipt["fixtures_hash"] == fixtures_hash(fixture, BRAIN)
-    assert set(receipt["adapters"]) == {"recall", "grep"}
-    for result in receipt["adapters"].values():
+    assert set(first) == {"commit", "fixtures_hash", "corpus", "fixtures", "timestamp", "adapters"}
+    assert first["fixtures_hash"] == fixtures_hash(fixture, BRAIN)
+    assert set(first["adapters"]) == {"recall", "grep"}
+    for result in first["adapters"].values():
         assert set(result) == {"families", "superseded_leaks", "abstention_accuracy"}
         family = result["families"]["smoke"]
         assert set(family) == {"passed", "total", "hit_at_1", "recall_at_5", "cases"}
@@ -97,7 +96,7 @@ def test_receipt_shape_and_counts(tmp_path: Path) -> None:
                 assert set(hit) == {"path", "start_line", "end_line", "status", "confidence", "contradicted_by"}
         assert family["cases"]["samir-by-id"]["holdout"] is True
 
-    recall_smoke = receipt["adapters"]["recall"]["families"]["smoke"]
+    recall_smoke = first["adapters"]["recall"]["families"]["smoke"]
     assert recall_smoke["passed"] == 3
     assert recall_smoke["cases"]["teaching-load-current"]["hits"][0]["path"] == "40-areas/teaching-load-2026-09.md"
 
@@ -218,7 +217,7 @@ def test_fixtures_hash_tracks_fixture_and_corpus_bytes(tmp_path: Path) -> None:
     _write(corpus / "d.md", NOTE.format(id="d", status="current", body="changed"))
     after_corpus = fixtures_hash(fixture, corpus)
     assert after_corpus != before
-    _write(fixture, 'family = "one"\ndescription = "x"\n')
+    _write(fixture, 'family = "two"\n')
     assert fixtures_hash(fixture, corpus) != after_corpus
 
 
@@ -249,6 +248,26 @@ def test_cli_eval_run_writes_receipt(tmp_path: Path, capsys) -> None:
     receipt = json.loads(out.read_text(encoding="utf-8"))
     assert list(receipt["adapters"]) == ["grep"]
     assert receipt["adapters"]["grep"]["families"]["smoke"]["total"] == 3
+
+
+def test_cli_eval_gate_missing_corpus_exits_2(tmp_path: Path, capsys) -> None:
+    missing = tmp_path / "no-brain"
+    code = main(
+        [
+            "eval",
+            "gate",
+            "--main-baseline",
+            str(tmp_path / "baseline.json"),
+            "--corpus",
+            str(missing),
+            "--fixtures",
+            str(ROOT / "evals" / "fixtures"),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "not a directory" in captured.err
+    assert "gate:" not in captured.out
 
 
 def test_cli_eval_run_missing_fixtures_exits_2(tmp_path: Path, capsys) -> None:

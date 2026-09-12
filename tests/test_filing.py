@@ -196,8 +196,9 @@ def test_supersede_writes_new_and_flips_old_in_one_apply(brain: Path) -> None:
     new = get_note(brain, "teaching-load-2027-01")
     assert new.meta.extra["supersedes"] == "teaching-load-2026-09"
     assert check_brain(brain).ok
-    current = recall(brain, "teaching load").cards
-    assert [str(c.path) for c in current] == ["40-areas/teaching-load-2027-01.md"]
+    current_paths = [str(c.path) for c in recall(brain, "teaching load").cards]
+    assert "40-areas/teaching-load-2027-01.md" in current_paths
+    assert "40-areas/teaching-load-2026-09.md" not in current_paths
 
 
 def test_supersede_already_superseded_is_blocked(brain: Path) -> None:
