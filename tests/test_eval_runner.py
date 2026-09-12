@@ -12,7 +12,6 @@ DEMO = ROOT / "examples" / "demo-brain"
 
 BRAIN_FIXTURE = """
 family = "smoke"
-description = "A few cases the eval corpus answers today."
 
 [[case]]
 id = "teaching-load-current"
@@ -218,7 +217,7 @@ def test_fixtures_hash_tracks_fixture_and_corpus_bytes(tmp_path: Path) -> None:
     _write(corpus / "d.md", NOTE.format(id="d", status="current", body="changed"))
     after_corpus = fixtures_hash(fixture, corpus)
     assert after_corpus != before
-    _write(fixture, 'family = "one"\ndescription = "x"\n')
+    _write(fixture, 'family = "two"\n')
     assert fixtures_hash(fixture, corpus) != after_corpus
 
 

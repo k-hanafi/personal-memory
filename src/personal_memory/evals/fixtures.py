@@ -29,18 +29,16 @@ class Case:
     abstain: bool = False
     contradiction: tuple[str, ...] = ()
     holdout: bool = False
-    note: str = ""
 
 
 @dataclass(frozen=True)
 class Family:
     name: str
-    description: str
     cases: tuple[Case, ...]
     source: Path
 
 
-TOP_KEYS = frozenset({"family", "description", "case"})
+TOP_KEYS = frozenset({"family", "case"})
 CASE_KEYS = frozenset(Case.__dataclass_fields__)
 ALSO_PRESENT_KEYS = frozenset(AlsoPresent.__dataclass_fields__)
 
@@ -55,7 +53,6 @@ def load_fixture_file(path: Path) -> Family:
 
     _reject_unknown(data, TOP_KEYS, where)
     name = _typed(data, "family", str, where, required=True)
-    description = _typed(data, "description", str, where) or ""
 
     cases: list[Case] = []
     seen: set[str] = set()
@@ -65,7 +62,7 @@ def load_fixture_file(path: Path) -> Family:
             raise FixtureError(f"{where}: duplicate case id {case.id!r}")
         seen.add(case.id)
         cases.append(case)
-    return Family(name=name, description=description, cases=tuple(cases), source=path)
+    return Family(name=name, cases=tuple(cases), source=path)
 
 
 def load_fixtures(directory: Path) -> list[Family]:
@@ -125,7 +122,6 @@ def _parse_case(raw: dict, file_where: str) -> Case:
         abstain=abstain,
         contradiction=contradiction,
         holdout=_typed(raw, "holdout", bool, where) or False,
-        note=_typed(raw, "note", str, where) or "",
     )
 
 
