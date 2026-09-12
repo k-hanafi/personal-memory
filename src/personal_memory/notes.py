@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 
 from personal_memory.frontmatter import (
     Frontmatter,
@@ -11,6 +12,41 @@ from personal_memory.frontmatter import (
 )
 
 SKIP_NAMES = frozenset({"README.md", "AGENTS.md", "CHANGELOG.md"})
+TOKEN_RE = re.compile(r"[a-z0-9]+")
+STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "but",
+        "do",
+        "for",
+        "from",
+        "how",
+        "i",
+        "in",
+        "is",
+        "it",
+        "my",
+        "of",
+        "on",
+        "or",
+        "the",
+        "this",
+        "to",
+        "was",
+        "what",
+        "when",
+        "where",
+        "who",
+        "why",
+        "with",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -84,3 +120,11 @@ def _title_of(body: str, fallback: str) -> str:
         if stripped.startswith("#"):
             return stripped.lstrip("#").strip()
     return fallback
+
+
+def norm(value: str) -> str:
+    return " ".join(TOKEN_RE.findall(value.lower()))
+
+
+def tokenize(query: str) -> list[str]:
+    return [token for token in TOKEN_RE.findall(query.lower()) if token not in STOPWORDS and len(token) > 1]

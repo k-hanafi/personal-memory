@@ -12,10 +12,13 @@ code.
 
 ## Status
 
-2026-09-11: spec locked. `check` validates frontmatter. `recall` returns
+2026-09-12: spec locked. `check` validates frontmatter. `recall` returns
 evidence cards. `get` fetches one note by id or path. Layer 1 evals are
 complete (`personal-memory eval run`, committed baseline, `eval-gate` CI).
-No MCP, no filing queue yet. Filing is specified in `docs/v1-spec.md`.
+The write path exists (`propose`, `queue`, `apply`, `remember`, `unfiled`).
+No MCP server yet. The engine holds no model: the coding agent decides what
+to file, the engine validates and writes. See the Write section of
+`docs/v1-spec.md`.
 
 ```bash
 python3 -m venv .venv
@@ -28,6 +31,24 @@ personal-memory get examples/demo-brain alex-rivera
 personal-memory eval run
 bash scripts/eval-gate.sh
 ```
+
+## Writing to a brain
+
+```bash
+personal-memory remember ~/brain "Dean approved the sabbatical." --provenance "user, 2026-09-10" --target sabbatical-plan
+personal-memory propose ~/brain proposal.json
+personal-memory queue ~/brain
+personal-memory apply ~/brain
+personal-memory unfiled ~/brain
+```
+
+`remember` saves one fact as a dated line in the note's `## Log`, or stub-creates a
+note when you pass `--path` and `--type` instead of `--target`. `propose` queues a
+JSON proposal (`create`, `append`, or `supersede`) after validating it against the
+brain. `apply` writes every high-confidence proposal; `apply <id>` writes one you
+chose. High confidence needs a boring signal (the user said it, a real `sources/`
+file, or an exact-id target), otherwise the proposal waits in the queue for you.
+`unfiled` lists files under `sources/` that no note names yet.
 
 `python3 -m venv .venv` creates a project-local install folder so Personal Memory
 does not land in your system Python. `source .venv/bin/activate` makes that folder
@@ -71,4 +92,4 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 | `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
 | `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
 | `evals/brain/` | Fictional Layer 1 eval corpus |
-| `src/personal_memory/` | Engine: `check`, `recall`, `get`, and `eval` |
+| `src/personal_memory/` | Engine: `check`, `recall`, `get`, filing (`propose`, `apply`, `remember`), `unfiled`, and `eval` |

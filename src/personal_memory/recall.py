@@ -4,44 +4,10 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 import re
 
-from personal_memory.notes import Note, load_notes
+from personal_memory.notelog import LOG_ENTRY_RE
+from personal_memory.notes import Note, load_notes, norm, tokenize
 
-STOPWORDS = frozenset(
-    {
-        "a",
-        "an",
-        "and",
-        "are",
-        "as",
-        "at",
-        "be",
-        "but",
-        "do",
-        "for",
-        "from",
-        "how",
-        "i",
-        "in",
-        "is",
-        "it",
-        "my",
-        "of",
-        "on",
-        "or",
-        "the",
-        "this",
-        "to",
-        "was",
-        "what",
-        "when",
-        "where",
-        "who",
-        "why",
-        "with",
-    }
-)
 WIKILINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
-TOKEN_RE = re.compile(r"[a-z0-9]+")
 TITLE_SCORE = 8
 ID_SCORE = 10
 BODY_SCORE = 1
@@ -85,7 +51,7 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
     Default is current notes only. historical=True includes superseded notes.
     Wikilinks on a hit's claim line are followed one hop to the target note.
     """
-    tokens = _tokens(query)
+    tokens = tokenize(query)
     notes = load_notes(root)
     hits: list[_Hit] = []
 
@@ -115,27 +81,20 @@ def recall(root: Path, query: str, *, historical: bool = False) -> RecallResult:
             contradicted = tuple(p for p in current_paths if p != str(note.relative))
         else:
             contradicted = ()
+        claim, as_of = _log_line(note, hit.start, hit.claim)
         cards.append(
             EvidenceCard(
-                claim=hit.claim,
+                claim=claim,
                 path=note.relative,
                 start_line=hit.start,
                 end_line=hit.end,
                 status=note.meta.status,
-                as_of=note.meta.as_of,
+                as_of=as_of,
                 confidence=note.meta.confidence,
                 contradicted_by=contradicted,
             )
         )
     return RecallResult(tuple(cards))
-
-
-def _norm(value: str) -> str:
-    return " ".join(TOKEN_RE.findall(value.lower()))
-
-
-def _tokens(query: str) -> list[str]:
-    return [token for token in TOKEN_RE.findall(query.lower()) if token not in STOPWORDS and len(token) > 1]
 
 
 def _exact_match(note: Note, query: str) -> bool:
@@ -144,10 +103,10 @@ def _exact_match(note: Note, query: str) -> bool:
         return False
     if stripped == note.meta.id.lower():
         return True
-    if _norm(query) == _norm(note.title):
+    if norm(query) == norm(note.title):
         return True
-    aliases = _norm(note.aliases)
-    return bool(aliases) and _norm(query) == aliases
+    aliases = norm(note.aliases)
+    return bool(aliases) and norm(query) == aliases
 
 
 def _keyword_score(note: Note, tokens: list[str]) -> int:
@@ -158,7 +117,7 @@ def _keyword_score(note: Note, tokens: list[str]) -> int:
     for token in tokens:
         if token in note.meta.id:
             score += ID_SCORE
-        elif token in _norm(note.title) or token in _norm(note.aliases):
+        elif token in norm(note.title) or token in norm(note.aliases):
             score += TITLE_SCORE
         elif token in body:
             score += BODY_SCORE
@@ -207,6 +166,16 @@ def _claim_span(note: Note, tokens: list[str], *, exact: bool) -> tuple[str, int
         return note.title, title_hit, title_hit
     claim = best[2].lstrip("#").strip() or note.title
     return claim, best[1], best[1]
+
+
+def _log_line(note: Note, line_number: int, claim: str) -> tuple[str, str]:
+    """A claim line that is a Log entry carries its own date; use it as as_of."""
+    lines = note.text.splitlines()
+    if 1 <= line_number <= len(lines):
+        match = LOG_ENTRY_RE.match(lines[line_number - 1])
+        if match is not None:
+            return match.group(3), match.group(1)
+    return claim, note.meta.as_of
 
 
 def _find_title_line(lines: list[tuple[int, str]], title: str) -> int:

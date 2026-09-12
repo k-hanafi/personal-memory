@@ -18,8 +18,9 @@ from the claim line, current-only unless `--historical`). `get` fetches one
 note by id or path with frontmatter intact. Layer 1 evals are complete: 109-note
 corpus, five fixture families, `personal-memory eval run`, a committed baseline
 (`evals/baselines/main.json`: recall 27/35, grep 7/35), and an `eval-gate` CI
-job that fails on any gold regression. No MCP, no filing queue yet. Personal
-Memory does not call an LLM API in v1.
+job that fails on any gold regression. The write path exists: `propose`, `queue`,
+`apply`, `remember`, and `unfiled` (spec: Write section). Notes may carry a dated
+`## Log` section. No MCP yet. Personal Memory does not call an LLM API in v1.
 
 Do not put Khaled's real vault notes in this repo.
 
@@ -41,8 +42,8 @@ Exists:
 - `docs/eval-corpus-plan.md`: persona, note inventory, and why notes exist in `evals/brain/`
 - `docs/sources.md`: every outside source a design choice traces to
 - `examples/demo-brain/`: fake notes with the v1 frontmatter contract
-- `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`, and `evals/` (fixture loader, adapters, checks)
-- `tests/`: checker, recall, and get tests against the demo brain
+- `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`, `notes.py` (shared loader), `notelog.py` (Log section), `filing.py` (proposals, apply, remember), `unfiled.py`, and `evals/` (fixture loader, adapters, checks)
+- `tests/`: checker, recall, get, Log, filing, and unfiled tests against the demo brain (write tests copy it to a temp folder)
 - `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
 - `evals/fixtures/`: TOML fixture files, one per family (supersession, abstention, named-thing, contradiction, citation)
 - `evals/baselines/main.json`: committed scores on `main`; `scripts/eval-gate.sh`: the CI regression gate
@@ -65,6 +66,8 @@ pytest
 personal-memory check examples/demo-brain
 personal-memory recall examples/demo-brain teaching load
 personal-memory get examples/demo-brain alex-rivera
+personal-memory remember BRAIN "One fact." --provenance "user, 2026-09-10" --target alex-rivera
+personal-memory unfiled BRAIN
 personal-memory eval run
 bash scripts/eval-gate.sh
 ```
@@ -105,6 +108,9 @@ notes into this repo. No product API keys are required.
 | Frontmatter / `personal-memory check` | `src/personal_memory/frontmatter.py`, `src/personal_memory/check.py` |
 | Recall / evidence cards | `src/personal_memory/recall.py` |
 | Get by id or path | `src/personal_memory/get.py` |
+| Writes: proposals, queue, apply, remember | `src/personal_memory/filing.py`, spec Write section |
+| Log section (dated facts inside a note) | `src/personal_memory/notelog.py` |
+| Unfiled sources scan | `src/personal_memory/unfiled.py` |
 | Fake corpus | `examples/demo-brain/` |
 | Tests | `tests/` |
 | Cloud VM install | `.cursor/environment.json` |
