@@ -280,8 +280,16 @@ def _run_eval_compare(main_path: Path, head_path: Path) -> int:
 
 
 def _run_eval_gate(main_baseline_path: Path, corpus: Path, fixtures: Path) -> int:
+    corpus = _resolve(corpus)
+    fixtures = _resolve(fixtures)
+    if not corpus.is_dir():
+        print(f"not a directory: {corpus}", file=sys.stderr)
+        return 2
+    if not fixtures.exists():
+        print(f"fixtures path does not exist: {fixtures}", file=sys.stderr)
+        return 2
     try:
-        fresh = run(_resolve(corpus), _resolve(fixtures), list(ADAPTERS))
+        fresh = run(corpus, fixtures, list(ADAPTERS))
     except (OSError, ValueError) as exc:
         print(f"run eval gate from the repository root: {exc}", file=sys.stderr)
         return 2

@@ -48,6 +48,10 @@ BODY_SCORE = 1
 HOP_SCORE = 1
 
 
+def _wikilink_visible(match: re.Match[str]) -> str:
+    return match.group(2) or match.group(1)
+
+
 @dataclass(frozen=True)
 class EvidenceCard:
     claim: str
@@ -149,7 +153,7 @@ def _exact_match(note: Note, query: str) -> bool:
 def _keyword_score(note: Note, tokens: list[str]) -> int:
     if not tokens:
         return 0
-    body = WIKILINK_RE.sub(lambda match: match.group(2) or "", note.body).lower()
+    body = WIKILINK_RE.sub(_wikilink_visible, note.body).lower()
     score = 0
     for token in tokens:
         if token in note.meta.id:
@@ -193,7 +197,7 @@ def _claim_span(note: Note, tokens: list[str], *, exact: bool) -> tuple[str, int
     for number, line in lines:
         if number < note.body_start_line:
             continue
-        visible = WIKILINK_RE.sub(lambda match: match.group(2) or "", line)
+        visible = WIKILINK_RE.sub(_wikilink_visible, line)
         hits = sum(1 for token in tokens if token in visible.lower())
         if hits == 0:
             continue

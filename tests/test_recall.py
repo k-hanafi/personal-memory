@@ -94,6 +94,13 @@ def test_hops_do_not_chain(tmp_path: Path) -> None:
     assert result.cards[0].claim == "Middle"
 
 
+def test_unlabeled_wikilink_uses_id_labeled_uses_label(tmp_path: Path) -> None:
+    _write_note(tmp_path, "unlabeled.md", "unlabeled", "current", "Unlabeled", "See [[zirconium-note]].")
+    _write_note(tmp_path, "labeled.md", "labeled", "current", "Labeled", "See [[zirconium-note|the metal]].")
+    assert [str(card.path) for card in recall(tmp_path, "zirconium").cards] == ["unlabeled.md"]
+    assert [str(card.path) for card in recall(tmp_path, "metal").cards] == ["labeled.md"]
+
+
 def test_query_without_claim_line_wikilinks_is_unchanged() -> None:
     result = recall(DEMO, "teaching load")
     assert [card.path.name for card in result.cards] == ["teaching-load-2026-09.md"]

@@ -254,6 +254,26 @@ def test_cli_eval_run_writes_receipt(tmp_path: Path, capsys) -> None:
     assert receipt["adapters"]["grep"]["families"]["smoke"]["total"] == 3
 
 
+def test_cli_eval_gate_missing_corpus_exits_2(tmp_path: Path, capsys) -> None:
+    missing = tmp_path / "no-brain"
+    code = main(
+        [
+            "eval",
+            "gate",
+            "--main-baseline",
+            str(tmp_path / "baseline.json"),
+            "--corpus",
+            str(missing),
+            "--fixtures",
+            str(ROOT / "evals" / "fixtures"),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "not a directory" in captured.err
+    assert "gate:" not in captured.out
+
+
 def test_cli_eval_run_missing_fixtures_exits_2(tmp_path: Path, capsys) -> None:
     missing = tmp_path / "nope"
     code = main(["eval", "run", "--fixtures", str(missing), "--corpus", str(BRAIN), "--out", str(tmp_path / "r.json")])
