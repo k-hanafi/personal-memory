@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from personal_memory.check import SKIP_NAMES
-from personal_memory.frontmatter import Frontmatter, FrontmatterError, parse_frontmatter, split_frontmatter
+from personal_memory.frontmatter import Frontmatter
+from personal_memory.notes import Note, load_note, load_notes
 
 
 @dataclass(frozen=True)
@@ -20,6 +20,7 @@ def get_note(root: Path, key: str) -> NoteDoc | None:
     if not key:
         return None
 
+    root = root.resolve()
     by_path = _from_path(root, key)
     if by_path is not None:
         return by_path
@@ -28,7 +29,6 @@ def get_note(root: Path, key: str) -> NoteDoc | None:
 
 
 def _from_path(root: Path, key: str) -> NoteDoc | None:
-    root = root.resolve()
     candidate = (root / key).resolve()
     try:
         candidate.relative_to(root)
@@ -36,30 +36,17 @@ def _from_path(root: Path, key: str) -> NoteDoc | None:
         return None
     if not candidate.is_file() or candidate.suffix != ".md":
         return None
-    return _load(root, candidate)
+    return _as_doc(load_note(root, candidate))
 
 
 def _from_id(root: Path, note_id: str) -> NoteDoc | None:
-    for path in sorted(root.rglob("*.md")):
-        if path.name in SKIP_NAMES:
-            continue
-        doc = _load(root, path)
-        if doc is not None and doc.meta.id == note_id:
-            return doc
+    for note in load_notes(root):
+        if note.meta.id == note_id:
+            return _as_doc(note)
     return None
 
 
-def _load(root: Path, path: Path) -> NoteDoc | None:
-    text = path.read_text(encoding="utf-8")
-    try:
-        split = split_frontmatter(text)
-    except FrontmatterError:
+def _as_doc(note: Note | None) -> NoteDoc | None:
+    if note is None:
         return None
-    if split is None:
-        return None
-    fields, _body = split
-    try:
-        meta = parse_frontmatter(fields)
-    except FrontmatterError:
-        return None
-    return NoteDoc(path=path.relative_to(root.resolve()), text=text, meta=meta)
+    return NoteDoc(path=note.relative, text=note.text, meta=note.meta)
