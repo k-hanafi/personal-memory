@@ -141,15 +141,15 @@ this, because every write splits into two halves that want different tools.
 
 | Half | Who does it | Why |
 |---|---|---|
-| Judgment: is this durable, which note is it about, new or changed, what `type`, what `as_of`, where | The coding agent in the editor | It has the whole conversation, the filing rules, and the neighborhood from `recall`. It can ask the user. An engine-side model would see one sentence and could not ask. |
+| Judgment: is this durable, which note is it about, new or changed, what `type`, what `as_of`, where | The coding agent in the editor | It has the whole conversation, the filing rules, and the neighborhood from `remember`. It can ask the user. An engine-side model would see one sentence and could not ask. |
 | Consistency: valid frontmatter, no duplicate `id`/title/alias, supersession mechanics, `sources/` untouched, line-ranged cards | The engine, in code | This is bookkeeping. Models forget to flip a `status`; code does not. |
 
 The engine never decides. It refuses to let a decision be recorded wrong.
 
 ### One door
 
-Every write enters through the same validated path: `submit_proposal`, then
-`apply`. `remember` is the one-call shortcut for a single fact the user stated
+Every write enters through the same validated path: `draft`, then
+`file`. `note` is the one-call shortcut for a single fact the user stated
 in chat, and it goes through the same validation. Nothing writes markdown
 around this door. That seam is what lets a later background filer (spec step
 9) be added as another caller, not as a rewrite.
@@ -178,7 +178,7 @@ and where notes of the same `type` and the linked notes already live.
 
 ### Placement
 
-File next to what you link to. The agent runs `recall` on the subject, sees
+File next to what you link to. The agent runs `remember` on the subject, sees
 where the sibling notes live, and proposes that folder. The engine's tally
 confirms or disagrees. Folder is a convention; `id` is the address, so a
 note in the wrong folder is still found by id, title, alias, keyword, and
@@ -220,7 +220,7 @@ edit that breaks the schema.
 
 A proposal is one JSON file under `.personal-memory/queue/`. JSON, not
 markdown, because a proposal is a validated payload, not a note: it must
-never be indexed by `recall`, and it needs fields with fixed meanings.
+never be indexed by `remember`, and it needs fields with fixed meanings.
 Applied proposals move to `.personal-memory/applied/` so the queue folder is
 always exactly the open work. The id is the first twelve hex digits of the
 SHA-256 of the proposal's content, so submitting the same proposal twice is
@@ -255,9 +255,9 @@ file that exists under `sources/`, or the kind is `append` or `supersede`
 (the target was found by exact id). Otherwise the engine records
 `confidence: medium` and the proposal waits for a person.
 
-`apply` with no arguments writes every valid proposal whose effective
-confidence is high. `apply <id>` writes one named proposal at any
-confidence: that is the person choosing. Apply for `supersede` writes the new
+`file` with no arguments writes every valid proposal whose effective
+confidence is high. `file <id>` writes one named proposal at any
+confidence: that is the person choosing. `file` for `supersede` writes the new
 note and edits the old note's frontmatter in the same call, because leaving
 the flip in the queue would create the exact state this spec calls a bug:
 two current notes on one fact.
@@ -265,18 +265,18 @@ two current notes on one fact.
 On `create` and `supersede` the engine stamps `provenance` into frontmatter
 and, when given, `source`. On `append` the Log line carries provenance.
 
-### `remember`
+### `note`
 
-`remember(claim, provenance, target?, path?, type?, as_of?)` saves one fact
-and returns immediately. It is `propose` then `apply` for that one proposal:
+`note(claim, provenance, target?, path?, type?, as_of?)` saves one fact
+and returns immediately. It is `draft` then `file` for that one proposal:
 
 - With `target`: an `append` proposal. The fact becomes a Log line on that
   note.
 - Without `target`: a `create` proposal for a stub note (frontmatter, a title
   from the claim, and a Log with the one fact). `path` and `type` are required
-  in that case; the agent knows the folder from `recall`.
+  in that case; the agent knows the folder from `remember`.
 
-`remember` does not take a whole body. A whole page is a `create` proposal.
+`note` does not take a whole body. A whole page is a `create` proposal.
 One call, one fact, one shape.
 
 Result is one of `inserted`, `duplicate`, `superseded`, `queued`, `blocked`,
@@ -285,18 +285,18 @@ zero-LLM counts from the section above: candidate notes sharing tokens with
 the claim, and the folders where notes of this `type` and the linked notes
 already live.
 
-### Filed marker and `unfiled`
+### Filed marker and `inbox`
 
 A `sources/` item counts as filed when some note names it: frontmatter
 `source: <path>` on a created note, or `source:<path>` as the provenance of
-a Log line. `unfiled` lists every file under `sources/` that no note names.
+a Log line. `inbox` lists every file under `sources/` that no note names.
 No side file, no move, no edit under `sources/`.
 
 ### Automatic capture
 
 "Automatic" filing is a property of the prompt side, not the engine. The
 brain's `AGENTS.md` (and the user's own rules) tell the agent to call
-`remember` for durable facts without being asked: preferences, corrections,
+`note` for durable facts without being asked: preferences, corrections,
 decisions, commitments, relationships, project-state changes. It also
 carries the skip list: anything derivable from the codebase or git, session
 state, unverified conclusions, secrets. No harness hook in v1.
@@ -309,8 +309,8 @@ version: surface both, let the human pick.
 
 Revisit when dogfood replay shows the failure a background pass would catch
 (two notes on one fact that never co-retrieve) three or more times. First try
-an agent-run lint over `recall` and `get`. Only if that is not enough, add an
-overnight filer with its own key as a caller of `submit_proposal`.
+an agent-run lint over `remember` and `revisit`. Only if that is not enough, add an
+overnight filer with its own key as a caller of `draft`.
 
 ## Note schema
 
@@ -360,21 +360,21 @@ immutable: Personal Memory and the agent read it and never edit it.
 2. **Land raw material in `sources/`.** Drag and drop files, or later a
    connector (Notion first). Connectors are copy jobs: token in env, no
    model in the pipe. Same job as Khaled's `notion-sync`.
-3. **Scan.** `personal-memory unfiled` lists `sources/` items that have no filed
+3. **Scan.** `personal-memory inbox` lists `sources/` items that have no filed
    note yet. No LLM. No file moves.
 4. **Propose.** The user's coding agent (Claude Code, Codex, or Cursor)
-   reads each unfiled item plus `recall` against notes already in the
+   reads each inbox item plus `remember` against notes already in the
    brain, then submits a proposal: destination path, jar-label
    frontmatter, short claim, and a confidence. Personal Memory stores proposals in
    a queue (for example `.personal-memory/queue/`). The agent does not write the
    note yet.
-5. **Validate.** `personal-memory apply` refuses any proposal that fails the jar
+5. **Validate.** `personal-memory file` refuses any proposal that fails the jar
    rules (missing `id` / `as_of` / `status` / `confidence`, bad
    kebab-case, two `current` notes on the same fact). Model-stated
    "high confidence" is not enough. High also needs a boring signal:
    exact `id` or title match, or a dated source for `as_of`.
 6. **Apply by confidence.**
-   - High, and the engine agrees: apply. Write the note, leave `sources/`
+   - High, and the engine agrees: `file`. Write the note, leave `sources/`
      untouched, mark the source as filed.
    - Medium or low, or the engine disagrees: stay in the queue. The user sees
      a short list ("this looks like a person named Samir, or a course
@@ -410,10 +410,10 @@ Gbrain does both, on purpose:
   key, those jobs stay off.
 
 Personal Memory is not a 24/7 daemon in v1, so it should not collect a chat API
-key. A later `personal-memory file --model` overnight path can copy gbrain's
+key. A later overnight `--model` path can copy gbrain's
 daemon. Not now.
 
-If the agent writes markdown with the editor instead of `personal-memory apply`,
+If the agent writes markdown with the editor instead of `personal-memory file`,
 that is a bypass. `AGENTS.md` in the brain must say: new notes go
 through Personal Memory. `personal-memory check` (and later a git hook) catch strays.
 
@@ -422,19 +422,20 @@ through Personal Memory. `personal-memory check` (and later a git hook) catch st
 Install is: point Personal Memory at a folder, add one MCP server entry in Claude Code /
 Codex / Cursor. No website, no Telegram, no cloud account.
 
-v1 tools (names can shift, jobs cannot):
+CLI and MCP share these seven words (locked 2026-09-12):
 
-1. **recall** — search the brain. Returns evidence cards, already filtered
+1. **remember.** Search the brain. Returns evidence cards, already filtered
    with `status` / `as_of` / `confidence` visible. Default to preferring
    `current` unless the question is historical.
-2. **get** — fetch one note by `id` or path, with frontmatter intact.
-3. **unfiled** — list `sources/` items with no filed note yet.
-4. **submit_proposal** — agent hands Personal Memory a filing draft. Personal Memory validates
+2. **revisit.** Fetch one note by `id` or path, with frontmatter intact.
+3. **inbox.** List `sources/` items with no filed note yet.
+4. **draft.** Agent hands Personal Memory a filing. Personal Memory validates
    jar rules and queues it. Does not write the note.
-5. **apply** — write queued proposals that pass validation. High
-   auto-applies. Low stays for the user. Never silent-overwrite a
+5. **pending.** List filings waiting for review.
+6. **file.** Write queued proposals that pass validation. High
+   writes now. Low stays for the user. Never silent-overwrite a
    changing fact (supersede instead).
-6. **remember** — same write path as apply, for a single fact the user
+7. **note.** Same write path as `file`, for a single fact the user
    stated in chat rather than a `sources/` dump. Contract in the Write
    section.
 
@@ -482,7 +483,7 @@ historical notes.
 ## Contract
 
 GOAL: After v1, a coding agent connected to Personal Memory can answer a question from a
-markdown brain using only recall/get, and every stated fact has an evidence
+markdown brain using only remember/revisit, and every stated fact has an evidence
 card. The same install works with embeddings disabled. A new user can run
 `personal-memory check` on `examples/demo-brain` and get a clean pass without API keys.
 
@@ -513,7 +514,7 @@ FAILURE (any of these means v1 is not done):
 - Khaled's vault notes are copied into this repo
 - Filing requires the user to paste an OpenAI/Anthropic key into Personal Memory
 - Low-confidence dumps are written into the brain with no review
-- `sources/` files are moved or edited by apply
+- `sources/` files are moved or edited by `file`
 
 ## Implementation order
 
@@ -532,7 +533,6 @@ FAILURE (any of these means v1 is not done):
 
 ## Open
 
-- Exact MCP tool names
 - Rejecting a queued proposal: today the person deletes the file; a `reject`
   command with a reason may be worth the audit trail
 - Whether `check` should flag a `current` note whose State was last true
@@ -540,5 +540,9 @@ FAILURE (any of these means v1 is not done):
 
 Resolved 2026-09-10 (see Write): queue format is JSON under
 `.personal-memory/queue/`; notes may carry an optional State plus Log shape;
-`remember` saves one fact and stub-creates when there is no target; the
-`supersede` kind flips the old note in the same `apply` call.
+`note` saves one fact and stub-creates when there is no target; the
+`supersede` kind flips the old note in the same `file` call.
+
+Resolved 2026-09-12 (see MCP surface): CLI and MCP share
+`remember`, `revisit`, `inbox`, `draft`, `pending`, `file`, `note`.
+`remember` is search. `note` is the chat write.

@@ -12,15 +12,16 @@ not be required to install or to answer correctly.
 Canonical plan: `docs/v1-spec.md`. If implementation drifts, update the spec
 in the same change or stop and say so.
 
-**Status (2026-09-10):** spec locked. `check` validates frontmatter.
-`recall` returns evidence cards (keyword + exact id/title, one wikilink hop
-from the claim line, current-only unless `--historical`). `get` fetches one
+**Status (2026-09-12):** spec locked. `check` validates frontmatter.
+`remember` returns evidence cards (keyword + exact id/title, one wikilink hop
+from the claim line, current-only unless `--historical`). `revisit` fetches one
 note by id or path with frontmatter intact. Layer 1 evals are complete: 109-note
 corpus, five fixture families, `personal-memory eval run`, a committed baseline
 (`evals/baselines/main.json`: recall 27/35, grep 7/35), and an `eval-gate` CI
-job that fails on any gold regression. The write path exists: `propose`, `queue`,
-`apply`, `remember`, and `unfiled` (spec: Write section). Notes may carry a dated
-`## Log` section. No MCP yet. Personal Memory does not call an LLM API in v1.
+job that fails on any gold regression. The write path exists: `draft`, `pending`,
+`file`, `note`, and `inbox` (spec: Write section). Notes may carry a dated
+`## Log` section. MCP stdio server: `personal-memory mcp --brain`. Personal
+Memory does not call an LLM API in v1.
 
 Do not put Khaled's real vault notes in this repo.
 
@@ -29,7 +30,7 @@ Do not put Khaled's real vault notes in this repo.
 - Python 3.11+
 - Packaging: `pyproject.toml`, pip, a local `.venv`
 - Tests: pytest
-- Planned: MCP Python SDK over stdio (Claude Code, Codex, Cursor)
+- MCP: official Python SDK over stdio (`personal-memory mcp --brain`)
 - Not in v1: Postgres, Convex, required embeddings, Telegram, OpenClaw,
   marketplace plugins
 
@@ -42,8 +43,8 @@ Exists:
 - `docs/eval-corpus-plan.md`: persona, note inventory, and why notes exist in `evals/brain/`
 - `docs/sources.md`: every outside source a design choice traces to
 - `examples/demo-brain/`: fake notes with the v1 frontmatter contract
-- `src/personal_memory/`: frontmatter parse, `check`, `recall`, `get`, `notes.py` (shared loader), `notelog.py` (Log section), `filing.py` (proposals, apply, remember), `unfiled.py`, and `evals/` (fixture loader, adapters, checks)
-- `tests/`: checker, recall, get, Log, filing, and unfiled tests against the demo brain (write tests copy it to a temp folder)
+- `src/personal_memory/`: frontmatter parse, `check`, `recall.py` (search library), `get.py`, `notes.py` (shared loader), `notelog.py` (Log section), `filing.py` (proposals, apply, remember), `unfiled.py`, `mcp.py` (stdio server), and `evals/` (fixture loader, adapters, checks)
+- `tests/`: checker, remember/revisit CLI, Log, filing, inbox, and MCP tests against the demo brain (write tests copy it to a temp folder)
 - `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
 - `evals/fixtures/`: TOML fixture files, one per family (supersession, abstention, named-thing, contradiction, citation)
 - `evals/baselines/main.json`: committed scores on `main`; `scripts/eval-gate.sh`: the CI regression gate
@@ -52,8 +53,6 @@ Exists:
 Planned (do not invent extra layers before these):
 
 - Layer 2 vault replay and Layer 3 agent-in-the-loop evals (spec: `docs/evals-spec.md`)
-- MCP stdio server
-- Unfiled scan, proposal queue, apply (human review for low confidence)
 - Optional vector recall arm (fail-open)
 
 ## Development commands
@@ -64,13 +63,18 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 pytest
 personal-memory check examples/demo-brain
-personal-memory recall examples/demo-brain teaching load
-personal-memory get examples/demo-brain alex-rivera
-personal-memory remember BRAIN "One fact." --provenance "user, 2026-09-10" --target alex-rivera
-personal-memory unfiled BRAIN
+personal-memory remember examples/demo-brain teaching load
+personal-memory revisit examples/demo-brain alex-rivera
+personal-memory note BRAIN "One fact." --provenance "user, 2026-09-10" --target alex-rivera
+personal-memory inbox BRAIN
+personal-memory mcp --brain examples/demo-brain
 personal-memory eval run
 bash scripts/eval-gate.sh
 ```
+
+Install snippets for Cursor, Claude Code, and Codex are in `README.md`.
+Point `--brain` at `examples/demo-brain` in this repo. Do not commit a
+config that points at a real vault.
 
 `python3 -m venv .venv` creates a local install folder. `source .venv/bin/activate`
 uses it in this terminal. `python -m pip install -e ".[dev]"` installs the CLI and
@@ -85,8 +89,8 @@ User Rules, or `~/.cursor/skills`. After a Build, `.venv` already exists from
 ```bash
 .venv/bin/pytest
 .venv/bin/personal-memory check examples/demo-brain
-.venv/bin/personal-memory recall examples/demo-brain teaching load
-.venv/bin/personal-memory get examples/demo-brain alex-rivera
+.venv/bin/personal-memory remember examples/demo-brain teaching load
+.venv/bin/personal-memory revisit examples/demo-brain alex-rivera
 .venv/bin/personal-memory eval run
 PATH=".venv/bin:$PATH" bash scripts/eval-gate.sh
 ```
@@ -106,11 +110,12 @@ notes into this repo. No product API keys are required.
 | Eval loader, adapters, checks | `src/personal_memory/evals/` |
 | Why a design choice was made, what we read | `docs/sources.md` |
 | Frontmatter / `personal-memory check` | `src/personal_memory/frontmatter.py`, `src/personal_memory/check.py` |
-| Recall / evidence cards | `src/personal_memory/recall.py` |
-| Get by id or path | `src/personal_memory/get.py` |
-| Writes: proposals, queue, apply, remember | `src/personal_memory/filing.py`, spec Write section |
+| Search / evidence cards | `src/personal_memory/recall.py` (`remember` CLI and MCP) |
+| Open one note | `src/personal_memory/get.py` (`revisit`) |
+| Writes: draft, pending, file, note | `src/personal_memory/filing.py`, spec Write section |
+| MCP stdio server | `src/personal_memory/mcp.py` |
 | Log section (dated facts inside a note) | `src/personal_memory/notelog.py` |
-| Unfiled sources scan | `src/personal_memory/unfiled.py` |
+| Inbox (unfiled sources) | `src/personal_memory/unfiled.py` |
 | Fake corpus | `examples/demo-brain/` |
 | Tests | `tests/` |
 | Cloud VM install | `.cursor/environment.json` |
