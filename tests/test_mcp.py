@@ -1,3 +1,4 @@
+import inspect
 import shutil
 from pathlib import Path
 
@@ -5,7 +6,8 @@ import pytest
 
 from personal_memory.cli import main
 from personal_memory.get import get_note
-from personal_memory.mcp import TOOL_NAMES, handle
+from personal_memory import mcp as mcp_mod
+from personal_memory.mcp import make_server
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
 
@@ -32,6 +34,10 @@ def brain(tmp_path: Path) -> Path:
     return root
 
 
+def _tools(brain: Path, sources: str = "sources"):
+    return {tool.name: tool.fn for tool in make_server(brain, sources)._tool_manager.list_tools()}
+
+
 def test_mcp_cli_exposes_sources(capsys) -> None:
     try:
         main(["mcp", "--help"])
@@ -40,8 +46,15 @@ def test_mcp_cli_exposes_sources(capsys) -> None:
     assert "--sources" in capsys.readouterr().out
 
 
+def test_no_parallel_dispatcher() -> None:
+    assert not hasattr(mcp_mod, "handle")
+    assert not hasattr(mcp_mod, "call")
+    assert not hasattr(mcp_mod, "TOOL_NAMES")
+
+
 def test_tool_names_are_the_seven_human_verbs() -> None:
-    assert TOOL_NAMES == (
+    fns = _tools(DEMO)
+    assert tuple(fns) == (
         "remember",
         "revisit",
         "inbox",
@@ -50,10 +63,11 @@ def test_tool_names_are_the_seven_human_verbs() -> None:
         "file",
         "note",
     )
+    assert "title" not in inspect.signature(fns["note"]).parameters
 
 
 def test_remember_cards_have_path_lines_and_freshness() -> None:
-    result = handle("remember", DEMO, {"query": "teaching load"})
+    result = _tools(DEMO)["remember"]("teaching load")
     cards = result["cards"]
     assert cards
     sept = next(card for card in cards if Path(card["path"]).name == "teaching-load-2026-09.md")
@@ -68,14 +82,14 @@ def test_remember_cards_have_path_lines_and_freshness() -> None:
 
 
 def test_remember_historical_includes_superseded() -> None:
-    result = handle("remember", DEMO, {"query": "teaching load", "historical": True})
+    result = _tools(DEMO)["remember"]("teaching load", historical=True)
     by_name = {Path(card["path"]).name: card for card in result["cards"]}
     assert by_name["teaching-load-2026-01.md"]["status"] == "superseded"
     assert by_name["teaching-load-2026-09.md"]["status"] == "current"
 
 
 def test_revisit_keeps_frontmatter() -> None:
-    result = handle("revisit", DEMO, {"key": "alex-rivera"})
+    result = _tools(DEMO)["revisit"]("alex-rivera")
     assert result["text"].startswith("---")
     assert "id: alex-rivera" in result["text"]
     assert "Economics lecturer" in result["text"]
@@ -83,26 +97,27 @@ def test_revisit_keeps_frontmatter() -> None:
 
 
 def test_inbox_lists_unfiled_sources(brain: Path) -> None:
-    result = handle("inbox", brain, {})
+    result = _tools(brain)["inbox"]()
     assert "sources/dean-email.md" in result["unfiled"]
 
 
 def test_inbox_uses_named_sources_dir(tmp_path: Path) -> None:
     (tmp_path / "70-sources").mkdir()
     (tmp_path / "70-sources" / "x.md").write_text("x\n", encoding="utf-8")
-    result = handle("inbox", tmp_path, {"sources": "70-sources"})
+    result = _tools(tmp_path, sources="70-sources")["inbox"]()
     assert result["unfiled"] == ["70-sources/x.md"]
 
 
 def test_draft_queues_and_writes_nothing(brain: Path) -> None:
-    result = handle("draft", brain, {"proposal": CREATE})
+    result = _tools(brain)["draft"](CREATE)
     assert result["status"] == "queued"
     assert not (brain / "50-people" / "dana-whitfield.md").exists()
 
 
 def test_pending_lists_waiting_drafts(brain: Path) -> None:
-    handle("draft", brain, {"proposal": CREATE})
-    result = handle("pending", brain, {})
+    fns = _tools(brain)
+    fns["draft"](CREATE)
+    result = fns["pending"]()
     assert len(result["items"]) == 1
     assert result["items"][0]["proposal"]["id"] == "dana-whitfield"
 
@@ -110,9 +125,10 @@ def test_pending_lists_waiting_drafts(brain: Path) -> None:
 def test_file_without_id_skips_low_confidence(brain: Path) -> None:
     low = dict(CREATE, provenance="agent:cursor, 2026-09-10")
     del low["source"]
-    queued = handle("draft", brain, {"proposal": low})
+    fns = _tools(brain)
+    queued = fns["draft"](low)
     assert queued["confidence"] == "medium"
-    result = handle("file", brain, {})
+    result = fns["file"]()
     assert result["outcomes"][0]["status"] == "queued"
     assert not (brain / "50-people" / "dana-whitfield.md").exists()
 
@@ -120,38 +136,39 @@ def test_file_without_id_skips_low_confidence(brain: Path) -> None:
 def test_file_and_note_leave_sources_untouched(brain: Path) -> None:
     source = brain / "sources" / "dean-email.md"
     before = source.read_text(encoding="utf-8")
-    handle("draft", brain, {"proposal": CREATE})
-    handle("file", brain, {})
-    handle(
-        "note",
-        brain,
-        {
-            "claim": "Samir will draft the first case.",
-            "provenance": "user, 2026-09-10",
-            "target": "samir-okonkwo",
-            "as_of": "2026-09-10",
-        },
+    fns = _tools(brain)
+    fns["draft"](CREATE)
+    fns["file"]()
+    fns["note"](
+        claim="Samir will draft the first case.",
+        provenance="user, 2026-09-10",
+        target="samir-okonkwo",
+        as_of="2026-09-10",
     )
     assert source.read_text(encoding="utf-8") == before
 
 
 def test_note_writes_one_fact(brain: Path) -> None:
-    result = handle(
-        "note",
-        brain,
-        {
-            "claim": "Samir will draft the first case.",
-            "provenance": "user, 2026-09-10",
-            "target": "samir-okonkwo",
-            "as_of": "2026-09-10",
-        },
+    result = _tools(brain)["note"](
+        claim="Samir will draft the first case.",
+        provenance="user, 2026-09-10",
+        target="samir-okonkwo",
+        as_of="2026-09-10",
     )
     assert result["status"] == "inserted"
     text = get_note(brain, "samir-okonkwo").text
     assert "- 2026-09-10 | user, 2026-09-10 | Samir will draft the first case." in text
 
 
-def test_note_without_provenance_refuses(brain: Path) -> None:
-    with pytest.raises(ValueError, match="provenance"):
-        handle("note", brain, {"claim": "A fact.", "target": "alex-rivera"})
+def test_note_without_provenance_is_blocked_outcome(brain: Path) -> None:
+    result = _tools(brain)["note"](claim="A fact.", target="alex-rivera")
+    assert result["status"] == "blocked"
+    assert "provenance" in (result["reason"] or "")
     assert "A fact." not in get_note(brain, "alex-rivera").text
+
+
+def test_note_empty_claim_is_blocked_outcome(brain: Path) -> None:
+    result = _tools(brain)["note"](claim="", provenance="user", target="alex-rivera")
+    assert result["status"] == "blocked"
+    assert "claim" in (result["reason"] or "")
+    assert get_note(brain, "alex-rivera").text
