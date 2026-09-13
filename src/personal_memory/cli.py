@@ -36,36 +36,36 @@ def main(argv: list[str] | None = None) -> int:
         help="Folder of markdown notes (for example examples/demo-brain)",
     )
 
-    recall_parser = sub.add_parser(
-        "recall",
+    remember_parser = sub.add_parser(
+        "remember",
         help="Search a brain and print evidence cards",
     )
-    recall_parser.add_argument(
+    remember_parser.add_argument(
         "brain",
         type=Path,
         help="Folder of markdown notes (for example examples/demo-brain)",
     )
-    recall_parser.add_argument(
+    remember_parser.add_argument(
         "query",
         nargs="+",
         help="Words to search for",
     )
-    recall_parser.add_argument(
+    remember_parser.add_argument(
         "--historical",
         action="store_true",
         help="Include superseded notes. Default is current notes only.",
     )
 
-    get_parser = sub.add_parser(
-        "get",
+    revisit_parser = sub.add_parser(
+        "revisit",
         help="Fetch one note by id or path, with frontmatter intact",
     )
-    get_parser.add_argument(
+    revisit_parser.add_argument(
         "brain",
         type=Path,
         help="Folder of markdown notes (for example examples/demo-brain)",
     )
-    get_parser.add_argument(
+    revisit_parser.add_argument(
         "key",
         help="Note id (alex-rivera) or path relative to the brain",
     )
@@ -75,47 +75,58 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--sources", default="sources", metavar="DIR", help="Immutable dump folder inside the brain (default sources)")
         p.add_argument("--json", action="store_true", help="Print the result as JSON for an agent to read")
 
-    propose_parser = sub.add_parser(
-        "propose",
+    draft_parser = sub.add_parser(
+        "draft",
         help="Validate a filing proposal (JSON) and queue it. Writes no note.",
     )
-    brain_arg(propose_parser)
-    propose_parser.add_argument(
+    brain_arg(draft_parser)
+    draft_parser.add_argument(
         "file",
         nargs="?",
         type=Path,
         help="Proposal JSON: kind, provenance, confidence, as_of, and the kind's fields. Default stdin.",
     )
 
-    queue_parser = sub.add_parser("queue", help="List queued proposals and what the engine thinks of each")
-    brain_arg(queue_parser)
+    pending_parser = sub.add_parser("pending", help="List queued proposals and what the engine thinks of each")
+    brain_arg(pending_parser)
 
-    apply_parser = sub.add_parser(
-        "apply",
+    file_parser = sub.add_parser(
+        "file",
         help="Write queued proposals: every high-confidence one, or the one you name at any confidence",
     )
-    brain_arg(apply_parser)
-    apply_parser.add_argument("id", nargs="?", help="Proposal id to apply regardless of confidence")
+    brain_arg(file_parser)
+    file_parser.add_argument("id", nargs="?", help="Proposal id to write regardless of confidence")
 
-    remember_parser = sub.add_parser(
-        "remember",
+    note_parser = sub.add_parser(
+        "note",
         help="Save one fact now: append to a note, or stub-create one at --path",
     )
-    brain_arg(remember_parser)
-    remember_parser.add_argument("claim", help="One fact, one line")
-    remember_parser.add_argument(
+    brain_arg(note_parser)
+    note_parser.add_argument("claim", help="One fact, one line")
+    note_parser.add_argument(
         "--provenance",
         required=True,
         help="Who proposed it and when, for example 'user, 2026-09-10' or 'agent:claude-code, 2026-09-10'",
     )
-    remember_parser.add_argument("--target", help="Note id to append the fact to")
-    remember_parser.add_argument("--path", help="Where to create a new note when there is no target")
-    remember_parser.add_argument("--type", help="Note type for a new note")
-    remember_parser.add_argument("--title", help="Title for a new note (default: from the file name)")
-    remember_parser.add_argument("--as-of", dest="as_of", help="When the fact was true (default today)")
+    note_parser.add_argument("--target", help="Note id to append the fact to")
+    note_parser.add_argument("--path", help="Where to create a new note when there is no target")
+    note_parser.add_argument("--type", help="Note type for a new note")
+    note_parser.add_argument("--title", help="Title for a new note (default: from the file name)")
+    note_parser.add_argument("--as-of", dest="as_of", help="When the fact was true (default today)")
 
-    unfiled_parser = sub.add_parser("unfiled", help="List files under sources/ that no note has filed yet")
-    brain_arg(unfiled_parser)
+    inbox_parser = sub.add_parser("inbox", help="List files under sources/ that no note has filed yet")
+    brain_arg(inbox_parser)
+
+    mcp_parser = sub.add_parser(
+        "mcp",
+        help="Start the MCP server on stdin/stdout, pointed at one brain folder",
+    )
+    mcp_parser.add_argument(
+        "--brain",
+        type=Path,
+        required=True,
+        help="Folder of markdown notes (for example examples/demo-brain)",
+    )
 
     eval_parser = sub.add_parser(
         "eval",
@@ -175,22 +186,24 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "check":
         return _run_check(args.brain)
-    if args.command == "recall":
+    if args.command == "remember":
         return _run_recall(args.brain, " ".join(args.query), historical=args.historical)
-    if args.command == "get":
+    if args.command == "revisit":
         return _run_get(args.brain, args.key)
-    if args.command in ("propose", "queue", "apply", "remember", "unfiled"):
+    if args.command == "mcp":
+        return _run_mcp(args.brain)
+    if args.command in ("draft", "pending", "file", "note", "inbox"):
         root = args.brain.expanduser().resolve()
         if not root.is_dir():
             print(f"not a directory: {root}", file=sys.stderr)
             return 2
-        if args.command == "propose":
+        if args.command == "draft":
             return _run_propose(root, args.file, args.sources, args.json)
-        if args.command == "queue":
+        if args.command == "pending":
             return _run_queue(root, args.sources, args.json)
-        if args.command == "apply":
+        if args.command == "file":
             return _run_apply(root, args.id, args.sources, args.json)
-        if args.command == "remember":
+        if args.command == "note":
             return _run_remember(root, args)
         return _run_unfiled(root, args.sources, args.json)
     if args.command == "eval" and args.eval_command == "run":
@@ -274,6 +287,17 @@ def _run_get(brain: Path, key: str) -> int:
         print("the brain does not have this")
         return 0
     print(doc.text, end="" if doc.text.endswith("\n") else "\n")
+    return 0
+
+
+def _run_mcp(brain: Path) -> int:
+    from personal_memory.mcp import serve
+
+    root = _resolve(brain)
+    if not root.is_dir():
+        print(f"not a directory: {root}", file=sys.stderr)
+        return 2
+    serve(root)
     return 0
 
 
