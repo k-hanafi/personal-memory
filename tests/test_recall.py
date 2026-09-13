@@ -1,6 +1,8 @@
+import shutil
 from pathlib import Path
 
 from personal_memory.cli import main
+from personal_memory.get import get_note
 from personal_memory.recall import recall
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
@@ -111,8 +113,15 @@ def test_query_without_claim_line_wikilinks_is_unchanged() -> None:
     assert result.cards[0].start_line == 10
 
 
-def test_cli_recall_prints_september(capsys) -> None:
-    code = main(["recall", str(DEMO), "teaching", "load"])
+def _cli(argv: list[str]) -> int:
+    try:
+        return main(argv)
+    except SystemExit as exc:
+        return int(exc.code or 0)
+
+
+def test_cli_remember_prints_september(capsys) -> None:
+    code = _cli(["remember", str(DEMO), "teaching", "load"])
     captured = capsys.readouterr()
     assert code == 0
     assert "teaching-load-2026-09.md" in captured.out
@@ -120,8 +129,64 @@ def test_cli_recall_prints_september(capsys) -> None:
     assert "current" in captured.out
 
 
-def test_cli_recall_empty_is_success(capsys) -> None:
-    code = main(["recall", str(DEMO), "quantum", "pineapple"])
+def test_cli_remember_empty_is_success(capsys) -> None:
+    code = _cli(["remember", str(DEMO), "quantum", "pineapple"])
     captured = capsys.readouterr()
     assert code == 0
     assert "the brain does not have this" in captured.out
+
+
+def test_cli_recall_is_unknown() -> None:
+    assert _cli(["recall", str(DEMO), "teaching", "load"]) == 2
+
+
+def test_cli_remember_with_provenance_does_not_write(tmp_path: Path) -> None:
+    brain = tmp_path / "brain"
+    shutil.copytree(DEMO, brain)
+    before = get_note(brain, "alex-rivera").text
+    code = _cli(
+        [
+            "remember",
+            str(brain),
+            "One fact.",
+            "--provenance",
+            "user, 2026-09-10",
+            "--target",
+            "alex-rivera",
+        ]
+    )
+    assert code != 0 or "One fact." not in get_note(brain, "alex-rivera").text
+    assert "One fact." not in get_note(brain, "alex-rivera").text
+    assert get_note(brain, "alex-rivera").text == before
+
+
+def test_cli_note_writes_one_fact(tmp_path: Path, capsys) -> None:
+    brain = tmp_path / "brain"
+    shutil.copytree(DEMO, brain)
+    code = _cli(
+        [
+            "note",
+            str(brain),
+            "Samir will draft the first case.",
+            "--provenance",
+            "user, 2026-09-10",
+            "--target",
+            "samir-okonkwo",
+            "--as-of",
+            "2026-09-10",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "inserted" in captured.out
+    assert (
+        "- 2026-09-10 | user, 2026-09-10 | Samir will draft the first case."
+        in get_note(brain, "samir-okonkwo").text
+    )
+
+
+def test_cli_note_without_provenance_refuses(tmp_path: Path) -> None:
+    brain = tmp_path / "brain"
+    shutil.copytree(DEMO, brain)
+    assert _cli(["note", str(brain), "A fact."]) == 2
+    assert "A fact." not in get_note(brain, "alex-rivera").text

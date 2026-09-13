@@ -4,6 +4,13 @@ from personal_memory.cli import main
 from personal_memory.get import get_note
 from personal_memory.notes import SKIP_NAMES
 
+
+def _cli(argv: list[str]) -> int:
+    try:
+        return main(argv)
+    except SystemExit as exc:
+        return int(exc.code or 0)
+
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
 
 
@@ -48,8 +55,8 @@ def test_get_by_path_skips_protocol_names(tmp_path: Path) -> None:
         assert get_note(tmp_path, "readme") is None
 
 
-def test_cli_get_prints_note(capsys) -> None:
-    code = main(["get", str(DEMO), "alex-rivera"])
+def test_cli_revisit_prints_note(capsys) -> None:
+    code = _cli(["revisit", str(DEMO), "alex-rivera"])
     captured = capsys.readouterr()
     assert code == 0
     assert captured.out.startswith("---")
@@ -57,8 +64,12 @@ def test_cli_get_prints_note(capsys) -> None:
     assert "Economics lecturer" in captured.out
 
 
-def test_cli_get_missing_is_success(capsys) -> None:
-    code = main(["get", str(DEMO), "no-such-note"])
+def test_cli_revisit_missing_is_success(capsys) -> None:
+    code = _cli(["revisit", str(DEMO), "no-such-note"])
     captured = capsys.readouterr()
     assert code == 0
     assert "the brain does not have this" in captured.out
+
+
+def test_cli_get_is_unknown() -> None:
+    assert _cli(["get", str(DEMO), "alex-rivera"]) == 2
