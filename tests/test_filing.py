@@ -356,10 +356,12 @@ def test_note_from_agent_queues_instead_of_writing(brain: Path) -> None:
 
 
 def test_note_reports_duplicate_and_candidates(brain: Path) -> None:
-    outcome = note(brain, "Samir Okonkwo teaches finance.", "user", path="50-people/samir-okonkwo.md", type="person")
-    assert outcome.status == "duplicate"
-    assert outcome.target == "samir-okonkwo"
-    assert "samir-okonkwo" in outcome.candidates
+    duplicate = note(brain, "x", "user", path="30-projects/samir-okonkwo.md", type="person")
+    assert duplicate.status == "duplicate"
+    assert duplicate.target == "samir-okonkwo"
+    created = note(brain, "Samir Okonkwo teaches finance.", "user", path="50-people/dana-whitfield.md", type="person")
+    assert created.status == "inserted"
+    assert "samir-okonkwo" in created.candidates
 
 
 def test_note_without_target_needs_path_and_type(brain: Path) -> None:
