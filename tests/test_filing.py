@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from personal_memory.check import check_brain
-from personal_memory.filing import APPLIED_DIR, QUEUE_DIR, Proposal, apply, list_queue, remember, submit
+from personal_memory.filing import APPLIED_DIR, QUEUE_DIR, Proposal, apply, list_queue, note, submit
 from personal_memory.get import get_note
 from personal_memory.recall import recall
 
@@ -327,40 +327,58 @@ def test_apply_second_append_of_same_claim_stays_queued(brain: Path) -> None:
     assert check_brain(brain).ok
 
 
-def test_remember_appends_when_target_given(brain: Path) -> None:
-    outcome = remember(brain, "Samir will draft the first case.", "user, 2026-09-10", target="samir-okonkwo", as_of="2026-09-10")
+def test_note_appends_when_target_given(brain: Path) -> None:
+    outcome = note(brain, "Samir will draft the first case.", "user, 2026-09-10", target="samir-okonkwo", as_of="2026-09-10")
     assert outcome.status == "inserted"
     assert outcome.paths == ("50-people/samir-okonkwo.md",)
     assert list_queue(brain) == []
     assert "- 2026-09-10 | user, 2026-09-10 | Samir will draft the first case." in get_note(brain, "samir-okonkwo").text
 
 
-def test_remember_stub_creates_when_no_target(brain: Path) -> None:
-    outcome = remember(
+def test_note_stub_creates_when_no_target(brain: Path) -> None:
+    outcome = note(
         brain, "Dana chairs the department.", "user, 2026-09-10", path="50-people/dana-whitfield.md", type="person", as_of="2026-09-10"
     )
     assert outcome.status == "inserted"
-    note = get_note(brain, "dana-whitfield")
-    assert note.text.startswith("---\nid: dana-whitfield\ntype: person\nas_of: 2026-09-10\nstatus: current\nconfidence: high\n")
-    assert "# Dana whitfield" in note.text
-    assert "## Log\n- 2026-09-10 | user, 2026-09-10 | Dana chairs the department." in note.text
+    created = get_note(brain, "dana-whitfield")
+    assert created.text.startswith("---\nid: dana-whitfield\ntype: person\nas_of: 2026-09-10\nstatus: current\nconfidence: high\n")
+    assert "# Dana whitfield" in created.text
+    assert "## Log\n- 2026-09-10 | user, 2026-09-10 | Dana chairs the department." in created.text
     assert check_brain(brain).ok
 
 
-def test_remember_from_agent_queues_instead_of_writing(brain: Path) -> None:
-    outcome = remember(brain, "Dana chairs the department.", "agent:cursor, 2026-09-10", path="50-people/dana-whitfield.md", type="person")
+def test_note_from_agent_queues_instead_of_writing(brain: Path) -> None:
+    outcome = note(brain, "Dana chairs the department.", "agent:cursor, 2026-09-10", path="50-people/dana-whitfield.md", type="person")
     assert outcome.status == "queued"
     assert outcome.confidence == "medium"
     assert not (brain / "50-people" / "dana-whitfield.md").exists()
     assert len(list_queue(brain)) == 1
 
 
-def test_remember_reports_duplicate_and_candidates(brain: Path) -> None:
-    outcome = remember(brain, "Samir Okonkwo teaches finance.", "user", path="50-people/sam.md", type="person", title="Samir Okonkwo")
+def test_note_reports_duplicate_and_candidates(brain: Path) -> None:
+    outcome = note(brain, "Samir Okonkwo teaches finance.", "user", path="50-people/samir-okonkwo.md", type="person")
     assert outcome.status == "duplicate"
     assert outcome.target == "samir-okonkwo"
     assert "samir-okonkwo" in outcome.candidates
 
 
-def test_remember_without_target_needs_path_and_type(brain: Path) -> None:
-    assert remember(brain, "x", "user").status == "blocked"
+def test_note_without_target_needs_path_and_type(brain: Path) -> None:
+    outcome = note(brain, "x", "user")
+    assert outcome.status == "blocked"
+    assert "note without a target" in (outcome.reason or "")
+
+
+def test_note_empty_claim_is_blocked(brain: Path) -> None:
+    outcome = note(brain, "  ", "user", target="alex-rivera")
+    assert outcome.status == "blocked"
+    assert "claim is required" in (outcome.reason or "")
+    assert list_queue(brain) == []
+    assert "  " not in get_note(brain, "alex-rivera").text
+
+
+def test_note_empty_provenance_is_blocked(brain: Path) -> None:
+    outcome = note(brain, "A fact.", "  ", target="alex-rivera")
+    assert outcome.status == "blocked"
+    assert "provenance is required" in (outcome.reason or "")
+    assert list_queue(brain) == []
+    assert "A fact." not in get_note(brain, "alex-rivera").text

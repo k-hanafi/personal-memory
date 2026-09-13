@@ -190,3 +190,8 @@ def test_cli_note_without_provenance_refuses(tmp_path: Path) -> None:
     shutil.copytree(DEMO, brain)
     assert _cli(["note", str(brain), "A fact."]) == 2
     assert "A fact." not in get_note(brain, "alex-rivera").text
+
+
+def test_cli_note_has_no_title_flag(capsys) -> None:
+    assert _cli(["note", "--help"]) == 0
+    assert "--title" not in capsys.readouterr().out

@@ -160,7 +160,7 @@ def apply(root: Path, *, proposal_id: str | None = None, sources_dir: str = "sou
     return outcomes
 
 
-def remember(
+def note(
     root: Path,
     claim: str,
     provenance: str,
@@ -169,16 +169,19 @@ def remember(
     path: str | None = None,
     type: str | None = None,
     as_of: str | None = None,
-    title: str | None = None,
     sources_dir: str = "sources",
 ) -> Outcome:
     """Save one fact: append to target, or stub-create a note at path."""
+    if not (provenance or "").strip():
+        return Outcome("blocked", "", reason="provenance is required: who proposed this and when")
+    if not (claim or "").strip():
+        return Outcome("blocked", "", reason="claim is required")
     as_of = as_of or today()
     if target is not None:
         proposal = Proposal("append", provenance, "high", as_of, target=target, claim=claim)
     else:
         if not path or not type:
-            return Outcome("blocked", "", reason="remember without a target needs path and type")
+            return Outcome("blocked", "", reason="note without a target needs path and type")
         note_id = Path(path).stem
         proposal = Proposal(
             "create",
@@ -188,7 +191,7 @@ def remember(
             path=path,
             id=note_id,
             type=type,
-            title=title or note_id.replace("-", " ").capitalize(),
+            title=note_id.replace("-", " ").capitalize(),
             claim=claim,
         )
     submitted = submit(root, proposal, sources_dir=sources_dir)

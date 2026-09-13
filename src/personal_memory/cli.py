@@ -13,7 +13,7 @@ from personal_memory.evals.baseline import BASELINE_PATH, compare, gate, to_base
 from personal_memory.evals.receipt import write_receipt
 from personal_memory.evals.report import render
 from personal_memory.evals.runner import DEFAULT_CORPUS, DEFAULT_FIXTURES, run
-from personal_memory.filing import Outcome, Proposal, apply, list_queue, remember, submit
+from personal_memory.filing import Outcome, Proposal, apply, list_queue, note, submit
 from personal_memory.get import get_note
 from personal_memory.recall import recall
 from personal_memory.unfiled import unfiled
@@ -111,7 +111,6 @@ def main(argv: list[str] | None = None) -> int:
     note_parser.add_argument("--target", help="Note id to append the fact to")
     note_parser.add_argument("--path", help="Where to create a new note when there is no target")
     note_parser.add_argument("--type", help="Note type for a new note")
-    note_parser.add_argument("--title", help="Title for a new note (default: from the file name)")
     note_parser.add_argument("--as-of", dest="as_of", help="When the fact was true (default today)")
 
     inbox_parser = sub.add_parser("inbox", help="List files under sources/ that no note has filed yet")
@@ -193,9 +192,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "check":
         return _run_check(args.brain)
     if args.command == "remember":
-        return _run_recall(args.brain, " ".join(args.query), historical=args.historical)
+        return _run_remember(args.brain, " ".join(args.query), historical=args.historical)
     if args.command == "revisit":
-        return _run_get(args.brain, args.key)
+        return _run_revisit(args.brain, args.key)
     if args.command == "mcp":
         return _run_mcp(args.brain, args.sources)
     if args.command in ("draft", "pending", "file", "note", "inbox"):
@@ -204,14 +203,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"not a directory: {root}", file=sys.stderr)
             return 2
         if args.command == "draft":
-            return _run_propose(root, args.file, args.sources, args.json)
+            return _run_draft(root, args.file, args.sources, args.json)
         if args.command == "pending":
-            return _run_queue(root, args.sources, args.json)
+            return _run_pending(root, args.sources, args.json)
         if args.command == "file":
-            return _run_apply(root, args.id, args.sources, args.json)
+            return _run_file(root, args.id, args.sources, args.json)
         if args.command == "note":
-            return _run_remember(root, args)
-        return _run_unfiled(root, args.sources, args.json)
+            return _run_note(root, args)
+        return _run_inbox(root, args.sources, args.json)
     if args.command == "eval" and args.eval_command == "run":
         return _run_eval(
             args.corpus,
@@ -262,7 +261,7 @@ def _run_check(brain: Path) -> int:
     return 0
 
 
-def _run_recall(brain: Path, query: str, *, historical: bool) -> int:
+def _run_remember(brain: Path, query: str, *, historical: bool) -> int:
     root = _resolve(brain)
     if not root.is_dir():
         print(f"not a directory: {root}", file=sys.stderr)
@@ -283,7 +282,7 @@ def _run_recall(brain: Path, query: str, *, historical: bool) -> int:
     return 0
 
 
-def _run_get(brain: Path, key: str) -> int:
+def _run_revisit(brain: Path, key: str) -> int:
     root = _resolve(brain)
     if not root.is_dir():
         print(f"not a directory: {root}", file=sys.stderr)
@@ -307,7 +306,7 @@ def _run_mcp(brain: Path, sources: str) -> int:
     return 0
 
 
-def _run_propose(root: Path, file: Path | None, sources: str, as_json: bool) -> int:
+def _run_draft(root: Path, file: Path | None, sources: str, as_json: bool) -> int:
     raw = sys.stdin.read() if file is None else file.read_text(encoding="utf-8")
     try:
         proposal = Proposal.from_dict(json.loads(raw))
@@ -319,7 +318,7 @@ def _run_propose(root: Path, file: Path | None, sources: str, as_json: bool) -> 
     return 0 if outcome.status == "queued" else 1
 
 
-def _run_queue(root: Path, sources: str, as_json: bool) -> int:
+def _run_pending(root: Path, sources: str, as_json: bool) -> int:
     items = list_queue(root, sources_dir=sources)
     if as_json:
         print(json.dumps([{"id": q.proposal_id, "submitted_at": q.submitted_at, "proposal": asdict(q.proposal), "outcome": asdict(q.outcome)} for q in items], indent=2))
@@ -336,7 +335,7 @@ def _run_queue(root: Path, sources: str, as_json: bool) -> int:
     return 0
 
 
-def _run_apply(root: Path, proposal_id: str | None, sources: str, as_json: bool) -> int:
+def _run_file(root: Path, proposal_id: str | None, sources: str, as_json: bool) -> int:
     outcomes = apply(root, proposal_id=proposal_id, sources_dir=sources)
     _print_outcomes(outcomes, as_json)
     if proposal_id is not None and outcomes and outcomes[0].status not in ("inserted", "superseded"):
@@ -344,8 +343,8 @@ def _run_apply(root: Path, proposal_id: str | None, sources: str, as_json: bool)
     return 0
 
 
-def _run_remember(root: Path, args: argparse.Namespace) -> int:
-    outcome = remember(
+def _run_note(root: Path, args: argparse.Namespace) -> int:
+    outcome = note(
         root,
         args.claim,
         args.provenance,
@@ -353,14 +352,13 @@ def _run_remember(root: Path, args: argparse.Namespace) -> int:
         path=args.path,
         type=args.type,
         as_of=args.as_of,
-        title=args.title,
         sources_dir=args.sources,
     )
     _print_outcomes([outcome], args.json)
     return 0 if outcome.status in ("inserted", "superseded", "queued") else 1
 
 
-def _run_unfiled(root: Path, sources: str, as_json: bool) -> int:
+def _run_inbox(root: Path, sources: str, as_json: bool) -> int:
     result = unfiled(root, sources_dir=sources)
     if as_json:
         print(json.dumps({"sources": result.sources, "unfiled": [p.as_posix() for p in result.unfiled]}, indent=2))
