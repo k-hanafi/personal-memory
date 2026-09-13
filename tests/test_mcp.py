@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from personal_memory.cli import main
 from personal_memory.get import get_note
 from personal_memory.mcp import TOOL_NAMES, handle
 
@@ -29,6 +30,14 @@ def brain(tmp_path: Path) -> Path:
     (root / "sources").mkdir()
     (root / "sources" / "dean-email.md").write_text("Sabbatical approved.\n", encoding="utf-8")
     return root
+
+
+def test_mcp_cli_exposes_sources(capsys) -> None:
+    try:
+        main(["mcp", "--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    assert "--sources" in capsys.readouterr().out
 
 
 def test_tool_names_are_the_seven_human_verbs() -> None:
@@ -76,6 +85,13 @@ def test_revisit_keeps_frontmatter() -> None:
 def test_inbox_lists_unfiled_sources(brain: Path) -> None:
     result = handle("inbox", brain, {})
     assert "sources/dean-email.md" in result["unfiled"]
+
+
+def test_inbox_uses_named_sources_dir(tmp_path: Path) -> None:
+    (tmp_path / "70-sources").mkdir()
+    (tmp_path / "70-sources" / "x.md").write_text("x\n", encoding="utf-8")
+    result = handle("inbox", tmp_path, {"sources": "70-sources"})
+    assert result["unfiled"] == ["70-sources/x.md"]
 
 
 def test_draft_queues_and_writes_nothing(brain: Path) -> None:

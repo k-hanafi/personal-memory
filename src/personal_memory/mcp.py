@@ -77,38 +77,41 @@ def handle(name: str, brain: Path, arguments: dict) -> dict:
     raise ValueError(f"unknown tool: {name}")
 
 
-def serve(brain: Path) -> None:
+def serve(brain: Path, sources: str = "sources") -> None:
     server = MCPServer("personal-memory")
+
+    def call(name: str, arguments: dict) -> dict:
+        return handle(name, brain, {**arguments, "sources": sources})
 
     @server.tool()
     def remember(query: str, historical: bool = False) -> dict:
         """Search the brain. Returns evidence cards with path, lines, status, as_of, and confidence."""
-        return handle("remember", brain, {"query": query, "historical": historical})
+        return call("remember", {"query": query, "historical": historical})
 
     @server.tool()
     def revisit(key: str) -> dict:
         """Open one note by id or path. Frontmatter stays intact."""
-        return handle("revisit", brain, {"key": key})
+        return call("revisit", {"key": key})
 
     @server.tool()
     def inbox() -> dict:
-        """List leftover files under sources/ that no note has filed yet."""
-        return handle("inbox", brain, {})
+        """List leftover files under the dump folder that no note has filed yet."""
+        return call("inbox", {})
 
     @server.tool()
     def draft(proposal: dict) -> dict:
         """Queue a filing draft after checking the rules. Writes no note."""
-        return handle("draft", brain, {"proposal": proposal})
+        return call("draft", {"proposal": proposal})
 
     @server.tool()
     def pending() -> dict:
         """List filing drafts waiting for review."""
-        return handle("pending", brain, {})
+        return call("pending", {})
 
     @server.tool()
     def file(id: str | None = None) -> dict:
         """Write queued drafts that pass the rules. Pass id to write one at any confidence."""
-        return handle("file", brain, {"id": id})
+        return call("file", {"id": id})
 
     @server.tool()
     def note(
@@ -121,9 +124,8 @@ def serve(brain: Path) -> None:
         title: str | None = None,
     ) -> dict:
         """Write one fact said in chat. Provenance is required."""
-        return handle(
+        return call(
             "note",
-            brain,
             {
                 "claim": claim,
                 "provenance": provenance,

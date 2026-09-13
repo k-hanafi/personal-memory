@@ -57,7 +57,8 @@ CLI. Use `examples/demo-brain` first. Do not commit a config that points at a
 real personal vault.
 
 Replace `BRAIN` with the absolute path to `examples/demo-brain` in this repo,
-and `BIN` with `.venv/bin/personal-memory` after you install.
+and `BIN` with `.venv/bin/personal-memory` after you install. If dumps live
+in another folder, add `--sources 70-sources` after `--brain`.
 
 **Cursor.** Add this to `.cursor/mcp.json` (or Cursor Settings, MCP):
 

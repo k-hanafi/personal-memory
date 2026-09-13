@@ -127,6 +127,12 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="Folder of markdown notes (for example examples/demo-brain)",
     )
+    mcp_parser.add_argument(
+        "--sources",
+        default="sources",
+        metavar="DIR",
+        help="Immutable dump folder inside the brain (default sources)",
+    )
 
     eval_parser = sub.add_parser(
         "eval",
@@ -191,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "revisit":
         return _run_get(args.brain, args.key)
     if args.command == "mcp":
-        return _run_mcp(args.brain)
+        return _run_mcp(args.brain, args.sources)
     if args.command in ("draft", "pending", "file", "note", "inbox"):
         root = args.brain.expanduser().resolve()
         if not root.is_dir():
@@ -290,14 +296,14 @@ def _run_get(brain: Path, key: str) -> int:
     return 0
 
 
-def _run_mcp(brain: Path) -> int:
+def _run_mcp(brain: Path, sources: str) -> int:
     from personal_memory.mcp import serve
 
     root = _resolve(brain)
     if not root.is_dir():
         print(f"not a directory: {root}", file=sys.stderr)
         return 2
-    serve(root)
+    serve(root, sources=sources)
     return 0
 
 
