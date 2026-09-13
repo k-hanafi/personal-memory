@@ -12,13 +12,13 @@ code.
 
 ## Status
 
-2026-09-12: spec locked. `check` validates frontmatter. `recall` returns
-evidence cards. `get` fetches one note by id or path. Layer 1 evals are
-complete (`personal-memory eval run`, committed baseline, `eval-gate` CI).
-The write path exists (`propose`, `queue`, `apply`, `remember`, `unfiled`).
-No MCP server yet. The engine holds no model: the coding agent decides what
-to file, the engine validates and writes. See the Write section of
-`docs/v1-spec.md`.
+2026-09-12: spec locked. `check` validates frontmatter. `remember` searches
+and returns evidence cards. `revisit` fetches one note by id or path.
+Layer 1 evals are complete (`personal-memory eval run`, committed baseline,
+`eval-gate` CI). The write path exists (`draft`, `pending`, `file`, `note`,
+`inbox`). The MCP server exists (`personal-memory mcp --brain`). The engine
+holds no model: the coding agent decides what to file, the engine validates
+and writes. See the Write section of `docs/v1-spec.md`.
 
 ```bash
 python3 -m venv .venv
@@ -26,8 +26,8 @@ source .venv/bin/activate
 python -m pip install -e ".[dev]"
 pytest
 personal-memory check examples/demo-brain
-personal-memory recall examples/demo-brain teaching load
-personal-memory get examples/demo-brain alex-rivera
+personal-memory remember examples/demo-brain teaching load
+personal-memory revisit examples/demo-brain alex-rivera
 personal-memory eval run
 bash scripts/eval-gate.sh
 ```
@@ -35,20 +35,56 @@ bash scripts/eval-gate.sh
 ## Writing to a brain
 
 ```bash
-personal-memory remember ~/brain "Dean approved the sabbatical." --provenance "user, 2026-09-10" --target sabbatical-plan
-personal-memory propose ~/brain proposal.json
-personal-memory queue ~/brain
-personal-memory apply ~/brain
-personal-memory unfiled ~/brain
+personal-memory note ~/brain "Dean approved the sabbatical." --provenance "user, 2026-09-10" --target sabbatical-plan
+personal-memory draft ~/brain proposal.json
+personal-memory pending ~/brain
+personal-memory file ~/brain
+personal-memory inbox ~/brain
 ```
 
-`remember` saves one fact as a dated line in the note's `## Log`, or stub-creates a
-note when you pass `--path` and `--type` instead of `--target`. `propose` queues a
+`note` saves one fact as a dated line in the note's `## Log`, or stub-creates a
+note when you pass `--path` and `--type` instead of `--target`. `draft` queues a
 JSON proposal (`create`, `append`, or `supersede`) after validating it against the
-brain. `apply` writes every high-confidence proposal; `apply <id>` writes one you
+brain. `file` writes every high-confidence proposal. `file <id>` writes one you
 chose. High confidence needs a boring signal (the user said it, a real `sources/`
 file, or an exact-id target), otherwise the proposal waits in the queue for you.
-`unfiled` lists files under `sources/` that no note names yet.
+`inbox` lists files under `sources/` that no note names yet.
+
+## MCP
+
+Point the editor at a brain folder. The seven tools are the same words as the
+CLI. Use `examples/demo-brain` first. Do not commit a config that points at a
+real personal vault.
+
+Replace `BRAIN` with the absolute path to `examples/demo-brain` in this repo,
+and `BIN` with `.venv/bin/personal-memory` after you install.
+
+**Cursor.** Add this to `.cursor/mcp.json` (or Cursor Settings, MCP):
+
+```json
+{
+  "mcpServers": {
+    "personal-memory": {
+      "command": "BIN",
+      "args": ["mcp", "--brain", "BRAIN"]
+    }
+  }
+}
+```
+
+**Claude Code.** From a terminal:
+
+```bash
+claude mcp add --transport stdio personal-memory -- BIN mcp --brain BRAIN
+```
+
+**Codex.** Add this to the Codex MCP config:
+
+```toml
+[mcp_servers.personal-memory]
+command = "BIN"
+args = ["mcp", "--brain", "BRAIN"]
+```
 
 `python3 -m venv .venv` creates a project-local install folder so Personal Memory
 does not land in your system Python. `source .venv/bin/activate` makes that folder
@@ -92,4 +128,4 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 | `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
 | `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
 | `evals/brain/` | Fictional Layer 1 eval corpus |
-| `src/personal_memory/` | Engine: `check`, `recall`, `get`, filing (`propose`, `apply`, `remember`), `unfiled`, and `eval` |
+| `src/personal_memory/` | Engine: `check`, `remember`, `revisit`, filing (`draft`, `file`, `note`), `inbox`, MCP, and `eval` |
