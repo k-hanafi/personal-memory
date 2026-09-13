@@ -65,7 +65,7 @@ The corpus is versioned by content hash. Any change to any file in `evals/brain/
 
 ### Fixture format
 
-Fixtures are TOML files, one per family, in `evals/fixtures/`. TOML because Python 3.11 reads it with the standard library (`tomllib`), because it is easier for a person to write than JSON, and because this project has no dependencies and test data is not a good reason to add one.
+Fixtures are TOML files, one per family, in `evals/fixtures/`. TOML because Python 3.11 reads it with the standard library (`tomllib`), and because it is easier for a person to write than JSON. The runtime depends on the MCP SDK; fixtures are not a reason to add another parser.
 
 The suite runs on `evals/brain/`. Live cases are in `evals/fixtures/`; this is a shortened copy of `evals/fixtures/supersession.toml`:
 
@@ -226,9 +226,11 @@ The replay is not gated and its numbers are not published, because the corpus is
 
 ## Layer 3: agent in the loop
 
-This layer does not exist until the MCP server does. It is specified now so the earlier layers are built with it in mind.
+The MCP server exists (`personal-memory mcp --brain`). This layer's runner does not. It is specified so the earlier layers stay compatible with it.
 
-The question is different from Layer 1. Layer 1 asks whether `recall` returns the right card. Layer 3 asks whether Claude Code, Codex, or Cursor, given only our `recall` and `get` tools, produces an answer that cites the right file and line and says the right thing about status. The engine can be perfect and the agent can still ignore the card, cite the wrong line, or answer from memory. LongMemEval found the same gap: even with perfect retrieval, the reading step lost accuracy.
+The question is different from Layer 1. Layer 1 asks whether the `recall` adapter returns the right card. Layer 3 asks whether Claude Code, Codex, or Cursor, given our `remember` and `revisit` tools, produces an answer that cites the right file and line and says the right thing about status. The engine can be perfect and the agent can still ignore the card, cite the wrong line, or answer from memory. LongMemEval found the same gap: even with perfect retrieval, the reading step lost accuracy.
+
+Write tools (`draft`, `pending`, `file`, `note`, `inbox`) are specified for Layer 3 and not built into any runner. Decide whether they belong in that set when the runner is built.
 
 The set is small on purpose. Twenty questions against `evals/brain/`, each with a gold path, gold line, and gold status. Each is run three times per agent and model. The grade is code, not a model: does the agent's answer contain the gold path, does it name a line range containing the gold line, and does it report the gold status. Abstention questions pass if the agent says the brain does not have it and cites nothing.
 
@@ -321,20 +323,18 @@ Any of these means the eval system is not doing its job:
 
 Evals come before the features they will measure, so that each feature is built to pass a case that already exists.
 
-1. Done. `evals/brain/` seeded from the demo brain, plus one planted contradiction pair and one aliased person. Grep guard for real names.
-2. Done. Fixture loader and the `Hit` shape. Adapter for `recall`. Adapter for `grep` (pure Python).
-3. Done. Runner that writes a receipt. Table output with the paired column.
-4. Done. Fixture families in this order: supersession, abstention, named-thing, citation, contradiction. Ten to fifteen cases total to start.
-5. Done. Commit the first baseline. Wire the CI gate.
-6. Vault fixture file and the first replay session. Turn the first three real failures into fictional fixtures.
-7. Done. Wikilink hops, measured against the named-thing family. First pre-registered prediction.
-8. When the MCP server lands: Layer 3 question set, pass^3 runner, token logging.
-9. Holdout slice once fixtures pass fifty cases.
-10. Model-generated corpus growth once hand-written notes stop covering the families.
+Layer 1 is shipped: corpus, fixture loader, adapters, runner, five families, baseline plus CI gate, wikilink hops.
+
+Remaining:
+
+1. Vault fixture file and the first replay session. Turn the first three real failures into fictional fixtures.
+2. Layer 3 question set, pass^3 runner, token logging. MCP exists; the runner does not.
+3. Holdout slice once fixtures pass fifty cases.
+4. Model-generated corpus growth once hand-written notes stop covering the families.
 
 ## Open
 
-- Decided 2026-09-10: the write path (`propose`, `apply`, `remember`) is not a fixture family. Its rules are deterministic (refuse a duplicate title, flip `status` on supersede, cap confidence without a boring signal), so they are unit tests in `tests/test_filing.py`, not gated retrieval cases. Whether the agent files the right thing is a Layer 3 question.
+- Decided 2026-09-10: the write path (`draft`, `file`, `note`) is not a fixture family. Its rules are deterministic (refuse a duplicate title, flip `status` on supersede, cap confidence without a boring signal), so they are unit tests in `tests/test_filing.py`, not gated retrieval cases. Whether the agent files the right thing is a Layer 3 question (specified, not built; decide whether write tools are in scope later).
 - The contradiction family has no negative assertion. There is no way to say `contradicted_by` must be empty, so a fix that stops marking unrelated current notes as contradictions cannot be measured. A `no_contradiction` field is the likely fix.
 - How to express `expect_line` once cards return multi-line ranges and a claim spans a paragraph. A range-overlap rule is the likely answer.
 - Whether Layer 3 should record the agent's full transcript for later error analysis, and where that transcript is stored given that it may contain model output about the fictional corpus only.

@@ -164,17 +164,21 @@ around this door. That seam is what lets a later background filer (spec step
 - Path is inside the brain and not under `sources/`.
 - A changed fact supersedes: the old note gets `status: superseded` and
   `superseded_by: <new id>`; the new note is `current`. Never overwrite in
-  place. Two `current` notes on one fact is refused, not merged.
+  place. A second current note with the same `id`, normalized title, or that
+  title as an alias is refused, not merged. A Log line with the same
+  normalized claim is `duplicate`. Semantic same-fact is not detected.
 - Provenance recorded on the note: who proposed (`user`, `agent:<name>`,
   later `filer:<model>`) and the date. A user statement is a dated source, so
   it satisfies the "boring signal" rule for high confidence.
 
 ### What the engine returns
 
-`inserted`, `duplicate` (with the existing note), `superseded` (with the old
-and new paths), or `queued` (with the reason). Plus, without a model, the
-facts it can count: near-miss notes sharing entity tokens with the proposal,
-and where notes of the same `type` and the linked notes already live.
+`file` returns `inserted`, `duplicate` (with the existing note), `superseded`
+(with the old and new paths, after a `supersede` proposal), or `queued` (with
+the reason). `note` only appends or creates, so its result is `inserted`,
+`duplicate`, `queued`, or `blocked`. Plus, without a model, the facts it can
+count: near-miss notes sharing entity tokens with the proposal, and where
+notes of the same `type` and the linked notes already live.
 
 ### Placement
 
@@ -183,8 +187,9 @@ where the sibling notes live, and proposes that folder. The engine's tally
 confirms or disagrees. Folder is a convention; `id` is the address, so a
 note in the wrong folder is still found by id, title, alias, keyword, and
 wikilink. Misfiling is cheap to fix and never a retrieval error. Ambiguous
-placement goes to the queue at medium confidence and the user picks. Unknown
-placement goes to `inbox/`, which is a deferred decision, not a mistake.
+placement stays in the queue at the capped confidence and the user picks.
+There is no `inbox/` folder. `inbox` is the command that lists `sources/`
+files no note has named yet.
 
 ### Note shape: State and Log
 
@@ -267,20 +272,23 @@ and, when given, `source`. On `append` the Log line carries provenance.
 
 ### `note`
 
-`note(claim, provenance, target?, path?, type?, as_of?)` saves one fact
-and returns immediately. It is `draft` then `file` for that one proposal:
+`note(claim, provenance, target?, path?, type?, as_of?, title?)` saves one
+fact and returns immediately. It is `draft` then `file` for that one
+proposal. `title` is live on the CLI and MCP; leaving it off uses the path
+stem. `note` does not supersede.
 
 - With `target`: an `append` proposal. The fact becomes a Log line on that
   note.
 - Without `target`: a `create` proposal for a stub note (frontmatter, a title
-  from the claim, and a Log with the one fact). `path` and `type` are required
-  in that case; the agent knows the folder from `remember`.
+  from `title` or the path stem, and a Log with the one fact). `path` and
+  `type` are required in that case; the agent knows the folder from
+  `remember`.
 
-`note` does not take a whole body. A whole page is a `create` proposal.
-One call, one fact, one shape.
+`note` does not take a whole body. A whole page is a `create` proposal
+through `draft`. One call, one fact, one shape.
 
-Result is one of `inserted`, `duplicate`, `superseded`, `queued`, `blocked`,
-with the paths touched and the reason when there is one. It also carries the
+Result is one of `inserted`, `duplicate`, `queued`, `blocked`, with the
+paths touched and the reason when there is one. It also carries the
 zero-LLM counts from the section above: candidate notes sharing tokens with
 the claim, and the folders where notes of this `type` and the linked notes
 already live.
@@ -354,34 +362,37 @@ immutable: Personal Memory and the agent read it and never edit it.
 
 ### Ordered workflow
 
-1. **Start a brain.** `personal-memory init ~/my-brain` writes a small template
-   (folders, `AGENTS.md` filing rules, empty `sources/`). Or skip init and
-   point Personal Memory at a folder the user already has.
-2. **Land raw material in `sources/`.** Drag and drop files, or later a
+`personal-memory init` is not built. Point Personal Memory at a folder the
+user already has, or copy `examples/demo-brain/`.
+
+1. **Land raw material in `sources/`.** Drag and drop files, or later a
    connector (Notion first). Connectors are copy jobs: token in env, no
    model in the pipe. Same job as Khaled's `notion-sync`.
-3. **Scan.** `personal-memory inbox` lists `sources/` items that have no filed
-   note yet. No LLM. No file moves.
-4. **Propose.** The user's coding agent (Claude Code, Codex, or Cursor)
+2. **Scan.** `personal-memory inbox` lists `sources/` items that have no filed
+   note yet. No LLM. No file moves. A source is filed when a note names it
+   (`source:` in frontmatter, or `source:<path>` on a Log line). The engine
+   never writes under `sources/`.
+3. **Draft.** The user's coding agent (Claude Code, Codex, or Cursor)
    reads each inbox item plus `remember` against notes already in the
-   brain, then submits a proposal: destination path, jar-label
-   frontmatter, short claim, and a confidence. Personal Memory stores proposals in
-   a queue (for example `.personal-memory/queue/`). The agent does not write the
+   brain, then submits a proposal via `draft`: destination path, jar-label
+   frontmatter, short claim, and a confidence. Personal Memory stores
+   proposals in `.personal-memory/queue/`. The agent does not write the
    note yet.
-5. **Validate.** `personal-memory file` refuses any proposal that fails the jar
-   rules (missing `id` / `as_of` / `status` / `confidence`, bad
-   kebab-case, two `current` notes on the same fact). Model-stated
-   "high confidence" is not enough. High also needs a boring signal:
-   exact `id` or title match, or a dated source for `as_of`.
-6. **Apply by confidence.**
+4. **Validate.** `personal-memory file` uses the Write / `filing.py` rules
+   (required fields, path not under `sources/`, no duplicate `id` / title /
+   alias, no same-claim Log line, live target). Model-stated
+   "high confidence" is not enough. High survives only with a boring
+   signal: `provenance` starts with `user`, or `source` names a file that
+   exists under `sources/`, or the kind is `append` or `supersede`.
+5. **File by confidence.**
    - High, and the engine agrees: `file`. Write the note, leave `sources/`
-     untouched, mark the source as filed.
+     untouched. The note names the source; that is what `inbox` uses.
    - Medium or low, or the engine disagrees: stay in the queue. The user sees
      a short list ("this looks like a person named Samir, or a course
-     note, I cannot tell") and picks.
-   - Blocked: the engine will not guess. Example: two current notes already
-     disagree.
-7. **Check.** `personal-memory check` must pass on the brain after a batch.
+     note, I cannot tell") and picks with `file <id>`.
+   - Blocked: the engine will not guess. Example: the path is under
+     `sources/`, or a current note already has this title.
+6. **Check.** `personal-memory check` must pass on the brain after a batch.
 
 Jan's session is: drop files in `sources/`, open Cursor in the brain
 folder, say "file the inbox." The agent uses Personal Memory tools. The user only
@@ -520,11 +531,12 @@ FAILURE (any of these means v1 is not done):
 
 1. Schema check (`personal-memory check`) on a folder, including the demo brain
 2. Recall over markdown + frontmatter + evidence cards (library, then MCP)
-3. Get-by-id
+3. Get-by-id (`revisit`)
 3a. Eval corpus, fixtures, baseline gate (`docs/evals-spec.md`). Lands before
     wikilink hops so hops are measured, not assumed.
-4. MCP stdio server + install snippet for the three coding agents
-5. Unfiled scan, proposal queue, apply with human review for low confidence
+4. Done. MCP stdio server + install snippet for the three coding agents
+5. Done. Unfiled scan (`inbox`), proposal queue (`draft` / `pending`),
+   apply (`file`) with human review for low confidence, and `note`
 6. Dogfood on `~/vault` (including `70-sources/` as the dump pile)
 7. Optional Notion connector into `sources/`
 8. Optional vectors as a second recall arm (fail-open)
@@ -537,6 +549,8 @@ FAILURE (any of these means v1 is not done):
   command with a reason may be worth the audit trail
 - Whether `check` should flag a `current` note whose State was last true
   before its newest Log line (a staleness hint, not an error)
+- `personal-memory init` to write a template brain (folders, `AGENTS.md`,
+  empty `sources/`). Not a live verb.
 
 Resolved 2026-09-10 (see Write): queue format is JSON under
 `.personal-memory/queue/`; notes may carry an optional State plus Log shape;

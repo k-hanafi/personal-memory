@@ -43,7 +43,7 @@ Exists:
 - `docs/eval-corpus-plan.md`: persona, note inventory, and why notes exist in `evals/brain/`
 - `docs/sources.md`: every outside source a design choice traces to
 - `examples/demo-brain/`: fake notes with the v1 frontmatter contract
-- `src/personal_memory/`: frontmatter parse, `check`, `recall.py` (search library), `get.py`, `notes.py` (shared loader), `notelog.py` (Log section), `filing.py` (proposals, apply, remember), `unfiled.py`, `mcp.py` (stdio server), and `evals/` (fixture loader, adapters, checks)
+- `src/personal_memory/`: frontmatter parse, `check`, `recall.py` (search library), `get.py`, `notes.py` (shared loader), `notelog.py` (Log section), `filing.py` (`draft`, `pending`, `file`, `note`; library submit, apply, remember), `unfiled.py` (`inbox`), `mcp.py` (stdio server), and `evals/` (fixture loader, adapters, checks)
 - `tests/`: checker, remember/revisit CLI, Log, filing, inbox, and MCP tests against the demo brain (write tests copy it to a temp folder)
 - `evals/brain/`: fictional eval corpus (Alex Rivera persona), `evals/deny-list.txt`: name guard list
 - `evals/fixtures/`: TOML fixture files, one per family (supersession, abstention, named-thing, contradiction, citation)
@@ -65,16 +65,20 @@ pytest
 personal-memory check examples/demo-brain
 personal-memory remember examples/demo-brain teaching load
 personal-memory revisit examples/demo-brain alex-rivera
-personal-memory note BRAIN "One fact." --provenance "user, 2026-09-10" --target alex-rivera
-personal-memory inbox BRAIN
+personal-memory draft examples/demo-brain proposal.json
+personal-memory pending examples/demo-brain
+personal-memory file examples/demo-brain
+personal-memory note examples/demo-brain "One fact." --provenance "user, 2026-09-10" --target alex-rivera
+personal-memory inbox examples/demo-brain
 personal-memory mcp --brain examples/demo-brain
 personal-memory eval run
 bash scripts/eval-gate.sh
 ```
 
 Install snippets for Cursor, Claude Code, and Codex are in `README.md`.
-Point `--brain` at `examples/demo-brain` in this repo. Do not commit a
-config that points at a real vault.
+Point `--brain` at `examples/demo-brain` in this repo. That folder has no
+`sources/` dumps, so `inbox` is empty. Do not commit a config that points at
+a real vault.
 
 `python3 -m venv .venv` creates a local install folder. `source .venv/bin/activate`
 uses it in this terminal. `python -m pip install -e ".[dev]"` installs the CLI and
@@ -91,6 +95,12 @@ User Rules, or `~/.cursor/skills`. After a Build, `.venv` already exists from
 .venv/bin/personal-memory check examples/demo-brain
 .venv/bin/personal-memory remember examples/demo-brain teaching load
 .venv/bin/personal-memory revisit examples/demo-brain alex-rivera
+.venv/bin/personal-memory draft examples/demo-brain proposal.json
+.venv/bin/personal-memory pending examples/demo-brain
+.venv/bin/personal-memory file examples/demo-brain
+.venv/bin/personal-memory note examples/demo-brain "One fact." --provenance "user, 2026-09-10" --target alex-rivera
+.venv/bin/personal-memory inbox examples/demo-brain
+.venv/bin/personal-memory mcp --brain examples/demo-brain
 .venv/bin/personal-memory eval run
 PATH=".venv/bin:$PATH" bash scripts/eval-gate.sh
 ```
