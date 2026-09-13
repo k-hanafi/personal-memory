@@ -53,7 +53,8 @@ file, or an exact-id target), otherwise the proposal waits in the queue for you.
 ## MCP
 
 Point the editor at a brain folder. The seven tools are the same words as the
-CLI. Use `examples/demo-brain` first. Do not commit a config that points at a
+CLI. Use `examples/demo-brain` first. That folder has no `sources/` dumps, so
+`inbox` is empty until you add one. Do not commit a config that points at a
 real personal vault.
 
 Replace `BRAIN` with the absolute path to `examples/demo-brain` in this repo,
@@ -129,4 +130,4 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 | `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
 | `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
 | `evals/brain/` | Fictional Layer 1 eval corpus |
-| `src/personal_memory/` | Engine: `check`, `remember`, `revisit`, filing (`draft`, `file`, `note`), `inbox`, MCP, and `eval` |
+| `src/personal_memory/` | Engine: `check`, `remember`, `revisit`, filing (`draft`, `pending`, `file`, `note`), `inbox`, MCP, and `eval` |

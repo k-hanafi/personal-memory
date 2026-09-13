@@ -34,7 +34,7 @@ The ablation table (full system 49.1% P@5, no graph 19.2%, grep + BM25 17.1%, ve
 Markdown is canonical, the database is a rebuildable index, and a CI gate fails any write that skips the markdown. Also the forget and supersede encoding: rows are struck through with a date, never deleted. Source of our "one door" rule and of never overwriting in place.
 
 **Gbrain memory verbs protocol**, `docs/protocol/MEMORY_VERBS_v1.md` in the Gbrain repo. Read 2026-09-10.
-`remember(fact, provenance, entity?, kind?)` with provenance required, returning `inserted | duplicate | superseded`, and `recall` as a zero-LLM verb. Our `remember` return shape and mandatory provenance come from here. Their dedup rides embeddings and degrades without them; ours starts from exact match.
+`remember(fact, provenance, entity?, kind?)` with provenance required, returning `inserted | duplicate | superseded`, and `recall` as a zero-LLM search verb. Their write-`remember` is our `note`. Our `remember` is search and returns evidence cards. Mandatory provenance on the write comes from here. Their dedup rides embeddings and degrades without them; ours starts from exact match.
 
 **Gbrain filing rules and ambient writeback**, `skills/_brain-filing-rules.md` and `docs/guides/ambient-writeback.md` in the Gbrain repo. Read 2026-09-10.
 File by primary subject, a notability gate ("when in doubt, don't create"), source precedence when claims conflict, and automatic capture as an opt-in prompt contract with a skip list rather than a new verb. Our Write section's placement rule and automatic-capture paragraph follow this.

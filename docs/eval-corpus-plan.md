@@ -287,15 +287,15 @@ public about his contacts. We are not.
 The guard is a pytest test, `tests/test_eval_brain_guard.py`, that reads a
 deny-list path (default the committed one, overridable by an environment
 variable for the private run), lowercases both sides, and fails on any
-substring hit in any file under `evals/brain/`. Pytest already runs in CI,
+word-boundary hit in any file under `evals/brain/`. Pytest already runs in CI,
 so there is no new CI step.
 
 ## Layer 3 question bank
 
-This table is the source for the Layer 3 set when the MCP server lands
-(`docs/evals-spec.md`, Layer 3). Twenty questions, each answerable with
-`recall` and `get` alone. "title line" means the gold card is the
-exact-match title card.
+This table is the source for the Layer 3 set (`docs/evals-spec.md`, Layer 3).
+The MCP server exists. The Layer 3 runner does not. Twenty questions, each
+answerable with `remember` and `revisit` alone. "title line" means the gold
+card is the exact-match title card.
 
 | # | Question | Gold path | Gold line | Gold status | Abstain |
 |---|---|---|---|---|---|
@@ -348,8 +348,9 @@ The corpus is frozen for the rest of v1.
 - **Course titles vs codes.** Real courses have codes and users will search
   by them. Fictional codes risk colliding with real ones. Current choice is
   titles only. Revisit if a Layer 2 failure shows code-style queries matter.
-- **`get` fixtures.** The fixture format only describes `recall` queries.
-  Either add a `get` field to a case or give `get` its own fixture file.
+- **`revisit` fixtures.** The fixture format only describes `remember` /
+  `recall`-adapter queries. Either add a `revisit` field to a case or give
+  `revisit` its own fixture file.
 - **`expect_as_of`.** Some temporal questions need to assert the card's
   `as_of`. The fixture format has no such field. `expect_confidence` is
   already in the spec and used in fixtures.
