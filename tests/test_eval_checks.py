@@ -89,6 +89,14 @@ def test_also_present_requires_exact_status() -> None:
     assert check_also_present(case, [NEW, wrong_status]) == "also_present"
 
 
+def test_also_present_only_looks_at_top_five() -> None:
+    case = Case(id="c", query="q", also_present=(AlsoPresent("wanted.md", "current"),))
+    filler = [hit(f"{n}.md") for n in range(5)]
+    assert check_also_present(case, filler) == "also_present"
+    assert check_also_present(case, filler + [hit("wanted.md")]) == "also_present"
+    assert check_also_present(case, filler[:4] + [hit("wanted.md")]) is None
+
+
 def test_contradiction_needs_every_path_to_name_the_others() -> None:
     a, b, c = "a.md", "b.md", "c.md"
     case = Case(id="c", query="q", contradiction=(a, b))
@@ -98,6 +106,15 @@ def test_contradiction_needs_every_path_to_name_the_others() -> None:
     assert check_contradiction(case, missing_b) == "contradiction"
     one_way = [hit(a, contradicted_by=(b,)), hit(b, contradicted_by=())]
     assert check_contradiction(case, one_way) == "contradiction"
+
+
+def test_contradiction_only_looks_at_top_five() -> None:
+    a, b = "a.md", "b.md"
+    case = Case(id="c", query="q", contradiction=(a, b))
+    pair = [hit(a, contradicted_by=(b,)), hit(b, contradicted_by=(a,))]
+    filler = [hit(f"{n}.md") for n in range(5)]
+    assert check_contradiction(case, filler + pair) == "contradiction"
+    assert check_contradiction(case, filler[:3] + pair) is None
 
 
 def test_check_case_returns_first_failure_in_fixed_order() -> None:

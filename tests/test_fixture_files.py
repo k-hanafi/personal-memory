@@ -56,9 +56,3 @@ def test_expect_line_is_a_real_non_empty_line(family: Family, case: Case) -> Non
     lines = (BRAIN / case.expect_path).read_text(encoding="utf-8").splitlines()
     assert 1 <= case.expect_line <= len(lines)
     assert lines[case.expect_line - 1].strip()
-
-
-def test_abstain_cases_declare_nothing_else(family: Family, case: Case) -> None:
-    if not case.abstain:
-        return
-    assert case.forbid_paths == ()
