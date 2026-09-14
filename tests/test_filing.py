@@ -384,3 +384,60 @@ def test_note_empty_provenance_is_blocked(brain: Path) -> None:
     assert "provenance is required" in (outcome.reason or "")
     assert list_queue(brain) == []
     assert "A fact." not in get_note(brain, "alex-rivera").text
+
+
+def test_cli_note_writes_one_fact(brain: Path, capsys, _cli) -> None:
+    code = _cli(
+        [
+            "note",
+            str(brain),
+            "Samir will draft the first case.",
+            "--provenance",
+            "user, 2026-09-10",
+            "--target",
+            "samir-okonkwo",
+            "--as-of",
+            "2026-09-10",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "inserted" in captured.out
+    assert (
+        "- 2026-09-10 | user, 2026-09-10 | Samir will draft the first case."
+        in get_note(brain, "samir-okonkwo").text
+    )
+
+
+def test_cli_note_without_provenance_refuses(brain: Path, _cli) -> None:
+    assert _cli(["note", str(brain), "A fact."]) == 2
+    assert "A fact." not in get_note(brain, "alex-rivera").text
+
+
+def test_cli_note_help(capsys, _cli) -> None:
+    assert _cli(["note", "--help"]) == 0
+    help_text = capsys.readouterr().out
+    assert "--provenance" in help_text
+    assert "--target" in help_text
+    assert "--path" in help_text
+    assert "--type" in help_text
+    assert "--title" not in help_text
+
+
+def test_cli_note_stub_create_exits_0(brain: Path, _cli) -> None:
+    assert (
+        _cli(
+            [
+                "note",
+                str(brain),
+                "Dana chairs the department.",
+                "--provenance",
+                "user, 2026-09-10",
+                "--path",
+                "50-people/dana-whitfield.md",
+                "--type",
+                "person",
+            ]
+        )
+        == 0
+    )

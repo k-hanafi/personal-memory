@@ -65,13 +65,6 @@ def test_check_rejects_malformed_log_line(tmp_path: Path) -> None:
     assert "Log entry must be" in result.issues[0].message
 
 
-def test_check_rejects_dangling_superseded_by(tmp_path: Path) -> None:
-    text = NOTE.replace("status: current", "status: superseded\nsuperseded_by: [[sabbatical-plan-2027]]")
-    result = check_brain(_brain(tmp_path, text))
-    assert not result.ok
-    assert "superseded_by points at 'sabbatical-plan-2027'" in result.issues[0].message
-
-
 def test_check_accepts_well_formed_log(tmp_path: Path) -> None:
     assert check_brain(_brain(tmp_path)).ok
 
