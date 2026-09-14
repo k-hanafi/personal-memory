@@ -382,8 +382,6 @@ def _write(root: Path, proposal: Proposal, confidence: str) -> Outcome:
 
 def _set_frontmatter(text: str, key: str, value: str) -> str:
     match = FRONTMATTER_RE.match(text)
-    if match is None:
-        raise FrontmatterError("note has no frontmatter to edit")
     lines = match.group(1).splitlines()
     for index, line in enumerate(lines):
         if line.partition(":")[0].strip() == key:
