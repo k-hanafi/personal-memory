@@ -272,15 +272,15 @@ and, when given, `source`. On `append` the Log line carries provenance.
 
 ### `note`
 
-`note(claim, provenance, target?, path?, type?, as_of?, title?)` saves one
+`note(claim, provenance, target?, path?, type?, as_of?)` saves one
 fact and returns immediately. It is `draft` then `file` for that one
-proposal. `title` is live on the CLI and MCP; leaving it off uses the path
-stem. `note` does not supersede.
+proposal. `note` does not supersede. Stub titles come from the path stem
+only. There is no `title` argument on `note`.
 
 - With `target`: an `append` proposal. The fact becomes a Log line on that
   note.
 - Without `target`: a `create` proposal for a stub note (frontmatter, a title
-  from `title` or the path stem, and a Log with the one fact). `path` and
+  from the path stem, and a Log with the one fact). `path` and
   `type` are required in that case; the agent knows the folder from
   `remember`.
 
@@ -374,16 +374,10 @@ user already has, or copy `examples/demo-brain/`.
    never writes under `sources/`.
 3. **Draft.** The user's coding agent (Claude Code, Codex, or Cursor)
    reads each inbox item plus `remember` against notes already in the
-   brain, then submits a proposal via `draft`: destination path, jar-label
-   frontmatter, short claim, and a confidence. Personal Memory stores
-   proposals in `.personal-memory/queue/`. The agent does not write the
-   note yet.
-4. **Validate.** `personal-memory file` uses the Write / `filing.py` rules
-   (required fields, path not under `sources/`, no duplicate `id` / title /
-   alias, no same-claim Log line, live target). Model-stated
-   "high confidence" is not enough. High survives only with a boring
-   signal: `provenance` starts with `user`, or `source` names a file that
-   exists under `sources/`, or the kind is `append` or `supersede`.
+   brain, then submits a proposal via `draft`: destination path, frontmatter,
+   short claim, and a confidence. Personal Memory stores proposals in
+   `.personal-memory/queue/`. The agent does not write the note yet.
+4. **Validate.** `personal-memory file` applies the checks in Write.
 5. **File by confidence.**
    - High, and the engine agrees: `file`. Write the note, leave `sources/`
      untouched. The note names the source; that is what `inbox` uses.
@@ -408,8 +402,9 @@ That is what Claude Code / Codex / Cursor are for. The user is already
 paying for that session. The chat UI *is* the human-in-the-loop.
 
 Personal Memory's job is the clerk work: list unfiled sources, accept or reject
-proposals, enforce jar rules, refuse silent overwrite, leave `sources/`
-alone. The split, and why the engine holds no model, is in the Write section.
+proposals, enforce the frontmatter schema, refuse silent overwrite, leave
+`sources/` alone. The split, and why the engine holds no model, is in the
+Write section.
 
 Gbrain does both, on purpose:
 
@@ -441,7 +436,7 @@ CLI and MCP share these seven words (locked 2026-09-12):
 2. **revisit.** Fetch one note by `id` or path, with frontmatter intact.
 3. **inbox.** List `sources/` items with no filed note yet.
 4. **draft.** Agent hands Personal Memory a filing. Personal Memory validates
-   jar rules and queues it. Does not write the note.
+   it against the frontmatter schema and queues it. Does not write the note.
 5. **pending.** List filings waiting for review.
 6. **file.** Write queued proposals that pass validation. High
    writes now. Low stays for the user. Never silent-overwrite a
@@ -529,19 +524,16 @@ FAILURE (any of these means v1 is not done):
 
 ## Implementation order
 
-1. Schema check (`personal-memory check`) on a folder, including the demo brain
-2. Recall over markdown + frontmatter + evidence cards (library, then MCP)
-3. Get-by-id (`revisit`)
-3a. Eval corpus, fixtures, baseline gate (`docs/evals-spec.md`). Lands before
-    wikilink hops so hops are measured, not assumed.
-4. Done. MCP stdio server + install snippet for the three coding agents
-5. Done. Unfiled scan (`inbox`), proposal queue (`draft` / `pending`),
-   apply (`file`) with human review for low confidence, and `note`
-6. Dogfood on `~/vault` (including `70-sources/` as the dump pile)
-7. Optional Notion connector into `sources/`
-8. Optional vectors as a second recall arm (fail-open)
-9. Optional later: engine-owned model key for overnight filing with no
-   editor session (gbrain autopilot path)
+Shipped: `check`, search (`remember`) and `revisit`, Layer 1 evals, MCP,
+and the write path (`draft` / `pending` / `file` / `note` / `inbox`).
+
+Remaining:
+
+- Dogfood on `~/vault` (including `70-sources/` as the dump pile)
+- Optional Notion connector into `sources/`
+- Optional vectors as a second recall arm (fail-open)
+- Optional later: engine-owned model key for overnight filing with no
+  editor session (gbrain autopilot path)
 
 ## Open
 

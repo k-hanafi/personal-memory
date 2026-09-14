@@ -47,7 +47,7 @@ the engine overfits to academic vocabulary.
 6. `as_of` is when the claim was true. All dates fall between 2025-09-01
    and 2026-09-05.
 7. Hand-written. No model-generated notes until hand-written notes stop
-   covering the families (evals-spec step 10).
+   covering the families.
 8. Short by default, 8 to 25 lines. Six notes are deliberately long (60 or
    more lines) for dilution and source-swamp cases.
 
@@ -133,8 +133,10 @@ frozen corpus.
 
 ### Rest of the corpus
 
-Later notes in the frozen set. Letters in the why-column are enrichment
-goals (ranking, hops, get, paraphrase, and similar).
+Later notes in the frozen set. Letters in the why-column are leftover
+enrichment tags: a ranking, b hops, c revisit, d tokens, g dumps,
+h paraphrase, i false contradiction, j abstention, k noise, l multi-line,
+m temporal, n multi-entity, o timeline, p linked life notes.
 
 #### `50-people/` (14 new, 20 total)
 
@@ -330,14 +332,11 @@ The corpus is frozen for the rest of v1.
 
 - A note changes only to fix a defect that a fixture found (wrong gold,
   dangling link, a rule violation). Never to make a fixture pass.
-- Every such change gets a dated line in a "Changes since freeze" section at
-  the bottom of `evals/brain/README.md`: file, what changed, which fixture
-  found it.
 - New coverage is added as fixtures, not notes. If a family cannot be
-  expressed against the frozen corpus, that is a phase 3 proposal with its
-  own inventory table, not an edit.
+  expressed against the frozen corpus, that is a new corpus proposal with
+  its own inventory table, not an edit.
 - The content hash in the eval receipt is the enforcement: a changed hash
-  without a README line is a review failure.
+  is a review event.
 
 ## Open
 
