@@ -174,15 +174,15 @@ There is no `--allow-regression` flag. A pull request cannot approve its own reg
 
 ### Reading a result
 
-The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline.
+The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. The grid below is layout only. It is not today's scoreboard. Live family totals are in `README.md` and `evals/baselines/main.json` (on `main`: recall 27/35, grep 7/35).
 
 ```
 family          recall      grep       vs main
-named-thing     9/12        6/12       +1 / -0
-supersession    4/4         1/4        +0 / -0
-abstention      5/6         2/6        +0 / -1   <- FAIL: no-such-course
-contradiction   1/2         0/2        +0 / -0
-citation        11/12       4/12       +0 / -0
+named-thing     P/T         P/T        +N / -0
+supersession    P/T         P/T        +0 / -0
+abstention      P/T         P/T        +0 / -1   <- FAIL: case-id
+contradiction   P/T         P/T        +0 / -0
+citation        P/T         P/T        +0 / -0
 ```
 
 The `vs main` column is a paired comparison: for each case, did it flip from fail to pass (+) or pass to fail (-). This is more informative than two averages, because a change that fixes five cases and breaks five others has the same average as one that did nothing, and the paired view shows you the churn. Gbrain reports every retrieval change this way, as "+18 / -8" rather than "95.3% vs 93.2%".

@@ -36,19 +36,21 @@ bash scripts/eval-gate.sh
 
 ```bash
 personal-memory note ~/brain "Dean approved the sabbatical." --provenance "user, 2026-09-10" --target sabbatical-plan
-personal-memory draft ~/brain proposal.json
+personal-memory draft ~/brain
 personal-memory pending ~/brain
 personal-memory file ~/brain
 personal-memory inbox ~/brain
 ```
 
 `note` saves one fact as a dated line in the note's `## Log`, or stub-creates a
-note when you pass `--path` and `--type` instead of `--target`. `draft` queues a
-JSON proposal (`create`, `append`, or `supersede`) after validating it against the
-brain. `file` writes every high-confidence proposal. `file <id>` writes one you
-chose. High confidence needs a boring signal (the user said it, a real `sources/`
-file, or an exact-id target), otherwise the proposal waits in the queue for you.
-`inbox` lists files under `sources/` that no note names yet.
+note when you pass `--path` and `--type` instead of `--target`. Stub titles come
+from the path stem. `draft` reads a JSON proposal (`create`, `append`, or
+`supersede`) from stdin, or from a file you write, and queues it after
+validating it against the brain. `file` writes every high-confidence proposal.
+`file <id>` writes one you chose. High confidence needs a boring signal (the
+user said it, a real `sources/` file, or an exact-id target), otherwise the
+proposal waits in the queue for you. `inbox` lists files under `sources/` that
+no note names yet.
 
 ## MCP
 
