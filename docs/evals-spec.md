@@ -105,9 +105,9 @@ Human asides are `#` comments, not fields. Each case carries some subset of thes
 | `expect_status` | The `status` the top card must report. |
 | `expect_confidence` | The `confidence` the top card must report. |
 | `forbid_paths` | Files that must not appear in the top five. |
-| `also_present` | Files that must appear somewhere in the results, with the status they must carry. |
+| `also_present` | Files that must appear in the top N receipt hits (N=5), with the status they must carry. |
 | `abstain` | If true, the adapter must return zero cards. |
-| `contradiction` | A list of two or more current paths. All must appear, and each must list the others in `contradicted_by`. |
+| `contradiction` | A list of two or more current paths. All must appear in the top N receipt hits (N=5), and each must list the others in `contradicted_by`. |
 | `holdout` | If true, this case is scored in published runs but excluded from the CI gate. |
 
 A case passes only if every field it declares is satisfied. There is no partial credit inside a case. Partial credit lives one level up, as the pass rate across a family.
@@ -174,7 +174,7 @@ There is no `--allow-regression` flag. A pull request cannot approve its own reg
 
 ### Reading a result
 
-The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. The grid below is layout only. It is not today's scoreboard. Live family totals are in `README.md` and `evals/baselines/main.json` (on `main`: recall 27/35, grep 7/35).
+The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. The grid below is layout only. It is not today's scoreboard. Live family totals are in `README.md` and `evals/baselines/main.json` (on `main`: recall 27/35, grep 6/35).
 
 ```
 family          recall      grep       vs main

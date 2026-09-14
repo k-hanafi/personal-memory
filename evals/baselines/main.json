@@ -87,9 +87,9 @@
               "pass": true
             },
             "northbridge-review-three-notes-present": {
-              "failure": null,
+              "failure": "also_present",
               "holdout": false,
-              "pass": true
+              "pass": false
             },
             "research-budget-both-surface": {
               "failure": "contradiction",
@@ -103,7 +103,7 @@
             }
           },
           "hit_at_1": null,
-          "passed": 2,
+          "passed": 1,
           "recall_at_5": null,
           "total": 4
         },
@@ -446,5 +446,5 @@
   "corpus": "evals/brain",
   "fixtures": "evals/fixtures",
   "fixtures_hash": "b654ecb609ce03de986cbc71edc11a2f7bde276004fcea34b0eb4edfb6100353",
-  "justification": "Renamed contradiction presence-only case ids (marcus-both-present, northbridge-review-three-notes-present). Fixture comments keep Problem N only."
+  "justification": "also_present and contradiction now score the same top-5 window the receipt already keeps. Grep northbridge-review-three-notes-present flipped pass to fail (also_present): grep ranks 50-people/marcus-bellamy.md at 6 and 60-decisions/decline-associate-editor-role.md at 7, so two of the three required notes sat outside the receipt. Recall gold stays 27/35 (that case still passes; recall returns those three notes only). Grep 7/35 to 6/35. Expected from one comparison window, not a retrieval change."
 }

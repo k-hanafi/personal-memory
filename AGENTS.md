@@ -17,7 +17,7 @@ in the same change or stop and say so.
 from the claim line, current-only unless `--historical`). `revisit` fetches one
 note by id or path with frontmatter intact. Layer 1 evals are complete: 109-note
 corpus, five fixture families, `personal-memory eval run`, a committed baseline
-(`evals/baselines/main.json`: recall 27/35, grep 7/35), and an `eval-gate` CI
+(`evals/baselines/main.json`: recall 27/35, grep 6/35), and an `eval-gate` CI
 job that fails on any gold regression. The write path exists: `draft`, `pending`,
 `file`, `note`, and `inbox` (spec: Write section). Notes may carry a dated
 `## Log` section. MCP stdio server: `personal-memory mcp --brain`. Personal

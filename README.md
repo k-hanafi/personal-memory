@@ -105,7 +105,7 @@ what searching the folder already gets you before installing anything.
 |---|---|---|
 | abstention | 2/6 | 1/6 |
 | citation | 4/6 | 0/6 |
-| contradiction | 4/4 | 2/4 |
+| contradiction | 4/4 | 1/4 |
 | named-thing | 10/11 | 2/11 |
 | supersession | 7/8 | 2/8 |
 

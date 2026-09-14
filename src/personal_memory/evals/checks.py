@@ -48,8 +48,9 @@ def check_forbid_paths(case: Case, hits: list[Hit]) -> str | None:
 def check_also_present(case: Case, hits: list[Hit]) -> str | None:
     if not case.also_present:
         return None
+    top = hits[:TOP_N]
     for entry in case.also_present:
-        if not any(hit.path == entry.path and hit.status == entry.status for hit in hits):
+        if not any(hit.path == entry.path and hit.status == entry.status for hit in top):
             return "also_present"
     return None
 
@@ -58,7 +59,7 @@ def check_contradiction(case: Case, hits: list[Hit]) -> str | None:
     if not case.contradiction:
         return None
     listed = set(case.contradiction)
-    by_path = {hit.path: hit for hit in hits}
+    by_path = {hit.path: hit for hit in hits[:TOP_N]}
     for path in case.contradiction:
         hit = by_path.get(path)
         if hit is None or not (listed - {path}) <= set(hit.contradicted_by):

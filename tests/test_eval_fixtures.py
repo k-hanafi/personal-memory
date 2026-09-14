@@ -102,6 +102,7 @@ def test_missing_family_names_file(tmp_path: Path) -> None:
         ('id = "x"\nquery = "q"\nabstain = true\nexpect_confidence = "high"', "abstain"),
         ('id = "x"\nquery = "q"\nabstain = true\n[[case.also_present]]\npath = "a.md"\nstatus = "current"', "abstain"),
         ('id = "x"\nquery = "q"\nabstain = true\ncontradiction = ["a.md", "b.md"]', "abstain"),
+        ('id = "x"\nquery = "q"\nabstain = true\nforbid_paths = ["a.md"]', "abstain"),
         ('id = "x"\nquery = "q"\ncontradiction = ["a.md"]', "contradiction"),
         ('id = "x"\nquery = "q"\nhistorical = "yes"', "historical"),
         ('id = "x"\nquery = "q"\nexpect_path = "a.md"\nexpect_line = true', "expect_line"),
