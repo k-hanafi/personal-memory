@@ -174,7 +174,7 @@ There is no `--allow-regression` flag. A pull request cannot approve its own reg
 
 ### Reading a result
 
-The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. The grid below is layout only. It is not today's scoreboard. Live family totals are in `README.md` and `evals/baselines/main.json` (on `main`: recall 27/35, grep 7/35).
+The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. The grid below is layout only. It is not today's scoreboard. Live family totals are in `README.md` and `evals/baselines/main.json` (on `main`: recall 27/35, grep 6/35).
 
 ```
 family          recall      grep       vs main
