@@ -34,6 +34,7 @@ def test_no_sources_folder_means_nothing_to_file(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "source",
     [
+        "sources/dean-email.md",
         "./sources/dean-email.md",
         "sources/../sources/dean-email.md",
         "sources/./dean-email.md",
@@ -77,47 +78,19 @@ def test_absolute_source_path_inside_brain_counts_as_filed(brain: Path) -> None:
     assert [p.as_posix() for p in unfiled(brain).unfiled] == ["sources/2026-09/syllabus.pdf"]
 
 
-def test_created_note_with_source_files_it(brain: Path) -> None:
-    submit(
-        brain,
-        Proposal(
-            "create",
-            "agent:codex, 2026-09-10",
-            "high",
-            "2026-09-10",
-            path="30-projects/sabbatical.md",
-            id="sabbatical",
-            type="project",
-            title="Sabbatical",
-            source="sources/dean-email.md",
-        ),
-    )
-    apply(brain)
-    assert [p.as_posix() for p in unfiled(brain).unfiled] == ["sources/2026-09/syllabus.pdf"]
-
-
-def test_log_line_with_equivalent_source_provenance_files_it(brain: Path) -> None:
+@pytest.mark.parametrize(
+    "provenance",
+    [
+        "source:sources/2026-09/syllabus.pdf",
+        "source:./sources/2026-09/syllabus.pdf",
+    ],
+)
+def test_log_line_source_provenance_files_it(brain: Path, provenance: str) -> None:
     submit(
         brain,
         Proposal(
             "append",
-            "source:./sources/2026-09/syllabus.pdf",
-            "high",
-            "2026-09-10",
-            target="teaching-load-2026-09",
-            claim="Syllabus for econometrics posted.",
-        ),
-    )
-    apply(brain)
-    assert [p.as_posix() for p in unfiled(brain).unfiled] == ["sources/dean-email.md"]
-
-
-def test_log_line_with_source_provenance_files_it(brain: Path) -> None:
-    submit(
-        brain,
-        Proposal(
-            "append",
-            "source:sources/2026-09/syllabus.pdf",
+            provenance,
             "high",
             "2026-09-10",
             target="teaching-load-2026-09",

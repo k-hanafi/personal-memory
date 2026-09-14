@@ -58,3 +58,15 @@ def test_parse_rejects_bad_status() -> None:
                 "confidence": "high",
             }
         )
+
+
+def test_check_rejects_dangling_superseded_by(tmp_path: Path) -> None:
+    (tmp_path / "note.md").write_text(
+        "---\nid: sabbatical-plan\ntype: project\nas_of: 2026-08-01\n"
+        "status: superseded\nconfidence: high\n"
+        "superseded_by: [[sabbatical-plan-2027]]\n---\n\n# Sabbatical plan\n",
+        encoding="utf-8",
+    )
+    result = check_brain(tmp_path)
+    assert not result.ok
+    assert "superseded_by points at 'sabbatical-plan-2027'" in result.issues[0].message

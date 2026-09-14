@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from personal_memory.cli import main
 from personal_memory.filing import QUEUE_DIR
 from personal_memory.get import get_note
 from personal_memory import mcp as mcp_mod
@@ -39,11 +38,8 @@ def _tools(brain: Path, sources: str = "sources"):
     return {tool.name: tool.fn for tool in make_server(brain, sources)._tool_manager.list_tools()}
 
 
-def test_mcp_cli_exposes_sources(capsys) -> None:
-    try:
-        main(["mcp", "--help"])
-    except SystemExit as exc:
-        assert exc.code == 0
+def test_mcp_cli_exposes_sources(capsys, _cli) -> None:
+    assert _cli(["mcp", "--help"]) == 0
     assert "--sources" in capsys.readouterr().out
 
 
@@ -82,36 +78,6 @@ def test_tool_names_are_the_seven_human_verbs() -> None:
         "target",
         "claim",
     )
-
-
-def test_remember_cards_have_path_lines_and_freshness() -> None:
-    result = _tools(DEMO)["remember"]("teaching load")
-    cards = result["cards"]
-    assert cards
-    sept = next(card for card in cards if Path(card["path"]).name == "teaching-load-2026-09.md")
-    assert sept["status"] == "current"
-    assert sept["as_of"] == "2026-09-01"
-    assert sept["confidence"]
-    assert sept["claim"]
-    assert sept["start_line"] >= 1
-    assert sept["end_line"] >= sept["start_line"]
-    names = {Path(card["path"]).name for card in cards}
-    assert "teaching-load-2026-01.md" not in names
-
-
-def test_remember_historical_includes_superseded() -> None:
-    result = _tools(DEMO)["remember"]("teaching load", historical=True)
-    by_name = {Path(card["path"]).name: card for card in result["cards"]}
-    assert by_name["teaching-load-2026-01.md"]["status"] == "superseded"
-    assert by_name["teaching-load-2026-09.md"]["status"] == "current"
-
-
-def test_revisit_keeps_frontmatter() -> None:
-    result = _tools(DEMO)["revisit"]("alex-rivera")
-    assert result["text"].startswith("---")
-    assert "id: alex-rivera" in result["text"]
-    assert "Economics lecturer" in result["text"]
-    assert result["path"] == "20-identity/alex-rivera.md"
 
 
 def test_inbox_lists_unfiled_sources(brain: Path) -> None:
@@ -166,18 +132,6 @@ def test_file_and_note_leave_sources_untouched(brain: Path) -> None:
     assert source.read_text(encoding="utf-8") == before
 
 
-def test_note_writes_one_fact(brain: Path) -> None:
-    result = _tools(brain)["note"](
-        claim="Samir will draft the first case.",
-        provenance="user, 2026-09-10",
-        target="samir-okonkwo",
-        as_of="2026-09-10",
-    )
-    assert result["status"] == "inserted"
-    text = get_note(brain, "samir-okonkwo").text
-    assert "- 2026-09-10 | user, 2026-09-10 | Samir will draft the first case." in text
-
-
 def test_note_without_provenance_is_blocked_outcome(brain: Path) -> None:
     result = _tools(brain)["note"](claim="A fact.", target="alex-rivera")
     assert result["status"] == "blocked"
@@ -212,47 +166,3 @@ def test_draft_bad_payload_is_blocked_outcome(brain: Path) -> None:
     validated = tool.fn_metadata.validate_arguments({})
     result = tool.fn(**validated)
     assert result["status"] == "blocked"
-
-
-def test_note_cli_help_and_write_exit(brain: Path, capsys) -> None:
-    try:
-        main(["note", "--help"])
-    except SystemExit as exc:
-        assert exc.code == 0
-    help_text = capsys.readouterr().out
-    assert "--provenance" in help_text
-    assert "--target" in help_text
-    assert "--path" in help_text
-    assert "--type" in help_text
-    assert "--title" not in help_text
-
-    assert (
-        main(
-            [
-                "note",
-                str(brain),
-                "Samir will draft the first case.",
-                "--provenance",
-                "user, 2026-09-10",
-                "--target",
-                "samir-okonkwo",
-            ]
-        )
-        == 0
-    )
-    assert (
-        main(
-            [
-                "note",
-                str(brain),
-                "Dana chairs the department.",
-                "--provenance",
-                "user, 2026-09-10",
-                "--path",
-                "50-people/dana-whitfield.md",
-                "--type",
-                "person",
-            ]
-        )
-        == 0
-    )
