@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from personal_memory.cli import main
+from personal_memory.filing import QUEUE_DIR
 from personal_memory.get import get_note
 from personal_memory import mcp as mcp_mod
 from personal_memory.mcp import make_server
@@ -64,6 +65,23 @@ def test_tool_names_are_the_seven_human_verbs() -> None:
         "note",
     )
     assert "title" not in inspect.signature(fns["note"]).parameters
+    draft = inspect.signature(fns["draft"]).parameters
+    assert tuple(draft) == (
+        "kind",
+        "provenance",
+        "confidence",
+        "as_of",
+        "path",
+        "id",
+        "type",
+        "title",
+        "body",
+        "aliases",
+        "source",
+        "supersedes",
+        "target",
+        "claim",
+    )
 
 
 def test_remember_cards_have_path_lines_and_freshness() -> None:
@@ -109,14 +127,14 @@ def test_inbox_uses_named_sources_dir(tmp_path: Path) -> None:
 
 
 def test_draft_queues_and_writes_nothing(brain: Path) -> None:
-    result = _tools(brain)["draft"](CREATE)
+    result = _tools(brain)["draft"](**CREATE)
     assert result["status"] == "queued"
     assert not (brain / "50-people" / "dana-whitfield.md").exists()
 
 
 def test_pending_lists_waiting_drafts(brain: Path) -> None:
     fns = _tools(brain)
-    fns["draft"](CREATE)
+    fns["draft"](**CREATE)
     result = fns["pending"]()
     assert len(result["items"]) == 1
     assert result["items"][0]["proposal"]["id"] == "dana-whitfield"
@@ -126,7 +144,7 @@ def test_file_without_id_skips_low_confidence(brain: Path) -> None:
     low = dict(CREATE, provenance="agent:cursor, 2026-09-10")
     del low["source"]
     fns = _tools(brain)
-    queued = fns["draft"](low)
+    queued = fns["draft"](**low)
     assert queued["confidence"] == "medium"
     result = fns["file"]()
     assert result["outcomes"][0]["status"] == "queued"
@@ -137,7 +155,7 @@ def test_file_and_note_leave_sources_untouched(brain: Path) -> None:
     source = brain / "sources" / "dean-email.md"
     before = source.read_text(encoding="utf-8")
     fns = _tools(brain)
-    fns["draft"](CREATE)
+    fns["draft"](**CREATE)
     fns["file"]()
     fns["note"](
         claim="Samir will draft the first case.",
@@ -172,3 +190,69 @@ def test_note_empty_claim_is_blocked_outcome(brain: Path) -> None:
     assert result["status"] == "blocked"
     assert "claim" in (result["reason"] or "")
     assert get_note(brain, "alex-rivera").text
+
+
+def test_draft_bad_payload_is_blocked_outcome(brain: Path) -> None:
+    fns = _tools(brain)
+    empty = fns["draft"]()
+    assert empty["status"] == "blocked"
+    assert empty["reason"]
+    assert list((brain / QUEUE_DIR).glob("*.json")) == []
+
+    partial = fns["draft"](kind="create", provenance="user, 2026-09-10")
+    assert partial["status"] == "blocked"
+    assert "as_of" in (partial["reason"] or "")
+
+    tool = next(tool for tool in make_server(brain)._tool_manager.list_tools() if tool.name == "draft")
+    props = tool.parameters["properties"]
+    for name in inspect.signature(fns["draft"]).parameters:
+        assert name in props
+    assert "proposal" not in props
+    assert not tool.parameters.get("required")
+    validated = tool.fn_metadata.validate_arguments({})
+    result = tool.fn(**validated)
+    assert result["status"] == "blocked"
+
+
+def test_note_cli_help_and_write_exit(brain: Path, capsys) -> None:
+    try:
+        main(["note", "--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    help_text = capsys.readouterr().out
+    assert "--provenance" in help_text
+    assert "--target" in help_text
+    assert "--path" in help_text
+    assert "--type" in help_text
+    assert "--title" not in help_text
+
+    assert (
+        main(
+            [
+                "note",
+                str(brain),
+                "Samir will draft the first case.",
+                "--provenance",
+                "user, 2026-09-10",
+                "--target",
+                "samir-okonkwo",
+            ]
+        )
+        == 0
+    )
+    assert (
+        main(
+            [
+                "note",
+                str(brain),
+                "Dana chairs the department.",
+                "--provenance",
+                "user, 2026-09-10",
+                "--path",
+                "50-people/dana-whitfield.md",
+                "--type",
+                "person",
+            ]
+        )
+        == 0
+    )

@@ -36,9 +36,45 @@ def make_server(brain: Path, sources: str = "sources") -> MCPServer:
         return {"sources": result.sources, "unfiled": [path.as_posix() for path in result.unfiled]}
 
     @server.tool()
-    def draft(proposal: dict) -> dict:
+    def draft(
+        kind: str = "",
+        provenance: str = "",
+        confidence: str = "",
+        as_of: str = "",
+        path: str | None = None,
+        id: str | None = None,
+        type: str | None = None,
+        title: str | None = None,
+        body: str = "",
+        aliases: str | None = None,
+        source: str | None = None,
+        supersedes: str | None = None,
+        target: str | None = None,
+        claim: str | None = None,
+    ) -> dict:
         """Queue a filing draft after checking the rules. Writes no note."""
-        return asdict(submit(root, Proposal.from_dict(proposal), sources_dir=sources))
+        return asdict(
+            submit(
+                root,
+                Proposal(
+                    kind,
+                    provenance,
+                    confidence,
+                    as_of,
+                    path=path,
+                    id=id,
+                    type=type,
+                    title=title,
+                    body=body,
+                    aliases=aliases,
+                    source=source,
+                    supersedes=supersedes,
+                    target=target,
+                    claim=claim,
+                ),
+                sources_dir=sources,
+            )
+        )
 
     @server.tool()
     def pending() -> dict:

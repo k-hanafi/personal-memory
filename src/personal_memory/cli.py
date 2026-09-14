@@ -355,7 +355,7 @@ def _run_note(root: Path, args: argparse.Namespace) -> int:
         sources_dir=args.sources,
     )
     _print_outcomes([outcome], args.json)
-    return 0 if outcome.status in ("inserted", "superseded", "queued") else 1
+    return 0 if outcome.status in ("inserted", "queued") else 1
 
 
 def _run_inbox(root: Path, sources: str, as_json: bool) -> int:
