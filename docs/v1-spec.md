@@ -285,7 +285,8 @@ only. There is no `title` argument on `note`.
   `remember`.
 
 `note` does not take a whole body. A whole page is a `create` proposal
-through `draft`. One call, one fact, one shape.
+through `draft`. One call, one fact, one shape. When `as_of` is omitted,
+it is the UTC calendar day.
 
 Result is one of `inserted`, `duplicate`, `queued`, `blocked`, with the
 paths touched and the reason when there is one. It also carries the

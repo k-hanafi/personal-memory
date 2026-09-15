@@ -54,13 +54,9 @@ def parse_log(text: str) -> LogSection:
     return LogSection(heading_line, tuple(entries), tuple(bad))
 
 
-def format_entry(date: str, provenance: str, claim: str) -> str:
-    return f"- {date} | {provenance} | {claim}"
-
-
 def append_entry(text: str, date: str, provenance: str, claim: str) -> str:
     """Return text with one Log line added, creating the section if needed."""
-    entry = format_entry(date, provenance, claim)
+    entry = f"- {date} | {provenance} | {claim}"
     section = parse_log(text)
     lines = text.splitlines()
     if not section.present:
@@ -77,7 +73,3 @@ def append_entry(text: str, date: str, provenance: str, claim: str) -> str:
             insert_at = number
     lines.insert(insert_at, entry)
     return "\n".join(lines) + "\n"
-
-
-def normalize_claim(claim: str) -> str:
-    return " ".join(re.findall(r"[a-z0-9]+", claim.lower()))
