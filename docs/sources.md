@@ -28,7 +28,7 @@ The gate: baseline fetched from `main`, exact comparison on unchanged fixtures, 
 Pre-registration: write the predicted number before the run, publish the miss. Also the paired +/- reporting style.
 
 **Gbrain v0.40.6.0 benchmark snapshot**, in gbrain-evals `docs/benchmarks/`. Read 2026-09-08.
-The ablation table (full system 49.1% P@5, no graph 19.2%, grep + BM25 17.1%, vector only 10.8%). Source of our rule that the ripgrep row is always published.
+The ablation table (full system 49.1% P@5, no graph 19.2%, grep + BM25 17.1%, vector only 10.8%). Source of our rule that the grep row is always published.
 
 **Gbrain system-of-record contract**, `docs/architecture/system-of-record.md` in the Gbrain repo. Read 2026-09-10.
 Markdown is canonical, the database is a rebuildable index, and a CI gate fails any write that skips the markdown. Also the forget and supersede encoding: rows are struck through with a date, never deleted. Source of our "one door" rule and of never overwriting in place.

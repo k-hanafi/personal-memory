@@ -17,7 +17,7 @@ in the same change or stop and say so.
 from the claim line, current-only unless `--historical`). `revisit` fetches one
 note by id or path with frontmatter intact. Layer 1 evals are complete: 109-note
 corpus, five fixture families, `personal-memory eval run`, a committed baseline
-(`evals/baselines/main.json`: recall 27/35, grep 6/35), and an `eval-gate` CI
+at `evals/baselines/main.json` (family totals in `README.md`), and an `eval-gate` CI
 job that fails on any gold regression. The write path exists: `draft`, `pending`,
 `file`, `note`, and `inbox` (spec: Write section). Notes may carry a dated
 `## Log` section. MCP stdio server: `personal-memory mcp --brain`. Personal
@@ -77,9 +77,9 @@ bash scripts/eval-gate.sh
 
 Install snippets for Cursor, Claude Code, and Codex are in `README.md`.
 Point `--brain` at `examples/demo-brain` in this repo. That folder has no
-`sources/` dumps, so `inbox` is empty. `draft` reads a JSON proposal from
-stdin, or from a proposal file you write. There is no `proposal.json` in
-the demo brain. Do not commit a config that points at a real vault.
+`sources/` dumps, so `inbox` is empty. The demo has no queued filings.
+`draft` reads a JSON proposal from stdin, or from a file you write.
+Do not commit a config that points at a real vault.
 
 `python3 -m venv .venv` creates a local install folder. `source .venv/bin/activate`
 uses it in this terminal. `python -m pip install -e ".[dev]"` installs the CLI and
@@ -89,25 +89,17 @@ the test runner.
 
 Cloud agents run on an Ubuntu VM. They do not have this laptop, `/Users/k/vault`,
 User Rules, or `~/.cursor/skills`. After a Build, `.venv` already exists from
-`.cursor/environment.json`. Use those binaries:
+`.cursor/environment.json`. Use the same commands as Development commands, with
+`.venv/bin/` in front of each binary (`.venv/bin/pytest`,
+`.venv/bin/personal-memory ...`). For the eval gate, put that folder on `PATH`
+so the script can find the CLI:
 
 ```bash
-.venv/bin/pytest
-.venv/bin/personal-memory check examples/demo-brain
-.venv/bin/personal-memory remember examples/demo-brain teaching load
-.venv/bin/personal-memory revisit examples/demo-brain alex-rivera
-.venv/bin/personal-memory draft examples/demo-brain
-.venv/bin/personal-memory pending examples/demo-brain
-.venv/bin/personal-memory file examples/demo-brain
-.venv/bin/personal-memory note examples/demo-brain "One fact." --provenance "user, 2026-09-10" --target alex-rivera
-.venv/bin/personal-memory inbox examples/demo-brain
-.venv/bin/personal-memory mcp --brain examples/demo-brain
-.venv/bin/personal-memory eval run
 PATH=".venv/bin:$PATH" bash scripts/eval-gate.sh
 ```
 
 If `.venv` is missing, run the `install` command in `.cursor/environment.json`.
-Use `examples/demo-brain/` (and later `evals/brain/`) only. Never copy real vault
+Use `examples/demo-brain/` and `evals/brain/` only. Never copy real vault
 notes into this repo. No product API keys are required.
 
 ## Where to work

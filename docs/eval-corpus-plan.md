@@ -133,141 +133,120 @@ frozen corpus.
 
 ### Rest of the corpus
 
-Later notes in the frozen set. Letters in the why-column are leftover
-enrichment tags: a ranking, b hops, c revisit, d tokens, g dumps,
-h paraphrase, i false contradiction, j abstention, k noise, l multi-line,
-m temporal, n multi-entity, o timeline, p linked life notes.
+Later notes in the frozen set.
 
 #### `50-people/` (14 new, 20 total)
 
 | File | Status | Why it exists |
 |---|---|---|
-| `grant-oyelaran.md` | current | Program officer at the funding foundation. First name is a common noun next to the grant application project (k). `Grant` becomes a four-way id tie (a). |
-| `kjaer.md`, id `soren-kjaer` | current | Title "Søren Kjær", visiting scholar. Diacritics: TOKEN_RE turns "Søren" into `ren` (k). Path stem differs from id (c). |
-| `tobias-renquist.md` | current | Former student, reference letter. No note links to him; dailies name him in prose only (k). |
-| `ines-castellanos.md` | current | Econometrics TA. Role lookup "TA for econometrics" and a second TA so `TA` has two golds (n, i). |
-| `felix-brandvold.md` | current | Second coauthor on the labor markets paper. Multi-entity question (n). |
-| `nadia-ferrante.md` | current | Curriculum group colleague. Dailies refer to her by surname only (k). |
-| `mira-solberg.md` | current | Physiotherapist, linked from the health area. Daily writes "mira" lowercase (k, p). |
-| `theo-lindqvist.md` | current | Property manager, linked from home admin (p). |
-| `bea-okonkwo.md` | current | Data librarian. Shares a surname with Samir so `Okonkwo` is ambiguous (a). |
-| `jonas-weir.md` | current | Conference discussant. Daily misspells him "Jonas Wier" (k). |
-| `sam-delacroix.md` | current | Student team captain. Real first name collides with Samir's alias `Sam` (a, d). |
-| `harriet-obuya.md` | current | Associate dean who signs sabbatical and release forms. Appears in minutes (a). |
-| `rosalind-tembe.md` | current | Colleague who taught Alex to use coding agents. Linked from the learning area (p). |
-| `kofi-amankwah.md` | current | Master's advisee. Linked from thesis supervision (n). |
+| `grant-oyelaran.md` | current | Program officer at the funding foundation. First name is a common noun next to the grant application project. `Grant` becomes a four-way id tie. |
+| `kjaer.md`, id `soren-kjaer` | current | Title "Søren Kjær", visiting scholar. Diacritics: TOKEN_RE turns "Søren" into `ren`. Path stem differs from id. |
+| `tobias-renquist.md` | current | Former student, reference letter. No note links to him; dailies name him in prose only. |
+| `ines-castellanos.md` | current | Econometrics TA. Role lookup "TA for econometrics" and a second TA so `TA` has two golds. |
+| `felix-brandvold.md` | current | Second coauthor on the labor markets paper. Multi-entity question. |
+| `nadia-ferrante.md` | current | Curriculum group colleague. Dailies refer to her by surname only. |
+| `mira-solberg.md` | current | Physiotherapist, linked from the health area. Daily writes "mira" lowercase. |
+| `theo-lindqvist.md` | current | Property manager, linked from home admin. |
+| `bea-okonkwo.md` | current | Data librarian. Shares a surname with Samir so `Okonkwo` is ambiguous. |
+| `jonas-weir.md` | current | Conference discussant. Daily misspells him "Jonas Wier". |
+| `sam-delacroix.md` | current | Student team captain. Real first name collides with Samir's alias `Sam`. |
+| `harriet-obuya.md` | current | Associate dean who signs sabbatical and release forms. Appears in minutes. |
+| `rosalind-tembe.md` | current | Colleague who taught Alex to use coding agents. Linked from the learning area. |
+| `kofi-amankwah.md` | current | Master's advisee. Linked from thesis supervision. |
 
 #### `30-projects/` (7 new, 14 total)
 
 | File | Status | Why it exists |
 |---|---|---|
-| `grant-application.md`, id `research-grant-2026` | current | Grant application. Path differs from id (c). Links [[grant-oyelaran]] and [[lab-budget]] (b). Says the amount is not settled; must not use the phrase "research budget" so the budget contradiction stays a pair plus one daily. |
-| `conference-trip-2026-06.md` | current, `type: trip` | Two-day conference. Links [[soren-kjaer]], [[jonas-weir]]. Filed counterpart of the programme dump (g, p). |
-| `intermediate-macro-fall-2025.md` | superseded, no `superseded_by` field because nothing replaced it | Course taught once. "Fact that stopped being true and was never replaced" (j). |
-| `econometrics-fall-2025.md` | superseded, `superseded_by: econometrics-fall-2026` | Second long note (60 to 90 lines). Same section layout as the 2026 note; final exam weight 35 percent, not 40. Temporal query under `--historical` (m, a). |
-| `reading-group-causal-inference.md` | current | Reading group. Adds "identification" and "difference in differences" pressure against the course and reading notes (a). |
-| `replication-workshop-2026.md` | current | Week 13 workshop. Shares "replication" with the long course note; body-only target (a). |
-| `thesis-supervision-amankwah.md` | current | Links [[kofi-amankwah]]. Says the defense date is not set: near-miss abstention (j). Milestones span a paragraph (l). |
+| `grant-application.md`, id `research-grant-2026` | current | Grant application. Path differs from id. Links [[grant-oyelaran]] and [[lab-budget]]. Says the amount is not settled; must not use the phrase "research budget" so the budget contradiction stays a pair plus one daily. |
+| `conference-trip-2026-06.md` | current, `type: trip` | Two-day conference. Links [[soren-kjaer]], [[jonas-weir]]. Filed counterpart of the programme dump. |
+| `intermediate-macro-fall-2025.md` | superseded, no `superseded_by` field because nothing replaced it | Course taught once. "Fact that stopped being true and was never replaced". |
+| `econometrics-fall-2025.md` | superseded, `superseded_by: econometrics-fall-2026` | Second long note (60 to 90 lines). Same section layout as the 2026 note; final exam weight 35 percent, not 40. Temporal query under `--historical`. |
+| `reading-group-causal-inference.md` | current | Reading group. Adds "identification" and "difference in differences" pressure against the course and reading notes. |
+| `replication-workshop-2026.md` | current | Week 13 workshop. Shares "replication" with the long course note; body-only target. |
+| `thesis-supervision-amankwah.md` | current | Links [[kofi-amankwah]]. Says the defense date is not set: near-miss abstention. Milestones span a paragraph. |
 
 #### `40-areas/` (10 new, 22 total)
 
 | File | Status | Why it exists |
 |---|---|---|
-| `health.md` | current, `confidence: medium` | Shoulder, sleep, "running on empty by mid-afternoon". Paraphrase target for `burnout` (h, p). Links [[mira-solberg]]. |
-| `home-admin.md` | current | Lease, renewal date, "lease payment" (never "rent"). Paraphrase target for `rent` (h). Carries two unknown frontmatter keys, `tags` and `source` (k). |
-| `learning-coding-agents.md` | current | Alex learning Claude Code and Codex, with [[rosalind-tembe]]. Learning area (p). What-works list spans a paragraph (l). |
-| `exam-integrity.md` | current | "Strategic exam sitting", deferred sittings. Paraphrase target for `gaming the curve` (h). Mentions the curve without disagreeing with `assessment-policy` (i). |
-| `office-hours-2025-09.md` | superseded, **no `superseded_by`** although `office-hours-2026-01` replaced it | Fall 2025 schedule, Mondays 1 to 3. Broken chain link (k). Temporal target (m). |
-| `advising-load-2025-09.md` | superseded, `superseded_by: advising-load` | Eighteen advisees. Temporal pair with the current note (m). |
-| `commute.md` | superseded, no successor | Cycled to campus; stopped after a move. Second never-replaced fact (j). |
-| `data-purchases.md` | current | Data line items, links [[bea-okonkwo]]. Says "data line", not "budget" (a). |
-| `committee-service-2025.md` | superseded, `superseded_by: department-service` | Last year's committees. Temporal question "what committees in 2025" (m). |
-| `journal-refereeing.md` | current | Refereeing load; names the Northbridge Review. Contradiction negative with [[marcus-bellamy]] (i). `review` pressure (a). |
+| `health.md` | current, `confidence: medium` | Shoulder, sleep, "running on empty by mid-afternoon". Paraphrase target for `burnout`. Links [[mira-solberg]]. |
+| `home-admin.md` | current | Lease, renewal date, "lease payment" (never "rent"). Paraphrase target for `rent`. Carries two unknown frontmatter keys, `tags` and `source`. |
+| `learning-coding-agents.md` | current | Alex learning Claude Code and Codex, with [[rosalind-tembe]]. Learning area. What-works list spans a paragraph. |
+| `exam-integrity.md` | current | "Strategic exam sitting", deferred sittings. Paraphrase target for `gaming the curve`. Mentions the curve without disagreeing with `assessment-policy`. |
+| `office-hours-2025-09.md` | superseded, **no `superseded_by`** although `office-hours-2026-01` replaced it | Fall 2025 schedule, Mondays 1 to 3. Broken chain link. Temporal target. |
+| `advising-load-2025-09.md` | superseded, `superseded_by: advising-load` | Eighteen advisees. Temporal pair with the current note. |
+| `commute.md` | superseded, no successor | Cycled to campus; stopped after a move. Second never-replaced fact. |
+| `data-purchases.md` | current | Data line items, links [[bea-okonkwo]]. Says "data line", not "budget". |
+| `committee-service-2025.md` | superseded, `superseded_by: department-service` | Last year's committees. Temporal question "what committees in 2025". |
+| `journal-refereeing.md` | current | Refereeing load; names the Northbridge Review. Contradiction negative with [[marcus-bellamy]]. `review` pressure. |
 
 #### `60-decisions/` (6 new, 11 total)
 
 | File | Status | Why it exists |
 |---|---|---|
-| `adopt-open-textbook-intro-micro.md` | current | Rationale spans three lines (l). Shares "textbook" with the econometrics switch (a). |
-| `decline-conference-panel-2027.md` | current, as_of 2026-08-14 | Declined a future panel. Date in the title is later than the as_of range on purpose; as_of is the decision date (m). |
-| `move-office-hours-to-afternoon.md` | current | Long id with four query tokens. Outscores the schedule note on `afternoon office hours` (a, d). |
-| `use-claude-code-for-pipeline.md` | current | Vocabulary overlaps the pipeline and the learning area (a). |
-| `accept-associate-editor-role.md` | superseded, `superseded_by: decline-associate-editor-role` | Second reversed decision. "editor" pressure (a). |
-| `decline-associate-editor-role.md` | current, `supersedes: accept-associate-editor-role` | The reversal. Names the Northbridge Review (i). |
+| `adopt-open-textbook-intro-micro.md` | current | Rationale spans three lines. Shares "textbook" with the econometrics switch. |
+| `decline-conference-panel-2027.md` | current, as_of 2026-08-14 | Declined a future panel. Date in the title is later than the as_of range on purpose; as_of is the decision date. |
+| `move-office-hours-to-afternoon.md` | current | Long id with four query tokens. Outscores the schedule note on `afternoon office hours`. |
+| `use-claude-code-for-pipeline.md` | current | Vocabulary overlaps the pipeline and the learning area. |
+| `accept-associate-editor-role.md` | superseded, `superseded_by: decline-associate-editor-role` | Second reversed decision. "editor" pressure. |
+| `decline-associate-editor-role.md` | current, `supersedes: accept-associate-editor-role` | The reversal. Names the Northbridge Review. |
 
 #### `70-meetings/` (new folder, 6)
 
 | File | Status | Why it exists |
 |---|---|---|
-| `committee-minutes-2026-05-08.md` | current, `type: meeting` | Load committee minutes. "release request" appears (i). |
-| `committee-minutes-2026-09-04.md` | current, `type: meeting` | Load committee minutes. Filed counterpart of the transcript dump (g). Motion text spans three lines (l). Links [[dana-whitfield]], [[nadia-ferrante]], [[harriet-obuya]]. |
-| `curriculum-group-2026-02-05.md` | current | Where the open textbook was first raised. Links the decision (b). |
-| `meeting-grant-officer-2026-07-22.md` | current | Links [[grant-oyelaran]]. One-hop source for "who is the program officer" (b). |
-| `meeting-chair-staffing-2026-08-19.md` | current | Day before the evening section was dropped. `chair` pressure (a, o). |
-| `sponsor-call-quill-timber-2026-08-05.md` | current | Says "their marketing lead" with no name. Mentioned-but-not-named abstention (j). |
+| `committee-minutes-2026-05-08.md` | current, `type: meeting` | Load committee minutes. "release request" appears. |
+| `committee-minutes-2026-09-04.md` | current, `type: meeting` | Load committee minutes. Filed counterpart of the transcript dump. Motion text spans three lines. Links [[dana-whitfield]], [[nadia-ferrante]], [[harriet-obuya]]. |
+| `curriculum-group-2026-02-05.md` | current | Where the open textbook was first raised. Links the decision. |
+| `meeting-grant-officer-2026-07-22.md` | current | Links [[grant-oyelaran]]. One-hop source for "who is the program officer". |
+| `meeting-chair-staffing-2026-08-19.md` | current | Day before the evening section was dropped. `chair` pressure. |
+| `sponsor-call-quill-timber-2026-08-05.md` | current | Says "their marketing lead" with no name. Mentioned-but-not-named abstention. |
 
 #### `80-reading/` (new folder, 5)
 
 | File | Status | Why it exists |
 |---|---|---|
-| `reading-calder-markets-in-numbers.md` | current, `type: reading` | Notes on the textbook. "identification" pressure (a, p). |
-| `reading-hiring-frictions-survey.md` | current | Fictional survey paper. Overlaps the labor paper (a). Saved with **CRLF line endings** in the noise pass (k). |
-| `reading-agents-for-non-programmers.md` | current | Fictional essay on coding agents. Overlaps the learning area (a). |
-| `reading-diff-in-diff-handbook.md` | current | Third long note (60 or more lines). Dailies 2026-09-03 and 2026-09-05 mention it (a, o). |
-| `reading-strategic-exam-behavior.md` | current | The paper behind `exam-integrity`. Gives the paraphrase target a second candidate (h, a). |
+| `reading-calder-markets-in-numbers.md` | current, `type: reading` | Notes on the textbook. "identification" pressure. |
+| `reading-hiring-frictions-survey.md` | current | Fictional survey paper. Overlaps the labor paper. Saved with **CRLF line endings** in the noise pass. |
+| `reading-agents-for-non-programmers.md` | current | Fictional essay on coding agents. Overlaps the learning area. |
+| `reading-diff-in-diff-handbook.md` | current | Third long note (60 or more lines). Dailies 2026-09-03 and 2026-09-05 mention it. |
+| `reading-strategic-exam-behavior.md` | current | The paper behind `exam-integrity`. Gives the paraphrase target a second candidate. |
 
 #### `10-daily/` (20 new, 25 total)
 
 | File | Why it exists |
 |---|---|
-| `2025-09-03.md` | First week of fall 2025; intermediate macro and the seminar in passing (o, j). |
-| `2025-09-18.md` | Mentions Monday office hours; must not outrank `office-hours-2025-09` under `--historical` (m). |
-| `2025-10-09.md` | Reference letter for "Tobias", prose only, no link (k). |
-| `2025-11-07.md` | Night before the case competition (o). |
-| `2025-11-08.md` | Case competition day (o). |
-| `2025-12-12.md` | Grading the seminar; "running on empty" first appears (h). |
-| `2026-01-12.md` | Office hours moved to Monday and Wednesday (m, o). |
-| `2026-02-05.md` | Curriculum group; "Ferrante" surname only (k). |
-| `2026-03-02.md` | Declined summer teaching, in passing (o). |
-| `2026-04-21.md` | Accepted summer teaching after the chair asked again (o). |
-| `2026-05-08.md` | Committee day; release requests (i). |
-| `2026-06-10.md` | Conference day one; "Jonas Wier" misspelled (k). |
-| `2026-06-11.md` | Conference day two; "Søren" with the diacritic in the body (k). |
-| `2026-07-22.md` | Grant officer meeting; "the grant call" as a common noun (k). |
-| `2026-08-05.md` | Sponsor call (o). |
-| `2026-08-19.md` | Staffing meeting with the chair (o). |
-| `2026-08-25.md` | Physio visit, "saw mira" lowercase (k). |
-| `2026-08-31.md` | "Put off the results table again" (h). |
-| `2026-09-04.md` | Pipeline "next step" line; committee vote; "Ferrante" (o, k). |
-| `2026-09-05.md` | Last date in range. Closes the timeline (o). |
+| `2025-09-03.md` | First week of fall 2025; intermediate macro and the seminar in passing. |
+| `2025-09-18.md` | Mentions Monday office hours; must not outrank `office-hours-2025-09` under `--historical`. |
+| `2025-10-09.md` | Reference letter for "Tobias", prose only, no link. |
+| `2025-11-07.md` | Night before the case competition. |
+| `2025-11-08.md` | Case competition day. |
+| `2025-12-12.md` | Grading the seminar; "running on empty" first appears. |
+| `2026-01-12.md` | Office hours moved to Monday and Wednesday. |
+| `2026-02-05.md` | Curriculum group; "Ferrante" surname only. |
+| `2026-03-02.md` | Declined summer teaching, in passing. |
+| `2026-04-21.md` | Accepted summer teaching after the chair asked again. |
+| `2026-05-08.md` | Committee day; release requests. |
+| `2026-06-10.md` | Conference day one; "Jonas Wier" misspelled. |
+| `2026-06-11.md` | Conference day two; "Søren" with the diacritic in the body. |
+| `2026-07-22.md` | Grant officer meeting; "the grant call" as a common noun. |
+| `2026-08-05.md` | Sponsor call. |
+| `2026-08-19.md` | Staffing meeting with the chair. |
+| `2026-08-25.md` | Physio visit, "saw mira" lowercase. |
+| `2026-08-31.md` | "Put off the results table again". |
+| `2026-09-04.md` | Pipeline "next step" line; committee vote; "Ferrante". |
+| `2026-09-05.md` | Last date in range. Closes the timeline. |
 
 #### `sources/` (5 new, 7 total)
 
 | File | Frontmatter | Why it exists |
 |---|---|---|
-| `transcript-committee-2026-09-04.md` | yes, `type: source`, `confidence: low` | Meeting transcript, 600 or more words. Filed counterpart: `committee-minutes-2026-09-04`. Source swamp (g, a). |
-| `chat-log-yuki-pipeline-2026-09-04.md` | none | Chat log about the dedup fix. No filed counterpart; only daily 2026-09-04 mentions it (g). Loader skips it. |
-| `grant-call-pdf-text.md` | yes | PDF-to-text of the call for proposals. Filed counterpart: `research-grant-2026`. Uses "award" and "costs", never "budget" (g). Fourth `grant` id hit (a). |
-| `pasted-email-editor-decision.md` | none | Decision letter from the journal. No filed counterpart (g). |
-| `conference-programme-2026-06.md` | yes | Programme dump with many names, including "Søren Kjær". Filed counterpart: `conference-trip-2026-06`. Its id carries both query words, so it outranks the filed note (a, g). |
-
-#### Edits to existing notes
-
-| File | Edit | Why |
-|---|---|---|
-| `30-projects/undergrad-case-competition.md` | Add `supersedes: case-competition-2025` in frontmatter and body | Fixes the one-way chain; makes the hop into a superseded note possible (b). |
-| `30-projects/labor-markets-paper.md` | Add `[[felix-brandvold]]` to the coauthor line | Multi-entity question (n). |
-| `30-projects/econometrics-fall-2026.md` | Add `supersedes: econometrics-fall-2025` | Temporal chain (m). Body word count for the 2026 note is unchanged since links are stripped from scoring. |
-| `40-areas/advising-load.md` | Add `supersedes: advising-load-2025-09` | Temporal chain (m). |
-| `40-areas/department-service.md` | Add `supersedes: committee-service-2025` | Temporal chain (m). |
-| `10-daily/2026-09-01.md` | Turn "the assessment note" into `[[assessment-policy]]` | Daily-to-state hop (b). |
-| `60-decisions/adopt-codex-for-grading.md` | Change `as_of` from 2026-08-12 to 2026-08-05 | Internal date consistency: the decision must precede the rubric work that used Codex (`rubric-redesign` ended 2026-08-10). Temporal family (m). |
-
-`office-hours-2026-01.md` is deliberately not edited: it stays without a
-`supersedes` line so the break in that chain is real from both sides.
-`sources/pasted-email-chair.md` is also left alone: it confirms a Thursday
-seminar room that no current note mentions, but a raw dump being slightly
-wrong is realistic and the file is not indexed.
+| `transcript-committee-2026-09-04.md` | yes, `type: source`, `confidence: low` | Meeting transcript, 600 or more words. Filed counterpart: `committee-minutes-2026-09-04`. Source swamp. |
+| `chat-log-yuki-pipeline-2026-09-04.md` | none | Chat log about the dedup fix. No filed counterpart; only daily 2026-09-04 mentions it. Loader skips it. |
+| `grant-call-pdf-text.md` | yes | PDF-to-text of the call for proposals. Filed counterpart: `research-grant-2026`. Uses "award" and "costs", never "budget". Fourth `grant` id hit. |
+| `pasted-email-editor-decision.md` | none | Decision letter from the journal. No filed counterpart. |
+| `conference-programme-2026-06.md` | yes | Programme dump with many names, including "Søren Kjær". Filed counterpart: `conference-trip-2026-06`. Its id carries both query words, so it outranks the filed note. |
 
 ## Deny list and grep guard
 

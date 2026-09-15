@@ -110,9 +110,9 @@ what searching the folder already gets you before installing anything.
 | supersession | 7/8 | 2/8 |
 
 These numbers are for the fictional corpus in `evals/brain/` and match the committed
-baseline in `evals/baselines/main.json`. Cases that fail today are capability targets,
-not bugs in the fixtures. How scoring and the CI gate work is in
-[docs/evals-spec.md](docs/evals-spec.md).
+baseline in `evals/baselines/main.json` (recall 27/35, grep 6/35). Cases that fail
+today are capability targets, not bugs in the fixtures. How scoring and the CI gate
+work is in [docs/evals-spec.md](docs/evals-spec.md).
 
 ```bash
 personal-memory eval run
@@ -130,6 +130,6 @@ fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` cas
 |---|---|
 | `docs/v1-spec.md` | Product plan. Wins over code until we change it. |
 | `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
-| `examples/demo-brain/` | Fake notes for tests and a future install walkthrough |
+| `examples/demo-brain/` | Fake notes for tests and an install walkthrough |
 | `evals/brain/` | Fictional Layer 1 eval corpus |
 | `src/personal_memory/` | Engine: `check`, `remember`, `revisit`, filing (`draft`, `pending`, `file`, `note`), `inbox`, MCP, and `eval` |

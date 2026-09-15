@@ -160,7 +160,7 @@ Rounding and key sorting are what make a baseline diff in a pull request readabl
 
 ### The gate
 
-CI runs the fixtures on the pull request's HEAD and compares the receipt to `evals/baselines/main.json` as it exists on `main`. There are two modes, chosen by comparing the fixtures hash.
+CI runs the fixtures on the pull request's HEAD and compares the receipt to `evals/baselines/main.json` as it exists on `main`. `scripts/eval-gate.sh` fetches that file from `origin/main`; if it is missing, the script fails. There are two modes, chosen by comparing the fixtures hash.
 
 If the hash is unchanged, the pull request touched only engine code. Any gold item that passed on `main` and fails on HEAD fails the build. There is no tolerance band. Two runs of a hermetic suite produce identical numbers, so a flipped case is a behavior change, and the reviewer should know about it even if the aggregate went up.
 
@@ -174,16 +174,7 @@ There is no `--allow-regression` flag. A pull request cannot approve its own reg
 
 ### Reading a result
 
-The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. The grid below is layout only. It is not today's scoreboard. Live family totals are in `README.md` and `evals/baselines/main.json` (on `main`: recall 27/35, grep 6/35).
-
-```
-family          recall      grep       vs main
-named-thing     P/T         P/T        +N / -0
-supersession    P/T         P/T        +0 / -0
-abstention      P/T         P/T        +0 / -1   <- FAIL: case-id
-contradiction   P/T         P/T        +0 / -0
-citation        P/T         P/T        +0 / -0
-```
+The CLI prints a table. One row per family, one column per adapter, plus a paired-change column against the baseline. Live family totals are in `README.md` and `evals/baselines/main.json`. Do not copy the scoreboard here.
 
 The `vs main` column is a paired comparison: for each case, did it flip from fail to pass (+) or pass to fail (-). This is more informative than two averages, because a change that fixes five cases and breaks five others has the same average as one that did nothing, and the paired view shows you the churn. Gbrain reports every retrieval change this way, as "+18 / -8" rather than "95.3% vs 93.2%".
 
@@ -245,27 +236,7 @@ Layer 3 is run before a release, by hand, and costs a few dollars. It is not gat
 
 ## Primitives and where they come from
 
-Every structural choice above is copied from somewhere. This table is the map.
-
-| Primitive | Taken from | What we copy | What we leave out |
-|---|---|---|---|
-| Committed fictional corpus, publishable | Gbrain BrainBench, gbrain-evals | Fictional pages, grep guard against real names, grow with a model when hand-writing runs out | Their Postgres index. Our corpus is a folder. |
-| Hermetic run, no keys, seconds | Gbrain BrainBench | Deterministic adapters so any flipped case is a real change | Their in-memory PGLite. We have no database. |
-| Baseline on `main`, exact gate, byte-match when fixtures change, `justification` string | Gbrain BRAINBENCH.md gate governance | The whole mechanism | The `--live` and `--llm` stochastic modes, which we put in Layer 3 instead |
-| Holdout slice | Gbrain BrainBench | 15% excluded from gate, scored in published runs | Deferred until fifty cases |
-| Named-thing sub-families | Gbrain NamedThingBench | Exact, alias, substring, generic-to-named, multi-chunk dilution | Their reranker-specific rules |
-| Trivial-pass filter for supersession | MEME (arXiv 2605.12477) | Credit only if the old fact is findable and labeled, not merely absent | Cascade and multi-entity propagation, which need a graph we do not have |
-| Abstention as a scored ability | LongMemEval (arXiv 2410.10813) | Queries with no answer must return nothing | Their chat-session data format. Our substrate is markdown. |
-| Index, retrieve, read as separate stages | LongMemEval | Layer 1 tests retrieve; Layer 3 tests read | Their long-context baselines |
-| Grep baseline row | Gbrain scorecard, Letta filesystem experiment | Always report what a plain text search gets you | Nothing |
-| Adapter interface, engine is one system under test | gbrain-evals README | Common `search()` shape; anyone can plug in | Their TypeScript harness |
-| Paired +/- comparison | Gbrain scorecards | Per-case flips instead of two averages | Bootstrap confidence intervals, which only matter for stochastic runs |
-| Pre-registration | Gbrain SEARCH_MODE_METHODOLOGY.md | Predict the number in the PR, publish the miss | Their formal hypothesis numbering |
-| Capability versus regression evals | Anthropic, Demystifying evals for AI agents | Cases graduate from one to the other; gate only on regression | Their computer-use and coding agent sections |
-| pass^k and tokens per question | Anthropic; Mem0 memory evaluation docs | Layer 3 metrics | pass@k, which rewards retries we do not offer |
-| Error analysis before automation, binary grades, code before judge | Hamel Husain, Your AI Product Needs Evals; Evals FAQ | Layer 2 loop; no model judge without a counted failure mode | A/B testing, which needs users we do not have yet |
-| Synthetic questions need a human anchor | Can we Evaluate RAGs with Synthetic Data? (arXiv 2508.11758); ARES (arXiv 2311.09476) | Hand-written cases stay in every family even after generation begins; judges validated on labels | Their fine-tuned judge models |
-| Do not chase competitor numbers | Zep vs Mem0 dispute; Letta's 74% with grep | Publish our own ablation table and the corpus to reproduce it | Head-to-head claims against systems we cannot run |
+Every structural choice above is copied from somewhere. The map is `docs/sources.md`.
 
 ## What this does not do
 
@@ -277,33 +248,17 @@ No model grades anything in Layers 1 or 2. Evidence cards are paths and line num
 
 ## Commands
 
-All of these run from the repository root with the virtual environment active.
+The published `eval run`, `--update-baseline`, and `eval-gate.sh` invocations are in `README.md`. Gate behavior is in "The gate" above. Layer 2 replay is in that section. `--update-baseline` is the one command that changes a tracked file; everything else writes to `evals/runs/`, which git ignores.
+
+These are not in README:
 
 ```bash
-# Run every family against the eval corpus with our engine and with the grep baseline,
-# and show flips against the committed baseline. Always exits 0.
-personal-memory eval run
-
-# Same, but only one family and one adapter.
 personal-memory eval run --family supersession --adapter recall
-
-# Rewrite the committed baseline from a fresh run. Only after a fixture or
-# corpus change, and only when the PR explains why.
-personal-memory eval run --update-baseline
-
-# Compare two receipts case by case. Prints +/- flips.
 personal-memory eval compare evals/runs/a.json evals/runs/b.json
-
-# Run the suite and exit 1 if a gold recall case regressed against the given
-# baseline. The script fetches origin/main's baseline and passes it in; CI runs it.
 personal-memory eval gate --main-baseline <path>
-bash scripts/eval-gate.sh
-
-# Private replay against the vault. Never commits anything.
-personal-memory eval run --corpus ~/vault --fixtures ~/vault/90-meta/evals/vault-fixtures.toml
 ```
 
-`--update-baseline` is the one command that changes a tracked file. Everything else writes to `evals/runs/`, which git ignores.
+`scripts/eval-gate.sh` fetches `origin/main:evals/baselines/main.json` and passes it to `eval gate`. If that file is missing on `origin/main`, the script fails.
 
 ## Failure conditions
 
