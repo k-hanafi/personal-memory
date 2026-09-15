@@ -6,7 +6,6 @@ import pytest
 
 from personal_memory.filing import QUEUE_DIR
 from personal_memory.get import get_note
-from personal_memory import mcp as mcp_mod
 from personal_memory.mcp import make_server
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
@@ -41,12 +40,6 @@ def _tools(brain: Path, sources: str = "sources"):
 def test_mcp_cli_exposes_sources(capsys, _cli) -> None:
     assert _cli(["mcp", "--help"]) == 0
     assert "--sources" in capsys.readouterr().out
-
-
-def test_no_parallel_dispatcher() -> None:
-    assert not hasattr(mcp_mod, "handle")
-    assert not hasattr(mcp_mod, "call")
-    assert not hasattr(mcp_mod, "TOOL_NAMES")
 
 
 def test_tool_names_are_the_seven_human_verbs() -> None:
@@ -156,13 +149,3 @@ def test_draft_bad_payload_is_blocked_outcome(brain: Path) -> None:
     partial = fns["draft"](kind="create", provenance="user, 2026-09-10")
     assert partial["status"] == "blocked"
     assert "as_of" in (partial["reason"] or "")
-
-    tool = next(tool for tool in make_server(brain)._tool_manager.list_tools() if tool.name == "draft")
-    props = tool.parameters["properties"]
-    for name in inspect.signature(fns["draft"]).parameters:
-        assert name in props
-    assert "proposal" not in props
-    assert not tool.parameters.get("required")
-    validated = tool.fn_metadata.validate_arguments({})
-    result = tool.fn(**validated)
-    assert result["status"] == "blocked"

@@ -63,5 +63,6 @@ def test_cli_revisit_missing_is_success(capsys, _cli) -> None:
     assert "the brain does not have this" in captured.out
 
 
-def test_cli_get_is_unknown(_cli) -> None:
+def test_old_cli_verbs_are_unknown(_cli) -> None:
     assert _cli(["get", str(DEMO), "alex-rivera"]) == 2
+    assert _cli(["recall", str(DEMO), "teaching", "load"]) == 2

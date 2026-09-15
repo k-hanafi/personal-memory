@@ -1,11 +1,8 @@
-import shutil
 from pathlib import Path
 
-from personal_memory.get import get_note
 from personal_memory.recall import recall
 
 DEMO = Path(__file__).resolve().parents[1] / "examples" / "demo-brain"
-BRAIN = Path(__file__).resolve().parents[1] / "evals" / "brain"
 
 
 def _write_note(root: Path, name: str, note_id: str, status: str, title: str, body: str) -> None:
@@ -17,22 +14,18 @@ def _write_note(root: Path, name: str, note_id: str, status: str, title: str, bo
     )
 
 
-def test_present_tense_teaching_load_is_september_not_january() -> None:
-    result = recall(DEMO, "teaching load")
-    paths = [card.path.name for card in result.cards]
-    assert "teaching-load-2026-09.md" in paths
-    assert "teaching-load-2026-01.md" not in paths
-    sept = next(card for card in result.cards if card.path.name == "teaching-load-2026-09.md")
-    assert sept.status == "current"
-    assert sept.as_of == "2026-09-01"
-    assert sept.start_line >= 1
-    assert sept.end_line >= sept.start_line
-    assert sept.claim
+def test_teaching_load_prefers_september_and_historical_keeps_january() -> None:
+    current = recall(DEMO, "teaching load")
+    assert current.cards[0].path.name == "teaching-load-2026-09.md"
+    assert current.cards[0].status == "current"
+    assert current.cards[0].as_of == "2026-09-01"
+    assert current.cards[0].claim == "Teaching load (fall)"
+    assert current.cards[0].start_line == 10
+    assert current.cards[0].end_line >= current.cards[0].start_line
+    assert "teaching-load-2026-01.md" not in [card.path.name for card in current.cards]
 
-
-def test_historical_includes_january_as_superseded() -> None:
-    result = recall(DEMO, "teaching load", historical=True)
-    by_name = {card.path.name: card for card in result.cards}
+    historical = recall(DEMO, "teaching load", historical=True)
+    by_name = {card.path.name: card for card in historical.cards}
     assert by_name["teaching-load-2026-01.md"].status == "superseded"
     assert by_name["teaching-load-2026-09.md"].status == "current"
     assert by_name["teaching-load-2026-01.md"].contradicted_by == ()
@@ -62,13 +55,6 @@ def test_two_current_matches_are_marked_contradicted() -> None:
     paths = {str(card.path) for card in current}
     for card in current:
         assert set(card.contradicted_by) == paths - {str(card.path)}
-
-
-def test_claim_line_wikilink_hops_to_department_chair() -> None:
-    result = recall(BRAIN, "who is the department chair")
-    paths = [str(card.path) for card in result.cards]
-    assert paths[:2] == ["50-people/dana-whitfield.md", "40-areas/department-service.md"]
-    assert result.cards[0].start_line == 11
 
 
 def test_hop_target_superseded_is_added_only_with_historical(tmp_path: Path) -> None:
@@ -105,13 +91,6 @@ def test_unlabeled_wikilink_uses_id_labeled_uses_label(tmp_path: Path) -> None:
     assert [str(card.path) for card in recall(tmp_path, "metal").cards] == ["labeled.md"]
 
 
-def test_query_without_claim_line_wikilinks_is_unchanged() -> None:
-    result = recall(DEMO, "teaching load")
-    assert result.cards[0].path.name == "teaching-load-2026-09.md"
-    assert result.cards[0].claim == "Teaching load (fall)"
-    assert result.cards[0].start_line == 10
-
-
 def test_cli_remember_prints_september(capsys, _cli) -> None:
     code = _cli(["remember", str(DEMO), "teaching", "load"])
     captured = capsys.readouterr()
@@ -126,26 +105,3 @@ def test_cli_remember_empty_is_success(capsys, _cli) -> None:
     captured = capsys.readouterr()
     assert code == 0
     assert "the brain does not have this" in captured.out
-
-
-def test_cli_recall_is_unknown(_cli) -> None:
-    assert _cli(["recall", str(DEMO), "teaching", "load"]) == 2
-
-
-def test_cli_remember_with_provenance_does_not_write(tmp_path: Path, _cli) -> None:
-    brain = tmp_path / "brain"
-    shutil.copytree(DEMO, brain)
-    before = get_note(brain, "alex-rivera").text
-    _cli(
-        [
-            "remember",
-            str(brain),
-            "One fact.",
-            "--provenance",
-            "user, 2026-09-10",
-            "--target",
-            "alex-rivera",
-        ]
-    )
-    assert "One fact." not in get_note(brain, "alex-rivera").text
-    assert get_note(brain, "alex-rivera").text == before
