@@ -8,9 +8,6 @@ git fetch origin main
 
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
-if ! git show origin/main:evals/baselines/main.json > "$tmp" 2>/dev/null; then
-  # origin/main has no baseline yet, so the gate must see none.
-  rm -f "$tmp"
-fi
+git show origin/main:evals/baselines/main.json > "$tmp"
 
 personal-memory eval gate --main-baseline "$tmp"

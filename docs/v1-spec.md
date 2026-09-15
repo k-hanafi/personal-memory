@@ -455,7 +455,7 @@ connectors.
 ## Tech (v1)
 
 - Language: Python 3.11+, packaged so a non-infrastructure user can run one
-  command (`uvx` or equivalent) later
+  command
 - Why Python: Khaled already ships Python tooling, the vault scripts are
   Python, and Jan should not need Node + Docker + a cloud DB to start
 - MCP: official Python SDK, stdio first (the coding-agent path)
