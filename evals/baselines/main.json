@@ -1,450 +1,324 @@
 {
   "adapters": {
     "grep": {
-      "abstention_accuracy": 0.1667,
       "families": {
         "abstention": {
           "cases": {
-            "dissertation-defense-date": {
-              "failure": "abstain",
-              "holdout": false,
-              "pass": false
-            },
             "evening-elective-enrollment-number": {
               "failure": "abstain",
-              "holdout": false,
               "pass": false
             },
             "parking-permit-not-in-brain": {
               "failure": null,
-              "holdout": false,
               "pass": true
-            },
-            "sabbatical-start-date": {
-              "failure": "abstain",
-              "holdout": false,
-              "pass": false
             },
             "sponsor-contact-name": {
               "failure": "abstain",
-              "holdout": false,
-              "pass": false
-            },
-            "thesis-defense-date": {
-              "failure": "abstain",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": null,
           "passed": 1,
-          "recall_at_5": null,
-          "total": 6
+          "total": 3
         },
         "citation": {
           "cases": {
             "crlf-note-title-line": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "final-exam-weight-buried-line": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "grant-deadline-line": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "office-hours-schedule-line": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "open-textbook-rationale-line": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "teaching-load-claim-line": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": 0.5,
           "passed": 0,
-          "recall_at_5": 1.0,
           "total": 6
         },
         "contradiction": {
           "cases": {
             "marcus-both-present": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "northbridge-review-three-notes-present": {
               "failure": "also_present",
-              "holdout": false,
               "pass": false
             },
             "research-budget-both-surface": {
               "failure": "contradiction",
-              "holdout": false,
               "pass": false
             },
             "research-budget-second-phrasing": {
               "failure": "contradiction",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": null,
           "passed": 1,
-          "recall_at_5": null,
           "total": 4
         },
         "named-thing": {
           "cases": {
             "alias-sam": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "exact-id-assessment-policy": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "exact-title-curve-and-grading-policy": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "filed-note-beats-source-dump": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "generic-to-named-case-competition-co-organizer": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "generic-to-named-department-chair": {
               "failure": "expect_path",
-              "holdout": false,
-              "pass": false
-            },
-            "multi-alias-pn": {
-              "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "near-duplicate-marcus-bell": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "state-note-beats-daily-mentions": {
               "failure": "forbid_paths",
-              "holdout": false,
               "pass": false
             },
             "title-substring-okonkwo-both-present": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "title-substring-whitfield": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": 0.5,
           "passed": 2,
-          "recall_at_5": 0.8,
-          "total": 11
+          "total": 10
         },
         "supersession": {
           "cases": {
             "case-competition-current-edition-wins": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "case-competition-history-shows-last-year": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "office-hours-current-wins": {
               "failure": "forbid_paths",
-              "holdout": false,
               "pass": false
             },
             "office-hours-history-labels-old-schedules": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "summer-teaching-current-wins": {
               "failure": "forbid_paths",
-              "holdout": false,
               "pass": false
             },
             "summer-teaching-history-labels-declined": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "teaching-load-current-wins": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "teaching-load-history-labels-old-notes": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": 0.5,
           "passed": 2,
-          "recall_at_5": 1.0,
           "total": 8
         }
-      },
-      "superseded_leaks": 23
+      }
     },
     "recall": {
-      "abstention_accuracy": 0.3333,
       "families": {
         "abstention": {
           "cases": {
-            "dissertation-defense-date": {
-              "failure": null,
-              "holdout": false,
-              "pass": true
-            },
             "evening-elective-enrollment-number": {
               "failure": "abstain",
-              "holdout": false,
               "pass": false
             },
             "parking-permit-not-in-brain": {
               "failure": null,
-              "holdout": false,
               "pass": true
-            },
-            "sabbatical-start-date": {
-              "failure": "abstain",
-              "holdout": false,
-              "pass": false
             },
             "sponsor-contact-name": {
               "failure": "abstain",
-              "holdout": false,
-              "pass": false
-            },
-            "thesis-defense-date": {
-              "failure": "abstain",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": null,
-          "passed": 2,
-          "recall_at_5": null,
-          "total": 6
+          "passed": 1,
+          "total": 3
         },
         "citation": {
           "cases": {
             "crlf-note-title-line": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "final-exam-weight-buried-line": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "grant-deadline-line": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "office-hours-schedule-line": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             },
             "open-textbook-rationale-line": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "teaching-load-claim-line": {
               "failure": "expect_line",
-              "holdout": false,
               "pass": false
             }
           },
-          "hit_at_1": 1.0,
           "passed": 4,
-          "recall_at_5": 1.0,
           "total": 6
         },
         "contradiction": {
           "cases": {
             "marcus-both-present": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "northbridge-review-three-notes-present": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "research-budget-both-surface": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "research-budget-second-phrasing": {
               "failure": null,
-              "holdout": false,
               "pass": true
             }
           },
-          "hit_at_1": null,
           "passed": 4,
-          "recall_at_5": null,
           "total": 4
         },
         "named-thing": {
           "cases": {
             "alias-sam": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "exact-id-assessment-policy": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "exact-title-curve-and-grading-policy": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "filed-note-beats-source-dump": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "generic-to-named-case-competition-co-organizer": {
               "failure": "expect_path",
-              "holdout": false,
               "pass": false
             },
             "generic-to-named-department-chair": {
               "failure": null,
-              "holdout": false,
-              "pass": true
-            },
-            "multi-alias-pn": {
-              "failure": null,
-              "holdout": false,
               "pass": true
             },
             "near-duplicate-marcus-bell": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "state-note-beats-daily-mentions": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "title-substring-okonkwo-both-present": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "title-substring-whitfield": {
               "failure": null,
-              "holdout": false,
               "pass": true
             }
           },
-          "hit_at_1": 0.9,
-          "passed": 10,
-          "recall_at_5": 0.9,
-          "total": 11
+          "passed": 9,
+          "total": 10
         },
         "supersession": {
           "cases": {
             "case-competition-current-edition-wins": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "case-competition-history-shows-last-year": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "office-hours-current-wins": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "office-hours-history-labels-old-schedules": {
               "failure": "also_present",
-              "holdout": false,
               "pass": false
             },
             "summer-teaching-current-wins": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "summer-teaching-history-labels-declined": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "teaching-load-current-wins": {
               "failure": null,
-              "holdout": false,
               "pass": true
             },
             "teaching-load-history-labels-old-notes": {
               "failure": null,
-              "holdout": false,
               "pass": true
             }
           },
-          "hit_at_1": 1.0,
           "passed": 7,
-          "recall_at_5": 1.0,
           "total": 8
         }
-      },
-      "superseded_leaks": 0
+      }
     }
   },
   "corpus": "evals/brain",
   "fixtures": "evals/fixtures",
-  "fixtures_hash": "b654ecb609ce03de986cbc71edc11a2f7bde276004fcea34b0eb4edfb6100353",
-  "justification": "also_present and contradiction now score the same top-5 window the receipt already keeps. Grep northbridge-review-three-notes-present flipped pass to fail (also_present): grep ranks 50-people/marcus-bellamy.md at 6 and 60-decisions/decline-associate-editor-role.md at 7, so two of the three required notes sat outside the receipt. Recall gold stays 27/35 (that case still passes; recall returns those three notes only). Grep 7/35 to 6/35. Expected from one comparison window, not a retrieval change."
+  "fixtures_hash": "5ffa8aa06fd4a8aee9932372ab7f969c72b750958a28f3ab28ebedd6b55ca26c",
+  "justification": "Dropped three false-abstain cases (notes already answer, including the thesis/dissertation synonym) and multi-alias-pn until aliases are split. Recall gold 27/35 to 25/31 on purpose. Receipt scores stay in evals/runs/, not in this file."
 }

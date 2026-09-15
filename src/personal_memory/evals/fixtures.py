@@ -6,7 +6,7 @@ import tomllib
 
 
 class FixtureError(ValueError):
-    """A fixture file is malformed or breaks a validation rule."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -44,7 +44,6 @@ ALSO_PRESENT_KEYS = frozenset(AlsoPresent.__dataclass_fields__)
 
 
 def load_fixture_file(path: Path) -> Family:
-    """Parse one TOML fixture file into a Family, validating every case."""
     where = str(path)
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
@@ -62,6 +61,8 @@ def load_fixture_file(path: Path) -> Family:
             raise FixtureError(f"{where}: duplicate case id {case.id!r}")
         seen.add(case.id)
         cases.append(case)
+    if not cases:
+        raise FixtureError(f"{where}: family has no cases")
     return Family(name=name, cases=tuple(cases), source=path)
 
 
@@ -84,6 +85,9 @@ def _parse_case(raw: dict, file_where: str) -> Case:
     case_id = raw.get("id")
     where = f"{file_where}: case {case_id!r}" if isinstance(case_id, str) else file_where
     _reject_unknown(raw, CASE_KEYS, where)
+    case_id = _typed(raw, "id", str, where, required=True)
+    where = f"{file_where}: case {case_id!r}"
+    query = _typed(raw, "query", str, where, required=True)
 
     expect_path = _typed(raw, "expect_path", str, where)
     expect_line = _typed(raw, "expect_line", int, where)
@@ -93,6 +97,8 @@ def _parse_case(raw: dict, file_where: str) -> Case:
     abstain = _typed(raw, "abstain", bool, where) or False
     contradiction = _str_list(raw, "contradiction", where)
     forbid_paths = _str_list(raw, "forbid_paths", where)
+    historical = _typed(raw, "historical", bool, where) or False
+    holdout = _typed(raw, "holdout", bool, where) or False
 
     if expect_line is not None and expect_path is None:
         raise FixtureError(f"{where}: expect_line requires expect_path")
@@ -110,11 +116,21 @@ def _parse_case(raw: dict, file_where: str) -> Case:
         )
     if len(contradiction) == 1:
         raise FixtureError(f"{where}: contradiction needs at least two paths")
+    if not (
+        expect_path is not None
+        or expect_status is not None
+        or expect_confidence is not None
+        or forbid_paths
+        or also_present
+        or abstain
+        or contradiction
+    ):
+        raise FixtureError(f"{where}: case has no assert fields")
 
     return Case(
-        id=_typed(raw, "id", str, where, required=True),
-        query=_typed(raw, "query", str, where, required=True),
-        historical=_typed(raw, "historical", bool, where) or False,
+        id=case_id,
+        query=query,
+        historical=historical,
         expect_path=expect_path,
         expect_line=expect_line,
         expect_status=expect_status,
@@ -123,7 +139,7 @@ def _parse_case(raw: dict, file_where: str) -> Case:
         also_present=also_present,
         abstain=abstain,
         contradiction=contradiction,
-        holdout=_typed(raw, "holdout", bool, where) or False,
+        holdout=holdout,
     )
 
 
