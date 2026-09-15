@@ -110,7 +110,7 @@ what searching the folder already gets you before installing anything.
 | supersession | 7/8 | 2/8 |
 
 These numbers are for the fictional corpus in `evals/brain/` and match the committed
-baseline in `evals/baselines/main.json` (recall 27/35, grep 6/35). Cases that fail
+baseline in `evals/baselines/main.json` (recall 25/31, grep 6/31). Cases that fail
 today are capability targets, not bugs in the fixtures. How scoring and the CI gate
 work is in [docs/evals-spec.md](docs/evals-spec.md).
 
