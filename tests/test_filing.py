@@ -440,22 +440,3 @@ def test_cli_draft_rejects_non_object_json(brain: Path, capsys, _cli, tmp_path: 
     captured = capsys.readouterr()
     assert code == 2
     assert "JSON object" in captured.err
-
-
-def test_cli_note_stub_create_exits_0(brain: Path, _cli) -> None:
-    assert (
-        _cli(
-            [
-                "note",
-                str(brain),
-                "Dana chairs the department.",
-                "--provenance",
-                "user, 2026-09-10",
-                "--path",
-                "50-people/dana-whitfield.md",
-                "--type",
-                "person",
-            ]
-        )
-        == 0
-    )

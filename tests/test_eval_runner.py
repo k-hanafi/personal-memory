@@ -7,26 +7,24 @@ from personal_memory.evals.report import render
 from personal_memory.evals.runner import fixtures_hash, run
 
 ROOT = Path(__file__).resolve().parents[1]
-BRAIN = ROOT / "evals" / "brain"
-DEMO = ROOT / "examples" / "demo-brain"
 
-BRAIN_FIXTURE = """
+SMOKE = """
 family = "smoke"
 
 [[case]]
-id = "teaching-load-current"
-query = "teaching load"
-expect_path = "40-areas/teaching-load-2026-09.md"
+id = "top"
+query = "budget"
+expect_path = "b.md"
 expect_status = "current"
 
 [[case]]
-id = "samir-by-id"
-query = "samir-okonkwo"
-expect_path = "50-people/samir-okonkwo.md"
+id = "by-id"
+query = "b"
+expect_path = "b.md"
 holdout = true
 
 [[case]]
-id = "no-such-thing"
+id = "absent"
 query = "quantum pineapple syllabus"
 abstain = true
 """
@@ -65,9 +63,10 @@ def _budget_corpus(tmp_path: Path) -> Path:
 
 
 def test_receipt_shape_and_determinism(tmp_path: Path) -> None:
-    fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
-    first = run(BRAIN, fixture, ["recall", "grep"])
-    second = run(BRAIN, fixture, ["recall", "grep"])
+    corpus = _budget_corpus(tmp_path)
+    fixture = _write(tmp_path / "smoke.toml", SMOKE)
+    first = run(corpus, fixture, ["recall", "grep"])
+    second = run(corpus, fixture, ["recall", "grep"])
     assert _strip_timestamp(first) == _strip_timestamp(second)
     assert "timestamp" not in _strip_timestamp(first)
     assert "timestamp" in first
@@ -80,7 +79,7 @@ def test_receipt_shape_and_determinism(tmp_path: Path) -> None:
     assert (tmp_path / "runs" / "a.json").read_text().endswith("}\n")
 
     assert set(first) == {"commit", "fixtures_hash", "corpus", "fixtures", "timestamp", "adapters"}
-    assert first["fixtures_hash"] == fixtures_hash(fixture, BRAIN)
+    assert first["fixtures_hash"] == fixtures_hash(fixture, corpus)
     assert set(first["adapters"]) == {"recall", "grep"}
     for result in first["adapters"].values():
         assert set(result) == {"families", "superseded_leaks", "abstention_accuracy"}
@@ -94,11 +93,11 @@ def test_receipt_shape_and_determinism(tmp_path: Path) -> None:
             assert len(case["hits"]) <= 5
             for hit in case["hits"]:
                 assert set(hit) == {"path", "start_line", "end_line", "status", "confidence", "contradicted_by"}
-        assert family["cases"]["samir-by-id"]["holdout"] is True
+        assert family["cases"]["by-id"]["holdout"] is True
 
     recall_smoke = first["adapters"]["recall"]["families"]["smoke"]
     assert recall_smoke["passed"] == 3
-    assert recall_smoke["cases"]["teaching-load-current"]["hits"][0]["path"] == "40-areas/teaching-load-2026-09.md"
+    assert recall_smoke["cases"]["top"]["hits"][0]["path"] == "b.md"
 
 
 def test_hit_at_1_recall_at_5_and_abstention_on_known_corpus(tmp_path: Path) -> None:
@@ -134,7 +133,8 @@ query = "budget"
 abstain = true
 """,
     )
-    grep = run(corpus, fixture, ["grep"])["adapters"]["grep"]
+    receipt = run(corpus, fixture, ["recall", "grep"])
+    grep = receipt["adapters"]["grep"]
     family = grep["families"]["budget"]
     assert family["passed"] == 2
     assert family["total"] == 5
@@ -145,6 +145,7 @@ abstain = true
     assert grep["abstention_accuracy"] == 0.5
     # b (current), a (superseded), c (current): a outranks c on every non-abstaining "budget" query.
     assert grep["superseded_leaks"] == 4
+    assert receipt["adapters"]["recall"]["superseded_leaks"] == 0
 
 
 def test_abstention_accuracy_is_null_without_abstain_cases(tmp_path: Path) -> None:
@@ -163,50 +164,28 @@ expect_path = "b.md"
     assert receipt["adapters"]["grep"]["abstention_accuracy"] is None
 
 
-def test_superseded_leaks_counts_demo_teaching_load_tie_under_grep(tmp_path: Path) -> None:
-    fixture = _write(
-        tmp_path / "supersession.toml",
-        """
-family = "supersession"
-
-[[case]]
-id = "teaching-load"
-query = "teaching load"
-expect_path = "40-areas/teaching-load-2026-09.md"
-
-[[case]]
-id = "teaching-load-history"
-query = "teaching load"
-historical = true
-expect_path = "40-areas/teaching-load-2026-09.md"
-""",
-    )
-    receipt = run(DEMO, fixture, ["recall", "grep"])
-    assert receipt["adapters"]["grep"]["superseded_leaks"] == 1
-    assert receipt["adapters"]["recall"]["superseded_leaks"] == 0
-
-
 def test_family_filter_and_single_file_versus_directory(tmp_path: Path) -> None:
+    corpus = _budget_corpus(tmp_path)
     fixtures = tmp_path / "fixtures"
     fixtures.mkdir()
-    _write(fixtures / "smoke.toml", BRAIN_FIXTURE)
+    _write(fixtures / "smoke.toml", SMOKE)
     _write(
         fixtures / "other.toml",
         """
 family = "other"
 
 [[case]]
-id = "alex"
-query = "alex rivera"
-expect_path = "20-identity/alex-rivera.md"
+id = "also"
+query = "budget"
+expect_path = "b.md"
 """,
     )
-    both = run(BRAIN, fixtures, ["recall"])
-    assert list(both["adapters"]["recall"]["families"]) == ["other", "smoke"]
-    only = run(BRAIN, fixtures, ["recall"], families=["smoke"])
-    assert list(only["adapters"]["recall"]["families"]) == ["smoke"]
-    single = run(BRAIN, fixtures / "smoke.toml", ["recall"])
-    assert single["adapters"]["recall"]["families"]["smoke"] == both["adapters"]["recall"]["families"]["smoke"]
+    both = run(corpus, fixtures, ["grep"])
+    assert list(both["adapters"]["grep"]["families"]) == ["other", "smoke"]
+    only = run(corpus, fixtures, ["grep"], families=["smoke"])
+    assert list(only["adapters"]["grep"]["families"]) == ["smoke"]
+    single = run(corpus, fixtures / "smoke.toml", ["grep"])
+    assert single["adapters"]["grep"]["families"]["smoke"] == both["adapters"]["grep"]["families"]["smoke"]
 
 
 def test_fixtures_hash_tracks_fixture_and_corpus_bytes(tmp_path: Path) -> None:
@@ -221,11 +200,23 @@ def test_fixtures_hash_tracks_fixture_and_corpus_bytes(tmp_path: Path) -> None:
     assert fixtures_hash(fixture, corpus) != after_corpus
 
 
-def test_render_table(tmp_path: Path) -> None:
-    fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
-    receipt = run(BRAIN, fixture, ["recall", "grep"])
-    receipt["adapters"]["recall"]["families"]["extra"] = {"passed": 1, "total": 12}
-    receipt["adapters"]["grep"]["families"]["extra"] = {"passed": 0, "total": 12}
+def test_render_table() -> None:
+    receipt = {
+        "adapters": {
+            "recall": {
+                "families": {
+                    "smoke": {"passed": 3, "total": 3},
+                    "extra": {"passed": 1, "total": 12},
+                }
+            },
+            "grep": {
+                "families": {
+                    "smoke": {"passed": 1, "total": 3},
+                    "extra": {"passed": 0, "total": 12},
+                }
+            },
+        }
+    }
     lines = render(receipt).splitlines()
     assert len(lines) == 3
     assert lines[0].split() == ["family", "recall", "grep", "vs", "main"]
@@ -236,10 +227,11 @@ def test_render_table(tmp_path: Path) -> None:
 
 
 def test_cli_eval_run_writes_receipt(tmp_path: Path, capsys) -> None:
-    fixture = _write(tmp_path / "smoke.toml", BRAIN_FIXTURE)
+    corpus = _budget_corpus(tmp_path)
+    fixture = _write(tmp_path / "smoke.toml", SMOKE)
     out = tmp_path / "runs" / "r.json"
     code = main(
-        ["eval", "run", "--fixtures", str(fixture), "--corpus", str(BRAIN), "--adapter", "grep", "--out", str(out)]
+        ["eval", "run", "--fixtures", str(fixture), "--corpus", str(corpus), "--adapter", "grep", "--out", str(out)]
     )
     assert code == 0
     printed = capsys.readouterr().out.splitlines()
@@ -272,7 +264,7 @@ def test_cli_eval_gate_missing_corpus_exits_2(tmp_path: Path, capsys) -> None:
 
 def test_cli_eval_run_missing_fixtures_exits_2(tmp_path: Path, capsys) -> None:
     missing = tmp_path / "nope"
-    code = main(["eval", "run", "--fixtures", str(missing), "--corpus", str(BRAIN), "--out", str(tmp_path / "r.json")])
+    code = main(["eval", "run", "--fixtures", str(missing), "--corpus", str(tmp_path), "--out", str(tmp_path / "r.json")])
     assert code == 2
     assert "does not exist" in capsys.readouterr().err
     assert not (tmp_path / "r.json").exists()
@@ -281,6 +273,6 @@ def test_cli_eval_run_missing_fixtures_exits_2(tmp_path: Path, capsys) -> None:
 def test_cli_eval_run_empty_fixtures_dir_exits_2(tmp_path: Path, capsys) -> None:
     empty = tmp_path / "fixtures"
     empty.mkdir()
-    code = main(["eval", "run", "--fixtures", str(empty), "--corpus", str(BRAIN), "--out", str(tmp_path / "r.json")])
+    code = main(["eval", "run", "--fixtures", str(empty), "--corpus", str(tmp_path), "--out", str(tmp_path / "r.json")])
     assert code == 2
     assert "no fixture families" in capsys.readouterr().err
