@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from personal_memory.notelog import parse_log
-from personal_memory.notes import SKIP_NAMES, try_load_note
+from personal_memory.notes import try_load_note
 
 LINK_FIELDS = ("supersedes", "superseded_by")
 
@@ -44,9 +44,6 @@ def check_brain(root: Path) -> CheckResult:
     links: list[tuple[Path, str, str]] = []
 
     for path in sorted(root.rglob("*.md")):
-        if path.name in SKIP_NAMES:
-            skipped += 1
-            continue
         note, error = try_load_note(root, path)
         if error is not None:
             issues.append(NoteIssue(path, error))

@@ -3,12 +3,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
-from personal_memory.notes import load_note, markdown_paths
+from personal_memory.notes import TOKEN_RE, load_note, markdown_paths
 from personal_memory.recall import recall
-
-TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 @dataclass(frozen=True)

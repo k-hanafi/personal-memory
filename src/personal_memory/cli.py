@@ -111,7 +111,7 @@ def main(argv: list[str] | None = None) -> int:
     note_parser.add_argument("--target", help="Note id to append the fact to")
     note_parser.add_argument("--path", help="Where to create a new note when there is no target")
     note_parser.add_argument("--type", help="Note type for a new note")
-    note_parser.add_argument("--as-of", dest="as_of", help="When the fact was true (default today)")
+    note_parser.add_argument("--as-of", dest="as_of", help="When the fact was true (default UTC calendar day)")
 
     inbox_parser = sub.add_parser("inbox", help="List files under sources/ that no note has filed yet")
     brain_arg(inbox_parser)
@@ -189,28 +189,6 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
-    if args.command == "check":
-        return _run_check(args.brain)
-    if args.command == "remember":
-        return _run_remember(args.brain, " ".join(args.query), historical=args.historical)
-    if args.command == "revisit":
-        return _run_revisit(args.brain, args.key)
-    if args.command == "mcp":
-        return _run_mcp(args.brain, args.sources)
-    if args.command in ("draft", "pending", "file", "note", "inbox"):
-        root = args.brain.expanduser().resolve()
-        if not root.is_dir():
-            print(f"not a directory: {root}", file=sys.stderr)
-            return 2
-        if args.command == "draft":
-            return _run_draft(root, args.file, args.sources, args.json)
-        if args.command == "pending":
-            return _run_pending(root, args.sources, args.json)
-        if args.command == "file":
-            return _run_file(root, args.id, args.sources, args.json)
-        if args.command == "note":
-            return _run_note(root, args)
-        return _run_inbox(root, args.sources, args.json)
     if args.command == "eval" and args.eval_command == "run":
         return _run_eval(
             args.corpus,
@@ -223,7 +201,30 @@ def main(argv: list[str] | None = None) -> int:
         )
     if args.command == "eval" and args.eval_command == "compare":
         return _run_eval_compare(args.main, args.head)
-    return _run_eval_gate(args.main_baseline, args.corpus, args.fixtures)
+    if args.command == "eval":
+        return _run_eval_gate(args.main_baseline, args.corpus, args.fixtures)
+
+    root = args.brain.expanduser().resolve()
+    if not root.is_dir():
+        print(f"not a directory: {root}", file=sys.stderr)
+        return 2
+    if args.command == "check":
+        return _run_check(root)
+    if args.command == "remember":
+        return _run_remember(root, " ".join(args.query), historical=args.historical)
+    if args.command == "revisit":
+        return _run_revisit(root, args.key)
+    if args.command == "mcp":
+        return _run_mcp(root, args.sources)
+    if args.command == "draft":
+        return _run_draft(root, args.file, args.sources, args.json)
+    if args.command == "pending":
+        return _run_pending(root, args.sources, args.json)
+    if args.command == "file":
+        return _run_file(root, args.id, args.sources, args.json)
+    if args.command == "note":
+        return _run_note(root, args)
+    return _run_inbox(root, args.sources, args.json)
 
 
 def _add_corpus_fixtures(parser: argparse.ArgumentParser) -> None:
@@ -245,11 +246,7 @@ def _resolve(path: Path) -> Path:
     return path.expanduser().resolve()
 
 
-def _run_check(brain: Path) -> int:
-    root = _resolve(brain)
-    if not root.is_dir():
-        print(f"not a directory: {root}", file=sys.stderr)
-        return 2
+def _run_check(root: Path) -> int:
     result = check_brain(root)
     print(f"{root}: {result.notes} notes, {result.skipped} skipped")
     for issue in result.issues:
@@ -261,11 +258,7 @@ def _run_check(brain: Path) -> int:
     return 0
 
 
-def _run_remember(brain: Path, query: str, *, historical: bool) -> int:
-    root = _resolve(brain)
-    if not root.is_dir():
-        print(f"not a directory: {root}", file=sys.stderr)
-        return 2
+def _run_remember(root: Path, query: str, *, historical: bool) -> int:
     result = recall(root, query, historical=historical)
     if not result.cards:
         print("the brain does not have this")
@@ -282,26 +275,18 @@ def _run_remember(brain: Path, query: str, *, historical: bool) -> int:
     return 0
 
 
-def _run_revisit(brain: Path, key: str) -> int:
-    root = _resolve(brain)
-    if not root.is_dir():
-        print(f"not a directory: {root}", file=sys.stderr)
-        return 2
-    doc = get_note(root, key)
-    if doc is None:
+def _run_revisit(root: Path, key: str) -> int:
+    note = get_note(root, key)
+    if note is None:
         print("the brain does not have this")
         return 0
-    print(doc.text, end="" if doc.text.endswith("\n") else "\n")
+    print(note.text, end="" if note.text.endswith("\n") else "\n")
     return 0
 
 
-def _run_mcp(brain: Path, sources: str) -> int:
+def _run_mcp(root: Path, sources: str) -> int:
     from personal_memory.mcp import serve
 
-    root = _resolve(brain)
-    if not root.is_dir():
-        print(f"not a directory: {root}", file=sys.stderr)
-        return 2
     serve(root, sources=sources)
     return 0
 
@@ -310,7 +295,7 @@ def _run_draft(root: Path, file: Path | None, sources: str, as_json: bool) -> in
     raw = sys.stdin.read() if file is None else file.read_text(encoding="utf-8")
     try:
         proposal = Proposal.from_dict(json.loads(raw))
-    except (json.JSONDecodeError, TypeError) as exc:
+    except (json.JSONDecodeError, TypeError, AttributeError) as exc:
         print(f"proposal must be a JSON object with kind, provenance, confidence, as_of: {exc}", file=sys.stderr)
         return 2
     outcome = submit(root, proposal, sources_dir=sources)

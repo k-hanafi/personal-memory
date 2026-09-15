@@ -7,7 +7,7 @@ from mcp.server import MCPServer
 
 from personal_memory.filing import Proposal, apply, list_queue, note as write_note, submit
 from personal_memory.get import get_note
-from personal_memory.recall import recall
+from personal_memory.recall import EvidenceCard, recall
 from personal_memory.unfiled import unfiled
 
 
@@ -24,10 +24,10 @@ def make_server(brain: Path, sources: str = "sources") -> MCPServer:
     @server.tool()
     def revisit(key: str) -> dict:
         """Open one note by id or path. Frontmatter stays intact."""
-        doc = get_note(root, key)
-        if doc is None:
+        note = get_note(root, key)
+        if note is None:
             return {"text": None, "path": None}
-        return {"text": doc.text, "path": doc.path.as_posix()}
+        return {"text": note.text, "path": note.relative.as_posix()}
 
     @server.tool()
     def inbox() -> dict:
@@ -128,7 +128,7 @@ def serve(brain: Path, sources: str = "sources") -> None:
     make_server(brain, sources).run()
 
 
-def _card(card) -> dict:
+def _card(card: EvidenceCard) -> dict:
     return {
         "claim": card.claim,
         "path": card.path.as_posix(),

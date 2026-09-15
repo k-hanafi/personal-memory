@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import json
 import shutil
 from pathlib import Path
@@ -327,6 +328,13 @@ def test_apply_second_append_of_same_claim_stays_queued(brain: Path) -> None:
     assert check_brain(brain).ok
 
 
+def test_note_defaults_as_of_to_utc_calendar_day(brain: Path) -> None:
+    day = datetime.now(timezone.utc).date().isoformat()
+    outcome = note(brain, "Prefers morning lectures.", "user", target="alex-rivera")
+    assert outcome.status == "inserted"
+    assert f"- {day} | user | Prefers morning lectures." in get_note(brain, "alex-rivera").text
+
+
 def test_note_appends_when_target_given(brain: Path) -> None:
     outcome = note(brain, "Samir will draft the first case.", "user, 2026-09-10", target="samir-okonkwo", as_of="2026-09-10")
     assert outcome.status == "inserted"
@@ -422,6 +430,16 @@ def test_cli_note_help(capsys, _cli) -> None:
     assert "--path" in help_text
     assert "--type" in help_text
     assert "--title" not in help_text
+    assert "UTC calendar day" in help_text
+
+
+def test_cli_draft_rejects_non_object_json(brain: Path, capsys, _cli, tmp_path: Path) -> None:
+    payload = tmp_path / "proposal.json"
+    payload.write_text("[]\n", encoding="utf-8")
+    code = _cli(["draft", str(brain), str(payload)])
+    captured = capsys.readouterr()
+    assert code == 2
+    assert "JSON object" in captured.err
 
 
 def test_cli_note_stub_create_exits_0(brain: Path, _cli) -> None:

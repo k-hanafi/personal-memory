@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, replace
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
 
 from personal_memory.check import link_target
 from personal_memory.frontmatter import DATE_RE, FRONTMATTER_RE, FrontmatterError, parse_frontmatter
-from personal_memory.notelog import append_entry, normalize_claim, parse_log
+from personal_memory.notelog import append_entry, parse_log
 from personal_memory.notes import Note, load_notes, norm, tokenize
 from personal_memory.recall import WIKILINK_RE
 from personal_memory.unfiled import resolve_source
@@ -72,10 +72,6 @@ class _Verdict:
     status: str
     reason: str | None = None
     target: str | None = None
-
-
-def today() -> str:
-    return date.today().isoformat()
 
 
 def submit(root: Path, proposal: Proposal, *, sources_dir: str = "sources") -> Outcome:
@@ -176,7 +172,7 @@ def note(
         return Outcome("blocked", "", reason="provenance is required: who proposed this and when")
     if not (claim or "").strip():
         return Outcome("blocked", "", reason="claim is required")
-    as_of = as_of or today()
+    as_of = as_of or datetime.now(timezone.utc).date().isoformat()
     if target is not None:
         proposal = Proposal("append", provenance, "high", as_of, target=target, claim=claim)
     else:
@@ -278,9 +274,9 @@ def _validate_append(notes: list[Note], proposal: Proposal) -> _Verdict:
         return _Verdict("blocked", f"target {proposal.target!r} is not a note in this brain")
     if target.meta.status != "current":
         return _Verdict("blocked", f"target {proposal.target!r} is superseded; append to {link_target(target.meta.extra.get('superseded_by', '')) or 'its replacement'}")
-    wanted = normalize_claim(proposal.claim)
+    wanted = norm(proposal.claim)
     for entry in parse_log(target.text).entries:
-        if normalize_claim(entry.claim) == wanted:
+        if norm(entry.claim) == wanted:
             return _Verdict("duplicate", f"{target.meta.id!r} already logs this claim on line {entry.line}", target.meta.id)
     return _Verdict("valid")
 

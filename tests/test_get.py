@@ -11,7 +11,7 @@ def test_get_by_id_keeps_frontmatter() -> None:
     assert doc is not None
     assert doc.meta.id == "alex-rivera"
     assert doc.meta.status == "current"
-    assert doc.path.as_posix() == "20-identity/alex-rivera.md"
+    assert doc.relative.as_posix() == "20-identity/alex-rivera.md"
     assert doc.text.startswith("---")
     assert "id: alex-rivera" in doc.text
     assert "Economics lecturer" in doc.text
