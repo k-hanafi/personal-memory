@@ -103,10 +103,10 @@ what searching the folder already gets you before installing anything.
 
 | family | recall | grep |
 |---|---|---|
-| abstention | 2/6 | 1/6 |
+| abstention | 1/3 | 1/3 |
 | citation | 4/6 | 0/6 |
 | contradiction | 4/4 | 1/4 |
-| named-thing | 10/11 | 2/11 |
+| named-thing | 9/10 | 2/10 |
 | supersession | 7/8 | 2/8 |
 
 These numbers are for the fictional corpus in `evals/brain/` and match the committed
