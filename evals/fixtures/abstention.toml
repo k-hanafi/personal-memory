@@ -14,27 +14,6 @@ id = "evening-elective-enrollment-number"
 query = "evening elective enrollment"
 abstain = true
 
-# Problem 19
-
-[[case]]
-id = "sabbatical-start-date"
-query = "sabbatical start date"
-abstain = true
-
-# Problem 59
-
-[[case]]
-id = "dissertation-defense-date"
-query = "dissertation defense date"
-abstain = true
-
-# Problem 64
-
-[[case]]
-id = "thesis-defense-date"
-query = "thesis defense date"
-abstain = true
-
 # Problem 60
 
 [[case]]

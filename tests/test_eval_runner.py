@@ -87,13 +87,16 @@ def test_receipt_shape_and_determinism(tmp_path: Path) -> None:
         assert set(family) == {"passed", "total", "hit_at_1", "recall_at_5", "cases"}
         assert family["total"] == 3
         assert family["passed"] == sum(case["pass"] for case in family["cases"].values())
-        for case in family["cases"].values():
-            assert set(case) == {"pass", "failure", "holdout", "hits"}
+        for case_id, case in family["cases"].items():
             assert case["pass"] == (case["failure"] is None)
             assert len(case["hits"]) <= 5
             for hit in case["hits"]:
                 assert set(hit) == {"path", "start_line", "end_line", "status", "confidence", "contradicted_by"}
-        assert family["cases"]["by-id"]["holdout"] is True
+            if case_id == "by-id":
+                assert set(case) == {"pass", "failure", "holdout", "hits"}
+                assert case["holdout"] is True
+            else:
+                assert set(case) == {"pass", "failure", "hits"}
 
     recall_smoke = first["adapters"]["recall"]["families"]["smoke"]
     assert recall_smoke["passed"] == 3
@@ -162,6 +165,34 @@ expect_path = "b.md"
     )
     receipt = run(_budget_corpus(tmp_path), fixture, ["grep"])
     assert receipt["adapters"]["grep"]["abstention_accuracy"] is None
+
+
+def test_superseded_leaks_ignore_notes_past_top_n(tmp_path: Path) -> None:
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    for name in ("0", "1", "2", "3", "4"):
+        _write(corpus / f"{name}.md", NOTE.format(id=name, status="current", body="budget"))
+    _write(corpus / "z.md", NOTE.format(id="z", status="superseded", body="budget"))
+    fixture = _write(
+        tmp_path / "one.toml",
+        """
+family = "one"
+
+[[case]]
+id = "budget"
+query = "budget"
+expect_path = "0.md"
+""",
+    )
+    grep = run(corpus, fixture, ["grep"])["adapters"]["grep"]
+    assert [hit["path"] for hit in grep["families"]["one"]["cases"]["budget"]["hits"]] == [
+        "0.md",
+        "1.md",
+        "2.md",
+        "3.md",
+        "4.md",
+    ]
+    assert grep["superseded_leaks"] == 0
 
 
 def test_family_filter_and_single_file_versus_directory(tmp_path: Path) -> None:

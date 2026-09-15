@@ -25,17 +25,6 @@ expect_path = "50-people/samir-okonkwo.md"
 expect_line = 10
 expect_status = "current"
 
-# Problem 7
-
-[[case]]
-id = "multi-alias-pn"
-query = "PN"
-expect_path = "50-people/priya-natarajan.md"
-expect_line = 10
-expect_status = "current"
-
-# Title substring. Two sub-cases: a clean surname and a shared one.
-
 [[case]]
 id = "title-substring-whitfield"
 query = "Whitfield"

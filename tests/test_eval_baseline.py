@@ -49,17 +49,59 @@ def _receipt(recall: dict[str, dict[str, bool]], grep: dict[str, dict[str, bool]
 MAIN = _receipt({"named": {"a": True, "b": False, "c": True, "h!": True}}, {"named": {"a": False}})
 
 
-def test_to_baseline_strips_exactly_timestamp_commit_and_hits() -> None:
-    receipt = _receipt({"named": {"a": True}})
+def test_to_baseline_keeps_pass_fail_and_true_holdout() -> None:
+    receipt = _receipt({"named": {"a": True, "h!": True}})
     baseline = to_baseline(receipt)
     assert set(baseline) == set(receipt) - {"timestamp", "commit"}
-    case = baseline["adapters"]["recall"]["families"]["named"]["cases"]["a"]
-    assert set(case) == {"pass", "failure", "holdout"}
-    family = baseline["adapters"]["recall"]["families"]["named"]
-    assert {k: v for k, v in family.items() if k != "cases"} == {"passed": 1, "total": 1, "hit_at_1": 0.5, "recall_at_5": 0.5}
-    assert baseline["adapters"]["recall"]["abstention_accuracy"] == 0.5
-    assert baseline["fixtures_hash"] == "h1"
+    adapter = baseline["adapters"]["recall"]
+    assert set(adapter) == {"families"}
+    family = adapter["families"]["named"]
+    assert set(family) == {"passed", "total", "cases"}
+    assert set(family["cases"]["a"]) == {"pass", "failure"}
+    assert family["cases"]["h"]["holdout"] is True
+    assert family["cases"]["a"]["pass"] is True
     assert "hits" in receipt["adapters"]["recall"]["families"]["named"]["cases"]["a"]
+    assert "hit_at_1" in receipt["adapters"]["recall"]["families"]["named"]
+    assert "abstention_accuracy" in receipt["adapters"]["recall"]
+
+
+def test_gold_and_compare_treat_missing_holdout_as_false() -> None:
+    slim = {
+        "fixtures_hash": "h1",
+        "adapters": {
+            "recall": {
+                "families": {
+                    "named": {
+                        "cases": {
+                            "a": {"pass": True, "failure": None},
+                            "b": {"pass": False, "failure": "expect_path"},
+                            "h": {"pass": True, "failure": None, "holdout": True},
+                        }
+                    }
+                }
+            }
+        },
+    }
+    assert gold(slim, "recall") == {"a"}
+    head = {
+        "fixtures_hash": "h2",
+        "adapters": {
+            "recall": {
+                "families": {
+                    "named": {
+                        "cases": {
+                            "a": {"pass": False, "failure": "expect_path"},
+                            "b": {"pass": True, "failure": None},
+                            "h": {"pass": False, "failure": "expect_path", "holdout": True},
+                        }
+                    }
+                }
+            }
+        },
+    }
+    comparison = compare(slim, head)
+    assert comparison.improved == {"recall": {"named": ["b"]}}
+    assert comparison.regressed == {"recall": {"named": ["a"]}}
 
 
 def test_gold_excludes_failures_and_holdout() -> None:
@@ -205,6 +247,11 @@ def test_cli_update_baseline_preserves_justification(tmp_path: Path, capsys) -> 
     assert capsys.readouterr().out.splitlines()[-1] == str(baseline)
     written = json.loads(baseline.read_text())
     assert set(written) == {"adapters", "corpus", "fixtures", "fixtures_hash"}
+    adapter = written["adapters"]["recall"]
+    assert set(adapter) == {"families"}
+    family = adapter["families"]["smoke"]
+    assert set(family) == {"passed", "total", "cases"}
+    assert set(family["cases"]["hit"]) == {"pass", "failure"}
     written["justification"] = "keep me"
     baseline.write_text(json.dumps(written))
     assert main([*base_args, "--baseline", str(baseline), "--update-baseline"]) == 0

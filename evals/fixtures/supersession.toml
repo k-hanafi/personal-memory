@@ -68,8 +68,6 @@ status = "superseded"
 path = "40-areas/office-hours-2025-09.md"
 status = "superseded"
 
-# Case competition: last year's edition shares almost every word with this year's.
-
 [[case]]
 id = "case-competition-current-edition-wins"
 query = "case competition"

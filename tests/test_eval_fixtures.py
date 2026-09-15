@@ -79,9 +79,15 @@ def test_valid_file_loads_with_field_values(tmp_path: Path) -> None:
 
 
 def test_family_without_cases(tmp_path: Path) -> None:
-    family = load_fixture_file(write(tmp_path, "f.toml", 'family = "f"\n'))
-    assert family.name == "f"
-    assert family.cases == ()
+    path = write(tmp_path, "f.toml", 'family = "f"\n')
+    with pytest.raises(FixtureError, match="f.toml.*no cases"):
+        load_fixture_file(path)
+
+
+def test_case_without_assert_fields(tmp_path: Path) -> None:
+    path = write(tmp_path, "bad.toml", one_case('id = "x"\nquery = "q"'))
+    with pytest.raises(FixtureError, match="assert"):
+        load_fixture_file(path)
 
 
 def test_missing_family_names_file(tmp_path: Path) -> None:
@@ -112,6 +118,7 @@ def test_missing_family_names_file(tmp_path: Path) -> None:
         ('id = "x"\nquery = "q"\nholdout = 3', "holdout"),
         ('id = "x"\nquery = "q"\nnote = "unused"', "note"),
         ('id = "x"\nquery = 7', "query"),
+        ('id = "x"\nquery = "q"\nhistorical = true', "assert"),
     ],
 )
 def test_invalid_case_names_file_and_case_id(tmp_path: Path, body: str, fragment: str) -> None:
@@ -147,14 +154,17 @@ def test_unknown_top_level_key_is_rejected(tmp_path: Path) -> None:
 
 
 def test_duplicate_id_within_one_file(tmp_path: Path) -> None:
-    text = 'family = "f"\n\n[[case]]\nid = "x"\nquery = "a"\n\n[[case]]\nid = "x"\nquery = "b"\n'
+    text = (
+        'family = "f"\n\n[[case]]\nid = "x"\nquery = "a"\nabstain = true\n\n'
+        '[[case]]\nid = "x"\nquery = "b"\nabstain = true\n'
+    )
     with pytest.raises(FixtureError, match="'x'"):
         load_fixture_file(write(tmp_path, "dup.toml", text))
 
 
 def test_duplicate_id_across_files(tmp_path: Path) -> None:
-    write(tmp_path, "a.toml", one_case('id = "shared"\nquery = "a"'))
-    write(tmp_path, "b.toml", one_case('id = "shared"\nquery = "b"'))
+    write(tmp_path, "a.toml", one_case('id = "shared"\nquery = "a"\nabstain = true'))
+    write(tmp_path, "b.toml", one_case('id = "shared"\nquery = "b"\nabstain = true'))
     with pytest.raises(FixtureError) as info:
         load_fixtures(tmp_path)
     message = str(info.value)
@@ -164,7 +174,7 @@ def test_duplicate_id_across_files(tmp_path: Path) -> None:
 
 
 def test_load_fixtures_sorted_by_filename(tmp_path: Path) -> None:
-    write(tmp_path, "b.toml", 'family = "second"\n')
-    write(tmp_path, "a.toml", 'family = "first"\n')
+    write(tmp_path, "b.toml", 'family = "second"\n\n[[case]]\nid = "b"\nquery = "q"\nabstain = true\n')
+    write(tmp_path, "a.toml", 'family = "first"\n\n[[case]]\nid = "a"\nquery = "q"\nabstain = true\n')
     write(tmp_path, "ignored.txt", "not toml")
     assert [family.name for family in load_fixtures(tmp_path)] == ["first", "second"]

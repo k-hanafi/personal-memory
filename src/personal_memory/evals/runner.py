@@ -32,7 +32,6 @@ def run(
     adapters: list[str],
     families: list[str] | None = None,
 ) -> dict:
-    """Run every case through every requested adapter and return the receipt."""
     corpus_root = corpus_root.expanduser().resolve()
     fixtures = fixtures.expanduser().resolve()
     loaded = [load_fixture_file(fixtures)] if fixtures.is_file() else load_fixtures(fixtures)
@@ -65,12 +64,14 @@ def _run_adapter(name: str, corpus_root: Path, families: list[Family]) -> dict:
         for case in family.cases:
             hits = search(corpus_root, case.query, case.historical)
             failure = check_case(case, hits)
-            cases[case.id] = {
+            record = {
                 "pass": failure is None,
                 "failure": failure,
-                "holdout": case.holdout,
                 "hits": [_hit_dict(hit) for hit in hits[:TOP_N]],
             }
+            if case.holdout:
+                record["holdout"] = True
+            cases[case.id] = record
             if case.expect_path is not None:
                 top_paths = [hit.path for hit in hits[:TOP_N]]
                 ranked_total += 1
@@ -79,7 +80,7 @@ def _run_adapter(name: str, corpus_root: Path, families: list[Family]) -> dict:
             if case.abstain:
                 abstain_total += 1
                 abstain_correct += not hits
-            if not case.historical and _superseded_leak(hits):
+            if not case.historical and _superseded_leak(hits[:TOP_N]):
                 result["superseded_leaks"] += 1
         result["families"][family.name] = {
             "passed": sum(record["pass"] for record in cases.values()),

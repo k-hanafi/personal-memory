@@ -22,16 +22,16 @@ class GateResult:
 
 
 def to_baseline(receipt: dict) -> dict:
-    """The receipt without timestamp, commit, or per-case hits, so a diff shows only pass/fail flips."""
+    """Pass/fail by case. Drops timestamp, commit, hits, and receipt-only scores. Omits holdout when false."""
     baseline = {key: value for key, value in receipt.items() if key not in ("timestamp", "commit")}
     baseline["adapters"] = {
         name: {
-            **result,
             "families": {
                 family_name: {
-                    **family,
+                    "passed": family["passed"],
+                    "total": family["total"],
                     "cases": {
-                        case_id: {key: value for key, value in case.items() if key != "hits"}
+                        case_id: _case_baseline(case)
                         for case_id, case in family["cases"].items()
                     },
                 }
@@ -43,13 +43,20 @@ def to_baseline(receipt: dict) -> dict:
     return baseline
 
 
+def _case_baseline(case: dict) -> dict:
+    record = {"pass": case["pass"], "failure": case["failure"]}
+    if case.get("holdout"):
+        record["holdout"] = True
+    return record
+
+
 def gold(baseline: dict, adapter: str) -> set[str]:
-    """Case ids that pass and are not holdout for one adapter."""
+    """Case ids that pass and are not holdout for one adapter. Missing holdout is false."""
     return {
         case_id
         for family in baseline["adapters"].get(adapter, {}).get("families", {}).values()
         for case_id, case in family["cases"].items()
-        if case["pass"] and not case["holdout"]
+        if case["pass"] and not case.get("holdout")
     }
 
 
@@ -64,7 +71,7 @@ def compare(main: dict, head: dict) -> Comparison:
             regressed = []
             for case_id, head_case in head_family["cases"].items():
                 main_case = main_cases.get(case_id)
-                if main_case is None or head_case["holdout"] or main_case["holdout"]:
+                if main_case is None or head_case.get("holdout") or main_case.get("holdout"):
                     continue
                 if head_case["pass"] and not main_case["pass"]:
                     improved.append(case_id)
@@ -78,7 +85,6 @@ def compare(main: dict, head: dict) -> Comparison:
 
 
 def gate(fresh: dict, main_baseline: dict | None, head_baseline: dict | None) -> GateResult:
-    # Only the recall adapter gates; grep is the baseline row, reported but never gated.
     if head_baseline is None:
         return GateResult(False, [f"no committed baseline at {BASELINE_PATH}; run eval run --update-baseline"])
 
