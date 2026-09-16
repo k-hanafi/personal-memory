@@ -1,7 +1,7 @@
 [project]
 name = "personal-memory"
 version = "0.0.0"
-description = "Git-native memory for coding agents. Answers carry citations, freshness, and confidence."
+description = "Hosted memory for coding agents. Answers carry citations, freshness, and confidence."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

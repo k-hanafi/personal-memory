@@ -13,7 +13,7 @@ Add an entry when a document changes a decision in this repo. Do not add things 
 ## Prior art: products and their eval repos
 
 **Gbrain** by Garry Tan. https://github.com/garrytan/gbrain. Read 2026-09-08.
-The closest existing product. Git markdown as source of truth, Postgres index, hybrid search, agent skills. We take the ownership idea and the eval discipline, and leave the database, the connectors, and the hosted agent.
+The closest existing product. Git markdown as source of truth, Postgres index, hybrid search, agent skills. We take the ownership idea (zip-export later) and the eval discipline. v1 live store is hosted Postgres with URL-plus-key MCP, not Gbrain's local git-first install. Connectors and a hosted chat agent stay out.
 
 **Gbrain retrieval writeup** (README search section and `docs/eval-bench.md`). Read 2026-09-02 and 2026-09-08.
 Their own numbers show keyword-only and vector-only scoring close together, with the big precision jump coming from the page graph. This is why vectors are optional in our v1.
