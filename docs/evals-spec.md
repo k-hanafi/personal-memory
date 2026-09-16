@@ -6,7 +6,12 @@ Written 2026-09-09. Companion to `docs/v1-spec.md`. Every source named here is l
 
 ## Why this document exists
 
-Personal Memory is a search engine over a folder of markdown. The product promise is narrow and testable: every answer cites a file and a line range, says whether the note is still current, and refuses to answer when the brain does not have it. A promise that specific can be checked by a script. This document describes that script, the data it runs on, and the rules for reading its output.
+Personal Memory's evals have a hermetic Layer 1 on a git folder of markdown
+(`evals/brain/`). The product v1 is hosted (URL plus key). Layer 1 does not
+talk to that hosted process. It stays a search engine over a folder so CI
+needs no network and no API keys. The promise it checks is narrow: every
+answer cites a file and a line range, says whether the note is still current,
+and refuses when the brain does not have it.
 
 The larger reason is that retrieval quality is the product. When we add wikilink hops, or SQLite full-text search, or an optional vector arm, the only way to know whether the change helped is to ask the same questions before and after and count. Without that, every architectural decision is a guess dressed up as a decision.
 
@@ -217,7 +222,8 @@ The replay is not gated and its numbers are not published, because the corpus is
 
 ## Layer 3: agent in the loop
 
-The MCP server exists (`personal-memory mcp --brain`). This layer's runner does not. It is specified so the earlier layers stay compatible with it.
+The MCP server exists over stdio (`personal-memory mcp --brain`) and over HTTP
+(`personal-memory serve`, URL plus key). This layer's runner does not. It is specified so the earlier layers stay compatible with it.
 
 The question is different from Layer 1. Layer 1 asks whether the `recall` adapter returns the right card. Layer 3 asks whether Claude Code, Codex, or Cursor, given our `remember` and `revisit` tools, produces an answer that cites the right file and line and says the right thing about status. The engine can be perfect and the agent can still ignore the card, cite the wrong line, or answer from memory. LongMemEval found the same gap: even with perfect retrieval, the reading step lost accuracy.
 

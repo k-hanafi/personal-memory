@@ -2,66 +2,31 @@
 
 This GitHub repo is **private** until v1 is something a stranger can install.
 
-Personal Memory is a personal brain for coding agents (Claude Code, Codex, Cursor). The
-brain is a git folder of markdown. The engine answers with citations,
+Personal Memory is a personal brain for coding agents (Claude Code, Codex, Cursor).
+v1 is hosted: paste a URL and a key. The engine answers with citations,
 freshness, and confidence. Vector search is optional and off unless you turn
-it on later.
+it on later. A git folder of markdown is the Layer 1 eval corpus, not how you
+run the product.
 
 The plan lives in [docs/v1-spec.md](docs/v1-spec.md). Read that before writing
 code.
 
 ## Status
 
-2026-09-12: spec locked. `check` validates frontmatter. `remember` searches
+2026-09-16: hosted v1 locked. `check` validates frontmatter. `remember` searches
 and returns evidence cards. `revisit` fetches one note by id or path.
 Layer 1 evals are complete (`personal-memory eval run`, committed baseline,
 `eval-gate` CI). The write path exists (`draft`, `pending`, `file`, `note`,
-`inbox`). The MCP server exists (`personal-memory mcp --brain`). The engine
-holds no model: the coding agent decides what to file, the engine validates
-and writes. See the Write section of `docs/v1-spec.md`.
+`inbox`). Hosted MCP exists (`personal-memory serve`): URL plus key, same seven
+verbs. The folder behind `serve` is a stub until Postgres. Stdio MCP stays for
+tests and CI. The engine holds no model: the coding agent decides what to file,
+the engine validates and writes. See the Write section of `docs/v1-spec.md`.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[dev]"
-pytest
-personal-memory check examples/demo-brain
-personal-memory remember examples/demo-brain teaching load
-personal-memory revisit examples/demo-brain alex-rivera
-personal-memory eval run
-bash scripts/eval-gate.sh
-```
+## Connect (this is how v1 runs)
 
-## Writing to a brain
-
-```bash
-personal-memory note ~/brain "Dean approved the sabbatical." --provenance "user, 2026-09-10" --target sabbatical-plan
-personal-memory draft ~/brain
-personal-memory pending ~/brain
-personal-memory file ~/brain
-personal-memory inbox ~/brain
-```
-
-`note` saves one fact as a dated line in the note's `## Log`, or stub-creates a
-note when you pass `--path` and `--type` instead of `--target`. Stub titles come
-from the path stem. `draft` reads a JSON proposal (`create`, `append`, or
-`supersede`) from stdin, or from a file you write, and queues it after
-validating it against the brain. `file` writes every high-confidence proposal.
-`file <id>` writes one you chose. High confidence needs a boring signal (the
-user said it, a real `sources/` file, or an exact-id target), otherwise the
-proposal waits in the queue for you. `inbox` lists files under `sources/` that
-no note names yet.
-
-## MCP
-
-Point the editor at a brain folder. The seven tools are the same words as the
-CLI. Use `examples/demo-brain` first. That folder has no `sources/` dumps, so
-`inbox` is empty until you add one. Do not commit a config that points at a
-real personal vault.
-
-Replace `BRAIN` with the absolute path to `examples/demo-brain` in this repo,
-and `BIN` with `.venv/bin/personal-memory` after you install. If dumps live
-in another folder, add `--sources 70-sources` after `--brain`.
+The editor calls a URL. Auth is a long random key, sent as
+`Authorization: Bearer`. Not OAuth. Replace `URL` with the `/mcp` address and
+`KEY` with that secret.
 
 **Cursor.** Add this to `.cursor/mcp.json` (or Cursor Settings, MCP):
 
@@ -69,8 +34,10 @@ in another folder, add `--sources 70-sources` after `--brain`.
 {
   "mcpServers": {
     "personal-memory": {
-      "command": "BIN",
-      "args": ["mcp", "--brain", "BRAIN"]
+      "url": "URL",
+      "headers": {
+        "Authorization": "Bearer KEY"
+      }
     }
   }
 }
@@ -79,27 +46,38 @@ in another folder, add `--sources 70-sources` after `--brain`.
 **Claude Code.** From a terminal:
 
 ```bash
-claude mcp add --transport stdio personal-memory -- BIN mcp --brain BRAIN
+claude mcp add --transport http personal-memory URL --header "Authorization: Bearer KEY"
 ```
 
-**Codex.** Add this to the Codex MCP config:
+**Codex.** Add this to `~/.codex/config.toml`. Put the key in an env var, not
+in the file:
 
 ```toml
 [mcp_servers.personal-memory]
-command = "BIN"
-args = ["mcp", "--brain", "BRAIN"]
+url = "URL"
+bearer_token_env_var = "PERSONAL_MEMORY_API_KEY"
 ```
 
-`python3 -m venv .venv` creates a project-local install folder so Personal Memory
-does not land in your system Python. `source .venv/bin/activate` makes that folder
-the active Python for this terminal. `python -m pip install -e ".[dev]"` installs
-the CLI plus test tools. The `-e` means edits to `src/` show up without reinstalling.
+The seven tools are the same words as the engine: `remember`, `revisit`,
+`inbox`, `draft`, `pending`, `file`, `note`.
+
+Until Railway and Postgres land, you can boot that door on one machine with
+`PERSONAL_MEMORY_API_KEY` set (or `--key`). `--brain` is the folder stub, not
+the product:
+
+```bash
+personal-memory serve --key KEY --brain examples/demo-brain
+```
+
+That prints a `listening:` URL. Paste that URL and the key into the snippets
+above. An empty stub (no `--brain`) is enough to prove the door opens. It is
+not a hosted brain.
 
 ## Evals
 
 Retrieval is measured by fixed questions against a fictional corpus. `recall` is our
 engine. `grep` is a plain text search run on the same questions, so a reader can see
-what searching the folder already gets you before installing anything.
+what searching the folder already gets you.
 
 | family | recall | grep |
 |---|---|---|
@@ -124,12 +102,37 @@ bash scripts/eval-gate.sh
 rewrites `evals/baselines/main.json` from that run. `scripts/eval-gate.sh` compares a
 fresh run to the baseline on `origin/main` and exits 1 if a passing `recall` case broke.
 
+## Contributors
+
+This is how you change the engine. It is not how a person runs v1.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+pytest
+personal-memory check examples/demo-brain
+personal-memory remember examples/demo-brain teaching load
+personal-memory revisit examples/demo-brain alex-rivera
+personal-memory eval run
+bash scripts/eval-gate.sh
+```
+
+`python3 -m venv .venv` creates a project-local install folder so Personal Memory
+does not land in your system Python. `source .venv/bin/activate` makes that folder
+the active Python for this terminal. `python -m pip install -e ".[dev]"` installs
+the CLI plus test tools. The `-e` means edits to `src/` show up without reinstalling.
+
+Folder CLI verbs (`note`, `draft`, `pending`, `file`, `inbox`) and stdio
+(`personal-memory mcp --brain`) still exist so tests and Layer 1 evals stay
+hermetic. Do not commit a config that points at a real personal vault.
+
 ## Layout
 
 | Path | What it is |
 |---|---|
 | `docs/v1-spec.md` | Product plan. Wins over code until we change it. |
 | `docs/evals-spec.md` | Eval architecture, fixtures, and the CI gate. |
-| `examples/demo-brain/` | Fake notes for tests and an install walkthrough |
+| `examples/demo-brain/` | Fake notes for tests and evals |
 | `evals/brain/` | Fictional Layer 1 eval corpus |
-| `src/personal_memory/` | Engine: `check`, `remember`, `revisit`, filing (`draft`, `pending`, `file`, `note`), `inbox`, MCP, and `eval` |
+| `src/personal_memory/` | Engine: `check`, `remember`, `revisit`, filing (`draft`, `pending`, `file`, `note`), `inbox`, hosted MCP, stdio MCP, and `eval` |

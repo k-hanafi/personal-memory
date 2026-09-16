@@ -1,37 +1,46 @@
 # Personal Memory v1 spec
 
 Name: **Personal Memory**. GitHub: `k-hanafi/personal-memory`.
-Locked: 2026-09-02. Renamed from pith on 2026-09-07.
+Locked: 2026-09-02. Hosted v1 locked 2026-09-16. Renamed from pith on 2026-09-07.
 
 This file is the product plan. If code and this file disagree, this file wins
 until we change it on purpose.
 
 ## Bet
 
-A git folder of markdown is the brain. A coding agent (Claude Code, Codex,
-Cursor) talks to it over MCP. Every answer cites a file and a line range, and
-says whether the note is still current, when the claim was true, and how sure
-we were.
+v1 is hosted only. A coding agent (Claude Code, Codex, Cursor) pastes a URL
+and a long random key, then talks to Personal Memory over MCP. Every answer
+cites a note and a line range, and says whether the note is still current,
+when the claim was true, and how sure we were.
 
-The product works with no embedding vendor, no Postgres, and no hosted agent.
+The live store in v1 is Postgres (Railway). A git folder of markdown is the
+Layer 1 eval corpus, and later the shape of a zip-export. Folder-plus-stdio
+is not how someone runs v1. It stays for tests, CI, and evals.
+
+The product works with no embedding vendor and no engine-owned LLM key.
 Vector search is an optional extra for large, messy brains. It is never
-required to install or to get a correct answer.
+required to install or to get a correct answer. Hosted Postgres is required
+for the product. It is not required to run Layer 1 evals or
+`personal-memory check examples/demo-brain`.
 
 ## Who it is for
 
 v1 users live in a coding agent every day. They are not expected to run
-Telegram bots, Docker, or a vector database.
+Telegram bots, Docker, or a vector database on their laptop. They paste a
+URL and a key. The cloud box (Railway plus Postgres) is the always-on process.
 
 Primary users:
 
-- Khaled, dogfooding on the private vault at `~/vault`
+- Khaled, first customer. The private vault at `~/vault` is not how v1 runs.
+  It can feed the hosted brain later. Cloud agents do not have that folder.
 - A knowledge worker like Jan Bena: finance professor, uses Codex and Claude
   Code daily, not an infrastructure person
-- Other people in the same boat who want a personal brain they own as files
+- Other people in the same boat who want a personal brain they can leave
+  with as markdown (zip-export, later)
 
-v1 does **not** target OpenClaw, Hermes, Telegram, or a 24/7 hosted agent.
-That can come later. Most of the value now is memory for the agent already
-open in the editor.
+v1 does **not** target OpenClaw, Hermes, Telegram, or a marketplace plugin.
+The hosted MCP process is in v1. Most of the value now is memory for the
+agent already open in the editor.
 
 ## What this is not
 
@@ -51,8 +60,8 @@ embeddings. Gbrain can already boot with no embedding key and fall back to
 keyword search. We are making that the default path, not the fallback.
 
 Do not clone Gbrain's connector list, Render/Telegram tutorial, or Convex as
-the database. Git markdown stays the system of record. Any database is an
-index you can rebuild.
+the database. v1 live store is Postgres. Git-folder markdown stays the Layer 1
+eval path and the zip-export shape, not the way a client runs the product.
 
 ## Repos
 
@@ -74,12 +83,11 @@ engine? Then it belongs in the product.
 
 Khaled's vault today mixes both (`bin/` scripts next to people notes). That
 was right when the "product" was three scripts. The public product cannot
-live in `~/vault`. Features land here. `~/vault` stays the first customer:
-point Personal Memory at that folder. Do not freeze the vault while building a
-greenfield clone, and do not migrate onto a new note format at the end.
+live in `~/vault`. Features land here. Do not freeze the vault while building
+the hosted engine, and do not migrate onto a new note format at the end.
 
-Community install uses `examples/demo-brain/` (fake people, fake courses).
-Khaled's life never ships in this repo.
+Community evals and tests use `examples/demo-brain/` (fake people, fake
+courses). Khaled's life never ships in this repo.
 
 ## Retrieval
 
@@ -363,8 +371,9 @@ immutable: Personal Memory and the agent read it and never edit it.
 
 ### Ordered workflow
 
-`personal-memory init` is not built. Point Personal Memory at a folder the
-user already has, or copy `examples/demo-brain/`.
+`personal-memory init` is not built. The hosted brain starts empty (this
+slice stubs it with a folder). Eval and test brains are `examples/demo-brain/`
+and `evals/brain/`.
 
 1. **Land raw material in `sources/`.** Drag and drop files, or later a
    connector (Notion first). Connectors are copy jobs: token in env, no
@@ -389,9 +398,8 @@ user already has, or copy `examples/demo-brain/`.
      `sources/`, or a current note already has this title.
 6. **Check.** `personal-memory check` must pass on the brain after a batch.
 
-Jan's session is: drop files in `sources/`, open Cursor in the brain
-folder, say "file the inbox." The agent uses Personal Memory tools. The user only
-answers the low-confidence list.
+Jan's session is: paste the URL and key, say "file the inbox." The agent uses
+Personal Memory tools. The user only answers the low-confidence list.
 
 ### Who runs the LLM
 
@@ -416,9 +424,8 @@ Gbrain does both, on purpose:
   chat session is open, so the binary has to call a model. With no chat
   key, those jobs stay off.
 
-Personal Memory is not a 24/7 daemon in v1, so it should not collect a chat API
-key. A later overnight `--model` path can copy gbrain's
-daemon. Not now.
+The hosted process is always on. It still should not collect a chat API
+key. A later overnight `--model` path can copy gbrain's daemon. Not now.
 
 If the agent writes markdown with the editor instead of `personal-memory file`,
 that is a bypass. `AGENTS.md` in the brain must say: new notes go
@@ -426,8 +433,11 @@ through Personal Memory. `personal-memory check` (and later a git hook) catch st
 
 ## MCP surface (v1)
 
-Install is: point Personal Memory at a folder, add one MCP server entry in Claude Code /
-Codex / Cursor. No website, no Telegram, no cloud account.
+Install is: paste a URL and a key into Claude Code / Codex / Cursor. Auth is
+that key, sent as `Authorization: Bearer`. Not OAuth. No website, no Telegram.
+
+Stdio MCP (`personal-memory mcp --brain`) stays for tests, CI, and Layer 1
+evals. It is not how v1 runs.
 
 CLI and MCP share these seven words (locked 2026-09-12):
 
@@ -446,8 +456,8 @@ CLI and MCP share these seven words (locked 2026-09-12):
    stated in chat rather than a `sources/` dump. Contract in the Write
    section.
 
-Out of v1 MCP: Slack, Gmail, Calendar, a hosted HTTP MCP with OAuth, a
-reranker, query-expansion LLMs, engine-owned chat API calls.
+Out of v1 MCP: Slack, Gmail, Calendar, a hosted HTTP MCP with OAuth (v1
+uses a key), a reranker, query-expansion LLMs, engine-owned chat API calls.
 
 One ingestion path can follow later: Notion into `sources/`, modeled on
 Khaled's existing `notion-sync`. Not a launch checklist of five
@@ -455,50 +465,54 @@ connectors.
 
 ## Tech (v1)
 
-- Language: Python 3.11+, packaged so a non-infrastructure user can run one
-  command
-- Why Python: Khaled already ships Python tooling, the vault scripts are
-  Python, and Jan should not need Node + Docker + a cloud DB to start
-- MCP: official Python SDK, stdio first (the coding-agent path)
-- Search v1: walk markdown + frontmatter, keyword match, exact id/title,
-  wikilink hop. SQLite FTS is allowed if grep gets painful. Postgres is not
-  required.
+- Language: Python 3.11+, packaged as one hosted process
+- Why Python: Khaled already ships Python tooling, and the engine is already
+  Python. Jan never installs that stack. The landlord (Railway) does.
+- MCP: official Python SDK over Streamable HTTP, gated by a bearer key.
+  Stdio remains for tests, CI, and Layer 1 evals.
+- Live store: Postgres (not in the HTTP-key slice; folder is the stub until
+  that lands). Agent never writes SQL.
+- Search v1: walk markdown + frontmatter on the eval corpus, keyword match,
+  exact id/title, wikilink hop. Hosted search against Postgres is a later
+  slice on the same card shape.
 - Optional later: embeddings as a second recall arm, same evidence-card
   contract
 
 ## Dogfood
 
-Khaled keeps using `~/vault` every day. New engine features must run against
-that folder the same week they land. If Personal Memory cannot serve the vault without
-rewriting the notes, the engine is wrong, not the vault.
-
-Schema changes are versioned. The vault opts in. No surprise rewrites of
+`~/vault` is Khaled's private brain. It is not in this repo and not on cloud
+agent VMs. Using it to find bugs is his time, not a v1 FAILURE line. Schema
+changes stay versioned. The vault opts in. No surprise rewrites of
 historical notes.
 
 ## Out of scope until we say otherwise
 
 - Public launch site
 - OpenClaw / Hermes / Telegram
-- Convex or any backend that becomes the source of truth
+- Convex (Postgres is the v1 live store)
 - Required vector search
 - Slack / Google Suite ingestion
-- Marketplace plugins (Claude Code / Codex / Cursor). v1 install is the
-  CLI plus one MCP config snippet. A plugin can wrap that later.
-- Multi-user company brain, authz beyond "this folder is yours"
+- Marketplace plugins (Claude Code / Codex / Cursor). v1 install is URL plus
+  key. A plugin can wrap that later.
+- Multi-user company brain, authz beyond "this key opens this brain"
+- Local folder-plus-stdio as the way a person runs the product
 - Changing Khaled's vault into a public demo
 
 ## Contract
 
-GOAL: After v1, a coding agent connected to Personal Memory can answer a question from a
-markdown brain using only remember/revisit, and every stated fact has an evidence
-card. The same install works with embeddings disabled. A new user can run
-`personal-memory check` on `examples/demo-brain` and get a clean pass without API keys.
+GOAL: After v1, a coding agent pastes a URL and a key, answers a question
+using only remember/revisit, and every stated fact has an evidence card. The
+same hosted brain works with embeddings disabled. Layer 1 evals and
+`personal-memory check examples/demo-brain` still pass with no product API
+keys and no network.
 
 CONSTRAINTS:
 
-- Git markdown is the system of record
-- No required cloud account, embedding key, or engine-owned LLM API key
-- v1 clients are Claude Code, Codex, and Cursor only
+- Hosted Postgres is the live store. Git-folder markdown is the Layer 1 eval
+  path and the later zip-export shape.
+- No required embedding key or engine-owned LLM API key
+- v1 clients are Claude Code, Codex, and Cursor only. They paste a URL and a
+  key. They do not install a local folder MCP to use the product.
 - `sources/` is never rewritten by Personal Memory or the agent
 - Low-confidence proposals never auto-apply
 - Do not put real personal notes in this repo
@@ -513,7 +527,8 @@ FORMAT:
 
 FAILURE (any of these means v1 is not done):
 
-- Install requires Voyage, OpenAI embeddings, or Postgres
+- A v1 client has to run a local folder MCP to talk to the product
+- Install requires Voyage or OpenAI embeddings
 - Recall can return a superseded note as if it were current
 - Recall returns a chunk with frontmatter stripped
 - An answer cites a file but no line range
@@ -525,14 +540,19 @@ FAILURE (any of these means v1 is not done):
 
 ## Implementation order
 
-Shipped: `check`, search (`remember`) and `revisit`, Layer 1 evals, MCP,
-and the write path (`draft` / `pending` / `file` / `note` / `inbox`).
+Shipped: `check`, search (`remember`) and `revisit`, Layer 1 evals, stdio MCP,
+the write path (`draft` / `pending` / `file` / `note` / `inbox`), and hosted
+HTTP MCP with a key (folder store as a stub).
 
 Remaining:
 
-- Dogfood on `~/vault` (including `70-sources/` as the dump pile)
-- Optional Notion connector into `sources/`
-- Optional vectors as a second recall arm (fail-open)
+- Postgres live store (notes as rows, same `check` rules)
+- Hosted `remember` / writes against that store, same card shape and gates
+- Railway host (always-on process, `DATABASE_URL`)
+- Zip-export to a demo-brain-shaped folder
+- Brain `AGENTS.md` on that export (call `remember`, not grep)
+- Optional: Khaled dogfood from `~/vault`, Notion connector into `sources/`,
+  vectors as a second recall arm (fail-open)
 - Optional later: engine-owned model key for overnight filing with no
   editor session (gbrain autopilot path)
 
@@ -544,6 +564,8 @@ Remaining:
   before its newest Log line (a staleness hint, not an error)
 - `personal-memory init` to write a template brain (folders, `AGENTS.md`,
   empty `sources/`). Not a live verb.
+- Railway Hobby sleep vs a paid always-on box. Do not ship Jan on a
+  sleeping free process.
 
 Resolved 2026-09-10 (see Write): queue format is JSON under
 `.personal-memory/queue/`; notes may carry an optional State plus Log shape;
@@ -553,3 +575,7 @@ Resolved 2026-09-10 (see Write): queue format is JSON under
 Resolved 2026-09-12 (see MCP surface): CLI and MCP share
 `remember`, `revisit`, `inbox`, `draft`, `pending`, `file`, `note`.
 `remember` is search. `note` is the chat write.
+
+Resolved 2026-09-16 (see Bet): v1 is hosted URL-plus-key. Postgres is the
+live store. Git-folder plus stdio is the eval and test path. HTTP MCP uses a
+key, not OAuth.

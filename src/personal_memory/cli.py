@@ -5,6 +5,7 @@ from dataclasses import asdict
 from datetime import datetime
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 from personal_memory.check import check_brain
@@ -22,7 +23,7 @@ from personal_memory.unfiled import unfiled
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="personal-memory",
-        description="Git-native memory for coding agents.",
+        description="Hosted memory for coding agents. Clients paste a URL and a key.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -118,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
 
     mcp_parser = sub.add_parser(
         "mcp",
-        help="Start the MCP server on stdin/stdout, pointed at one brain folder",
+        help="Start the stdio MCP server (tests, CI, Layer 1 evals). v1 clients use serve.",
     )
     mcp_parser.add_argument(
         "--brain",
@@ -132,6 +133,30 @@ def main(argv: list[str] | None = None) -> int:
         metavar="DIR",
         help="Immutable dump folder inside the brain (default sources)",
     )
+
+    serve_parser = sub.add_parser(
+        "serve",
+        help="Start the hosted MCP server. Clients paste the URL and a key.",
+    )
+    serve_parser.add_argument(
+        "--key",
+        default=None,
+        help="Shared secret sent as Authorization: Bearer. Prefer PERSONAL_MEMORY_API_KEY.",
+    )
+    serve_parser.add_argument(
+        "--brain",
+        type=Path,
+        default=None,
+        help="Folder store used as a stub until Postgres. Default is an empty temp folder.",
+    )
+    serve_parser.add_argument(
+        "--sources",
+        default="sources",
+        metavar="DIR",
+        help="Immutable dump folder inside the brain (default sources)",
+    )
+    serve_parser.add_argument("--host", default="127.0.0.1", help="Bind address (default 127.0.0.1)")
+    serve_parser.add_argument("--port", type=int, default=8000, help="Bind port (default 8000)")
 
     eval_parser = sub.add_parser(
         "eval",
@@ -189,6 +214,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+    if args.command == "serve":
+        return _run_serve(args)
     if args.command == "eval" and args.eval_command == "run":
         return _run_eval(
             args.corpus,
@@ -288,6 +315,36 @@ def _run_mcp(root: Path, sources: str) -> int:
     from personal_memory.mcp import serve
 
     serve(root, sources=sources)
+    return 0
+
+
+def _run_serve(args: argparse.Namespace) -> int:
+    from personal_memory.http import MCP_PATH, resolve_api_key, serve_http
+
+    try:
+        key = resolve_api_key(args.key)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
+    stub: tempfile.TemporaryDirectory[str] | None = None
+    if args.brain is None:
+        stub = tempfile.TemporaryDirectory(prefix="personal-memory-stub-")
+        root = Path(stub.name)
+        store = "empty stub folder (Postgres is a later slice)"
+    else:
+        root = args.brain.expanduser().resolve()
+        if not root.is_dir():
+            print(f"not a directory: {root}", file=sys.stderr)
+            return 2
+        store = f"{root} (folder stub until Postgres)"
+    display_host = "127.0.0.1" if args.host in ("0.0.0.0", "::") else args.host
+    print(f"store: {store}")
+    print(f"listening: http://{display_host}:{args.port}{MCP_PATH}")
+    try:
+        serve_http(root, key, sources=args.sources, host=args.host, port=args.port)
+    finally:
+        if stub is not None:
+            stub.cleanup()
     return 0
 
 
